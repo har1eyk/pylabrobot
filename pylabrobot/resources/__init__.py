@@ -28,6 +28,7 @@ from .greiner import *
 from .hamilton import *
 from .itemized_resource import ItemizedResource
 from .liquid import Liquid
+from .mtcbio import *
 from .nest import *
 from .opentrons import *
 from .perkin_elmer import *

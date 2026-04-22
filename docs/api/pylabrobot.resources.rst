@@ -116,6 +116,17 @@ Hamilton
     hamilton.STARLetDeck
 
 
+MTC Bio
+-------
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+  :recursive:
+
+    mtcbio.plates
+
+
 ML Star resources
 -----------------
 
