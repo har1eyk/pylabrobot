@@ -60,7 +60,7 @@
     <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_position_increments" href="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_position_increments.html" />
+    <link rel="next" title="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_left_x_arm_last_collision_type" href="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_left_x_arm_last_collision_type.html" />
     <link rel="prev" title="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_version" href="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_version.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
@@ -583,21 +583,48 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_orientation">
 <span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">STAR.</span></span><span class="sig-name descname"><span class="pre">request_iswap_wrist_drive_orientation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">WristDriveOrientation</span></span></span><a class="headerlink" href="#pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_orientation" title="Link to this definition">#</a></dt>
-<dd><p>Request the iSWAP wrist drive orientation.
-This is the orientation of the iSWAP wrist drive (always in relation to the iSWAP arm/rotation drive).</p>
-<p>e.g.:
-1) iSWAP RotationDriveOrientation.FRONT (i.e. pointing to the front of the machine) + iSWAP WristDriveOrientation.STRAIGHT (i.e. wrist is also pointing to the front)</p>
-<ol class="arabic simple" start="2">
-<li><p>iSWAP RotationDriveOrientation.LEFT (i.e. pointing to the left of the machine) + iSWAP WristDriveOrientation.STRAIGHT (i.e. wrist is also pointing to the left)</p></li>
-<li><p>iSWAP RotationDriveOrientation.FRONT (i.e. pointing to the front of the machine) + iSWAP WristDriveOrientation.RIGHT (i.e. wrist is pointing to the left !)</p></li>
+<dd><p>Request the iSWAP wrist drive orientation (relative to the rotation drive).</p>
+<p>e.g.:</p>
+<ol class="arabic simple">
+<li><p>RotationDriveOrientation.FRONT + WristDriveOrientation.STRAIGHT
+=&gt; wrist also points to the front of the machine.</p></li>
+<li><p>RotationDriveOrientation.LEFT + WristDriveOrientation.STRAIGHT
+=&gt; wrist also points to the left of the machine.</p></li>
+<li><p>RotationDriveOrientation.FRONT + WristDriveOrientation.RIGHT
+=&gt; wrist points to the left of the machine.</p></li>
 </ol>
-<p>The relative wrist orientation is reported as a motor position increment by the STAR firmware. This value is mapped to a <code class="code docutils literal notranslate"><span class="pre">WristDriveOrientation</span></code> enum member.</p>
+<p>Uses nearest-neighbour classification against the per-machine EEPROM <code class="code docutils literal notranslate"><span class="pre">pt</span></code>
+values populated at setup. An earlier implementation used +/-50 windows
+around the Hamilton factory defaults and faulted on machines calibrated
+outside that band; we now pick whichever predefined stop is closest and
+only raise if the wrist is more than 5 deg from any predefined stop.</p>
+<p>Hamilton factory-default values shown below for reference only; the
+per-machine EEPROM table is queried at setup and used at runtime in place
+of these (T-drive resolution = 0.00508 deg/incr):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RIGHT</span>     <span class="n">T1</span>   <span class="o">-</span><span class="mi">26577</span> <span class="n">incr</span>  <span class="p">(</span><span class="o">-</span><span class="mi">135</span> <span class="n">deg</span><span class="p">)</span>
+<span class="n">STRAIGHT</span>  <span class="n">T2</span>    <span class="o">-</span><span class="mi">8859</span> <span class="n">incr</span>  <span class="p">(</span> <span class="o">-</span><span class="mi">45</span> <span class="n">deg</span><span class="p">)</span>
+<span class="n">LEFT</span>      <span class="n">T3</span>    <span class="o">+</span><span class="mi">8859</span> <span class="n">incr</span>  <span class="p">(</span> <span class="o">+</span><span class="mi">45</span> <span class="n">deg</span><span class="p">)</span>
+<span class="n">REVERSE</span>   <span class="n">T4</span>   <span class="o">+</span><span class="mi">26577</span> <span class="n">incr</span>  <span class="p">(</span><span class="o">+</span><span class="mi">135</span> <span class="n">deg</span><span class="p">)</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><em>WristDriveOrientation</em> – The interpreted wrist orientation (e.g., RIGHT, STRAIGHT, LEFT, REVERSE).</p>
+<dd class="field-odd"><p><p><em>WristDriveOrientation</em> –</p>
+<dl class="simple">
+<dt>The interpreted wrist orientation</dt><dd><p>(RIGHT, STRAIGHT, LEFT, or REVERSE).</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>WristDriveOrientation</p>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#RuntimeError" title="(in Python v3.14)"><strong>RuntimeError</strong></a> – if <code class="code docutils literal notranslate"><span class="pre">setup()</span></code> has not populated the predefined positions.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – if the measured position is more than 5 deg from any
+    predefined stop (drive is in transit or drifted).</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>WristDriveOrientation</p>
 </dd>
 </dl>
 </dd></dl>
@@ -624,11 +651,11 @@ This is the orientation of the iSWAP wrist drive (always in relation to the iSWA
       </div>
     </a>
     <a class="right-next"
-       href="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_position_increments.html"
+       href="pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_left_x_arm_last_collision_type.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_iswap_wrist_drive_position_increments</p>
+        <p class="prev-next-title">pylabrobot.liquid_handling.backends.hamilton.STAR_backend.STAR.request_left_x_arm_last_collision_type</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

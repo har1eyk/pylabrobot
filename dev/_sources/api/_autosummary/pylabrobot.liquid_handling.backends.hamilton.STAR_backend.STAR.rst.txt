@@ -1,4 +1,6 @@
-﻿pylabrobot.liquid\_handling.backends.hamilton.STAR\_backend.STAR
+﻿:orphan:
+
+pylabrobot.liquid\_handling.backends.hamilton.STAR\_backend.STAR
 ================================================================
 
 .. currentmodule:: pylabrobot.liquid_handling.backends.hamilton.STAR_backend
@@ -21,6 +23,7 @@
       ~STAR.MAXIMUM_CHANNEL_Z_POSITION
       ~STAR.MINIMUM_CHANNEL_Z_POSITION
       ~STAR.PIP_X_MIN_WITH_LEFT_SIDE_PANEL
+      ~STAR.SEARCH_START_CLEARANCE_MM
       ~STAR.autoload_installed
       ~STAR.barcode_1d_symbology_dict
       ~STAR.core96_head_installed
@@ -32,9 +35,28 @@
       ~STAR.head
       ~STAR.head96
       ~STAR.head96_installed
+      ~STAR.iswap_gripper_drive_max_increment
+      ~STAR.iswap_gripper_drive_min_increment
+      ~STAR.iswap_gripper_drive_mm_per_increment
       ~STAR.iswap_installed
       ~STAR.iswap_parked
+      ~STAR.iswap_rotation_drive_deg_per_increment
+      ~STAR.iswap_rotation_drive_diameter
+      ~STAR.iswap_rotation_drive_max_increment
+      ~STAR.iswap_rotation_drive_min_increment
+      ~STAR.iswap_rotation_drive_safety_radius
+      ~STAR.iswap_rotation_drive_y_speed_increment_range
+      ~STAR.iswap_rotation_drive_z_acceleration_increment_range
+      ~STAR.iswap_rotation_drive_z_max_increment
+      ~STAR.iswap_rotation_drive_z_min_increment
+      ~STAR.iswap_rotation_drive_z_offset_above_finger_mm
+      ~STAR.iswap_rotation_drive_z_speed_increment_range
       ~STAR.iswap_traversal_height
+      ~STAR.iswap_wrist_drive_deg_per_increment
+      ~STAR.iswap_wrist_drive_max_increment
+      ~STAR.iswap_wrist_drive_min_increment
+      ~STAR.iswap_y_drive_mm_per_increment
+      ~STAR.iswap_z_drive_mm_per_increment
       ~STAR.machine_conf
       ~STAR.module_id_length
       ~STAR.num_arms
@@ -109,6 +131,8 @@
       ~STAR.enable_cover_control
       ~STAR.ensure_can_reach_position
       ~STAR.execute_batched
+      ~STAR.experimental_iswap_rotation_drive_move_x
+      ~STAR.experimental_x_arm_move
       ~STAR.fill_selected_dual_chamber
       ~STAR.get_all_instances
       ~STAR.get_channel_spacings
@@ -147,18 +171,40 @@
       ~STAR.iswap_close_gripper
       ~STAR.iswap_dangerous_release_break
       ~STAR.iswap_get_plate
+      ~STAR.iswap_gripper_drive_increment_to_mm
+      ~STAR.iswap_gripper_drive_mm_to_increment
+      ~STAR.iswap_gripper_request_predefined_positions
+      ~STAR.iswap_gripper_request_width
       ~STAR.iswap_initialize_z_axis
       ~STAR.iswap_minimum_traversal_height
       ~STAR.iswap_move_picked_up_resource
       ~STAR.iswap_open_gripper
       ~STAR.iswap_put_plate
       ~STAR.iswap_reengage_break
+      ~STAR.iswap_request_link_1_length
+      ~STAR.iswap_request_link_2_length
       ~STAR.iswap_rotate
+      ~STAR.iswap_rotation_drive_move_y
+      ~STAR.iswap_rotation_drive_move_z
+      ~STAR.iswap_rotation_drive_request_angle
+      ~STAR.iswap_rotation_drive_request_position
+      ~STAR.iswap_rotation_drive_request_predefined_y_positions
+      ~STAR.iswap_rotation_drive_request_predefined_z_positions
+      ~STAR.iswap_rotation_drive_request_x
       ~STAR.iswap_rotation_drive_request_y
+      ~STAR.iswap_rotation_drive_request_z
+      ~STAR.iswap_rotation_drive_rotate_to_angle
+      ~STAR.iswap_wrist_drive_request_angle
+      ~STAR.iswap_wrist_drive_rotate_to_angle
+      ~STAR.iswap_y_drive_increment_to_mm
+      ~STAR.iswap_y_drive_mm_to_increment
+      ~STAR.iswap_z_drive_increment_to_mm
+      ~STAR.iswap_z_drive_mm_to_increment
       ~STAR.load_carrier
       ~STAR.load_carrier_from_autoload_belt
       ~STAR.load_carrier_from_tray_and_scan_carrier_barcode
       ~STAR.lock_cover
+      ~STAR.measure_iswap_gripper_force
       ~STAR.mm_to_y_drive_increment
       ~STAR.mm_to_z_drive_increment
       ~STAR.move_96head_to_coordinate
@@ -244,10 +290,8 @@
       ~STAR.request_iswap_initialization_status
       ~STAR.request_iswap_position
       ~STAR.request_iswap_rotation_drive_orientation
-      ~STAR.request_iswap_rotation_drive_position_increments
       ~STAR.request_iswap_version
       ~STAR.request_iswap_wrist_drive_orientation
-      ~STAR.request_iswap_wrist_drive_position_increments
       ~STAR.request_left_x_arm_last_collision_type
       ~STAR.request_left_x_arm_position
       ~STAR.request_machine_configuration
@@ -330,6 +374,7 @@
       ~STAR.unload_carrier_after_carrier_barcode_scanning
       ~STAR.unlock_cover
       ~STAR.verify_and_wait_for_carriers
+      ~STAR.x_arm_request_firmware_version
       ~STAR.y_drive_increment_to_mm
       ~STAR.z_drive_increment_to_mm
       ~STAR.ztouch_probe_z_height_using_channel
