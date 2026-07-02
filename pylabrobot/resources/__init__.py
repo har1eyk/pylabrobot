@@ -28,6 +28,7 @@ from .errors import ResourceNotFoundError
 from .greiner import *
 from .hamilton import *
 from .itemized_resource import ItemizedResource
+from .kimble import *
 from .liquid import Liquid
 from .nest import *
 from .opentrons import *

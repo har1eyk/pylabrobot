@@ -182,6 +182,7 @@ library/falcon
 library/greiner
 library/hamilton
 library/imcs
+library/kimble
 library/nest
 library/opentrons
 library/perkin_elmer
