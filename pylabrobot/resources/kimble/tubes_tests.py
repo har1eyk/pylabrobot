@@ -18,3 +18,12 @@ class KimbleTubeTests(unittest.TestCase):
     self.assertEqual(tube.max_volume, 4_000)
     self.assertEqual(tube.bottom_type, TubeBottomType.U)
     self.assertEqual(tube.material_z_thickness, 1)
+    self.assertTrue(tube.supports_compute_height_volume_functions())
+
+    self.assertAlmostEqual(tube.compute_height_from_volume(1000), 18.6717093)
+    self.assertAlmostEqual(tube.compute_volume_from_height(35.0925523), 2000)
+    self.assertAlmostEqual(tube.compute_height_from_volume(0), 2.2508663)
+    self.assertAlmostEqual(
+      tube.compute_volume_from_height(0),
+      (0 - 2.2508663) / 0.016420843,
+    )
