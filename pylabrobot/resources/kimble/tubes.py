@@ -28,5 +28,6 @@ def Kimble_tube_4mL_Rb(name: str) -> Tube:
     size_z=75,  # from spec
     model=Kimble_tube_4mL_Rb.__name__,
     max_volume=4_000,  # from spec; units: uL
+    material_z_thickness=1,  # measured
     bottom_type=TubeBottomType.U,
   )

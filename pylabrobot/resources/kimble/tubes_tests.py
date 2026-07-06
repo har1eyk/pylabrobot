@@ -17,4 +17,4 @@ class KimbleTubeTests(unittest.TestCase):
     self.assertEqual(tube.get_size_z(), 75)
     self.assertEqual(tube.max_volume, 4_000)
     self.assertEqual(tube.bottom_type, TubeBottomType.U)
-    self.assertIsNone(tube._material_z_thickness)
+    self.assertEqual(tube.material_z_thickness, 1)
