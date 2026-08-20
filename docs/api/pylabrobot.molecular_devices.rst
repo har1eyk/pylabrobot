@@ -3,6 +3,31 @@
 pylabrobot.molecular\_devices package
 =====================================
 
+FilterMax F5
+------------
+
+.. currentmodule:: pylabrobot.molecular_devices.filtermax
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+  :recursive:
+
+    FilterMaxF5
+    FilterSlideCatalog
+    InstrumentInfo
+    FilterMaxStatus
+    InstalledFilterSlides
+    PlateGeometry
+    KineticTiming
+    ShakingSettings
+    WellScanSettings
+    AbsorbanceResult
+    LuminescenceResult
+    FluorescenceResult
+    TimeResolvedFluorescenceResult
+    FluorescencePolarizationResult
+
 SpectraMax
 ----------
 
