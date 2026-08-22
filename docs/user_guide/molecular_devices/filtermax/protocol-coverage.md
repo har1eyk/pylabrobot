@@ -65,6 +65,7 @@ SF B 1 595 35 2 535 25 2 535 25 4 535 25 4 625 35 10 0 0 16
 | Captured operation | Exact read payload | Result shape |
 |---|---|---|
 | Absorbance 450, full plate | `ABS 0 1 450 1 8 1 1 0 0 0 0 0 3 1 1 0 O e INFO` | One 12-value message per row, then `INFO` |
+| Absorbance 450, portrait full plate | `SHIFT`, then `ABS 0 1 450 1 8 1 1 0 0 0 0 0 4 1 1 0 O e INFO` | Same `PLATE` geometry and canonical 8x12 result as landscape |
 | Absorbance 450, A1:B3 | `ABS 0 1 450 1 2 1 1 0 0 0 0 0 3 1 1 0 O e INFO` | Two complete hardware rows; PLR masks columns 4-12 |
 | Absorbance 450, C4:D6 | `ABS 0 1 450 3 4 1 1 0 0 0 0 0 3 1 1 0 O e INFO` | Two complete hardware rows; PLR masks unselected columns |
 | Absorbance 450 minus 620 | `ABS 1 2 450 620 3 4 1 1 0 0 0 0 0 3 1 1 0 O e INFO` | Firmware-subtracted one-channel values |
@@ -79,6 +80,9 @@ Absorbance values are returned in milli-OD and converted to OD. Luminescence val
 SoftMax exposed only row-order reads, only horizontal/fill well scans, and one absorbance wavelength
 optionally paired with one reference wavelength.
 
+Portrait orientation has been captured for absorbance only. Other portrait measurement modes are
+rejected before transmission rather than inferring their orientation fields.
+
 ## Direct PLR hardware validation
 
 The driver was exercised directly on FilterMax F5 serial 1191 after releasing the Windows VM's
@@ -91,6 +95,7 @@ The Orange G plate used for the live matrix produced the following representativ
 | Operation | Direct result |
 |---|---|
 | Absorbance 450, full 96-well plate | 96 values; range 0.11214-0.16882 OD; mean 0.157792 OD |
+| Absorbance 450, portrait full 96-well plate | 96 canonical values; range 0.03145-0.11605 OD; mean 0.089182 OD; Pearson correlation 0.99565 with the SoftMax portrait control |
 | Absorbance 450, C4:D6 | 6 values; range 0.15885-0.16210 OD |
 | Absorbance 450 minus 620, C4:D6 | 6 values; range 0.12460-0.12856 OD |
 | Absorbance 450, three-read kinetic | 3 parsed timepoints and READY recovery |

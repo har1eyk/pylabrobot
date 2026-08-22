@@ -14,6 +14,7 @@ from pylabrobot.molecular_devices.filtermax.errors import (
   FilterMaxIdentityError,
   FilterMaxProtocolError,
   FilterMaxSlideNotInstalledError,
+  FilterMaxUnsupportedOperationError,
 )
 from pylabrobot.molecular_devices.filtermax.protocol import (
   ACK,
@@ -183,6 +184,41 @@ class TestFilterMaxF5(unittest.IsolatedAsyncioTestCase):
       payloads,
     )
 
+  async def test_absorbance_portrait_uses_captured_shift_and_orientation_code(self) -> None:
+    rows = ["+ " + " ".join(str(row * 10 + column) for column in range(12)) for row in range(8)]
+    incoming = b"".join(
+      (
+        exchange_response("+ 2 1"),
+        exchange_response("+"),
+        exchange_response("+ 0 1"),
+        exchange_response("+"),
+        exchange_response("+ -67"),
+        measurement_response(*rows, "+ INFO"),
+        exchange_response("+ 24.5"),
+        exchange_response("+ 6512"),
+      )
+    )
+    driver, io = self.make_driver(incoming)
+    result = (
+      await driver.read_absorbance(
+        PlateGeometry.costar_96_clear_portrait(),
+        450,
+      )
+    )[0]
+
+    self.assertEqual((len(result.data), len(result.data[0])), (8, 12))
+    self.assertAlmostEqual(result.data[7][11], 0.081)  # type: ignore[arg-type]
+    self.assertIn(
+      "PLATE Temp 12770 8570 1427 1069 1405 1118 12 8 "
+      "902 900 640 640 0 300 0 1027 1 1",
+      host_payloads(io),
+    )
+    self.assertIn("SHIFT", host_payloads(io))
+    self.assertIn(
+      "ABS 0 1 450 1 8 1 1 0 0 0 0 0 4 1 1 0 O e INFO",
+      host_payloads(io),
+    )
+
   async def test_absorbance_fill_preserves_points(self) -> None:
     scan_rows = [
       "+ " + " ".join(str(value) for value in range(scan_y * 60, (scan_y + 1) * 60))
@@ -350,6 +386,12 @@ class TestFilterMaxF5(unittest.IsolatedAsyncioTestCase):
       "SF B 1 595 35 2 535 25 2 535 25 4 535 25 4 625 35 10 0 0 16",
       host_payloads(io),
     )
+
+  async def test_portrait_luminescence_is_rejected_before_transmission(self) -> None:
+    driver, io = self.make_driver(b"")
+    with self.assertRaisesRegex(FilterMaxUnsupportedOperationError, "only for absorbance"):
+      await driver.read_luminescence(PlateGeometry.costar_96_clear_portrait())
+    self.assertEqual(io.writes, [])
 
   async def test_missing_excitation_slide_blocks_fluorescence(self) -> None:
     driver, io = self.make_driver(exchange_response("+ 2 1"))

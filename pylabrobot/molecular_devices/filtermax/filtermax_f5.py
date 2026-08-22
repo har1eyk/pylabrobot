@@ -269,7 +269,7 @@ class FilterMaxF5:
       _hundredths(plate.length),
       _hundredths(plate.width),
       _hundredths(plate.height),
-      _hundredths(plate.bottom_row_offset),
+      _hundredths(plate.well_depth),
       _hundredths(plate.left_column_offset),
       _hundredths(plate.top_row_offset),
       plate.columns,
@@ -415,6 +415,8 @@ class FilterMaxF5:
         duration=shaking.duration,
       )
     await self._command(self._plate_command(plate, read_height), timeout=10)
+    if plate.orientation == "portrait":
+      await self._command("SHIFT", timeout=10)
     await self._send_filter_catalog(kind, slide_id)
     await self.move_plate_tray_in()
 
@@ -516,9 +518,11 @@ class FilterMaxF5:
             if reference is not None
             else f"1 {primary.wavelength}"
           )
+          orientation_code = 4 if plate.orientation == "portrait" else 3
           command = (
             f"ABS {mode} {wavelengths} {first_row + 1} {last_row + 1} "
-            f"{grid_x} {grid_y} {scan_code} 0 0 0 0 3 1 {remaining} {kinetic_flag} O e INFO"
+            f"{grid_x} {grid_y} {scan_code} 0 0 0 0 {orientation_code} 1 "
+            f"{remaining} {kinetic_flag} O e INFO"
           )
           timestamp = time.time()
           final_cycle = cycle == timing.reads - 1
@@ -595,6 +599,10 @@ class FilterMaxF5:
     kinetic: Optional[KineticTiming] = None,
     shaking: Optional[ShakingSettings] = None,
   ) -> List[LuminescenceResult]:
+    if plate.orientation != "landscape":
+      raise FilterMaxUnsupportedOperationError(
+        "Portrait orientation has been captured only for absorbance measurements"
+      )
     if channels not in (1, 2):
       raise ValueError("channels must be 1 or 2")
     if integration <= 0:

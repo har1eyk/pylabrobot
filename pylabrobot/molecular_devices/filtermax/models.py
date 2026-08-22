@@ -16,6 +16,7 @@ FilterTechnique = Literal[
 ShakePattern = Literal["linear", "orbital"]
 ShakeSpeed = Literal["low", "medium", "high"]
 WellScanPattern = Literal["horizontal", "fill"]
+PlateOrientation = Literal["landscape", "portrait"]
 
 
 @dataclass(frozen=True)
@@ -127,6 +128,17 @@ class PlateGeometry:
   well_size_y: float
   absorbance_z: float
   name: str = "Custom plate"
+  orientation: PlateOrientation = "landscape"
+
+  def __post_init__(self) -> None:
+    if self.orientation not in ("landscape", "portrait"):
+      raise ValueError(f"Unsupported FilterMax plate orientation {self.orientation!r}")
+
+  @property
+  def well_depth(self) -> float:
+    """Return the well depth stored under the legacy ``bottom_row_offset`` name."""
+
+    return self.bottom_row_offset
 
   @classmethod
   def costar_96_clear_landscape(cls) -> "PlateGeometry":
@@ -147,6 +159,28 @@ class PlateGeometry:
       well_size_y=6.40,
       absorbance_z=10.27,
       name="96 Well Costar clear [Landscape]",
+    )
+
+  @classmethod
+  def costar_96_clear_portrait(cls) -> "PlateGeometry":
+    """Return the Costar 96-well geometry with portrait scan orientation."""
+
+    return cls(
+      rows=8,
+      columns=12,
+      length=127.70,
+      width=85.70,
+      height=14.27,
+      bottom_row_offset=10.69,
+      left_column_offset=14.05,
+      top_row_offset=11.18,
+      column_spacing=9.02,
+      row_spacing=9.00,
+      well_size_x=6.40,
+      well_size_y=6.40,
+      absorbance_z=10.27,
+      name="96 Well Costar clear [Portrait]",
+      orientation="portrait",
     )
 
 
