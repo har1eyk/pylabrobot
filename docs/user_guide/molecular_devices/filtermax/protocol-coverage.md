@@ -8,7 +8,7 @@ kept outside version control.
 
 | Property | Captured value |
 |---|---|
-| Serial | 38,400 baud, 7 data bits, even parity, 1 stop bit, no flow control |
+| Serial | Automatic startup detection: 38,400 then 9,600 baud; 7 data bits, even parity, 1 stop bit, no flow control |
 | Host transaction | `ENQ`; device `ACK`; host frame; device `ACK`; host `EOT` |
 | Device response | Device `ENQ`; host `ACK`; one or more device frames, each host-acknowledged; device `EOT` |
 | Frame | `STX`, ASCII frame number, ASCII payload, `ETB` or `ETX`, two uppercase ASCII checksum digits, `CR LF` |
@@ -17,6 +17,22 @@ kept outside version control.
 | Example | `TG` is `02 31 54 47 03 43 46 0D 0A` |
 | Success | Payload beginning with `+` |
 | Device error | `- E<code>: <details>` |
+
+During setup, PLR first requests the instrument identity at 38,400 baud. If the initial ENQ
+receives no byte before its deadline, PLR closes the port and tries the identity request at
+9,600 baud. The working rate is retained for the session and recorded in the connection log.
+An unexpected byte, invalid identity, checksum error, device error, or timeout after the initial
+ACK ends setup without another attempt. Failed setup releases the port; errors after connection
+do not trigger baud detection or command retries.
+
+The SoftMax startup capture includes a silent probe at 38,400 baud, a successful identity exchange
+at 9,600 baud, and an acknowledged `BAUD 2` command before later communication at 38,400 baud.
+PLR supports both observed rates and does not send `BAUD` or change the reader's baud setting.
+
+Only one application may use the serial port. When SoftMax runs in a VirtualBox VM whose COM port
+maps to the host serial device, save the results and shut the guest down normally before connecting
+PLR. Confirm the VM is powered off: closing SoftMax or an empty unprivileged `fuser` result does not
+establish that VirtualBox released the host device.
 
 The instrument does not emit a separate busy token in the captured operations. A command owns the
 half-duplex transaction until its response arrives. Long reads return one or more framed result

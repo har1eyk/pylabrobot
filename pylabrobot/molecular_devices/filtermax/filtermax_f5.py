@@ -19,6 +19,7 @@ from .errors import (
   FilterMaxProtocolError,
   FilterMaxReadCancelled,
   FilterMaxSlideNotInstalledError,
+  FilterMaxTimeoutError,
   FilterMaxUnsupportedOperationError,
 )
 from .models import (
@@ -40,11 +41,12 @@ from .models import (
   WellScanSettings,
   empty_plate_data,
 )
-from .protocol import FilterMaxMessage, FilterMaxTransport, _CancelRequested
+from .protocol import FilterMaxMessage, FilterMaxTransport, _CancelRequested, _HandshakeTimeout
 
 logger = logging.getLogger(__name__)
 
 _F5_DEVICE_CODE = 57855
+_STARTUP_BAUDRATES = (38400, 9600)
 _ERROR_RE = re.compile(r"^- E(?P<code>\d+):\s*(?P<detail>.*)$", re.DOTALL)
 _WELL_RE = re.compile(r"^(?P<row>[A-Z]+)(?P<column>[1-9]\d*)$")
 _SHAKE_WIRE: Dict[ShakePattern, Tuple[str, int]] = {
@@ -62,7 +64,8 @@ class FilterMaxF5:
   """Current v1 driver for the Molecular Devices FilterMax F5.
 
   The serial protocol is not the SpectraMax ``!COMMAND`` protocol. It uses the captured
-  38,400-baud, 7E1 ASTM-like framing implemented privately by :class:`FilterMaxTransport`.
+  7E1 ASTM-like framing implemented privately by :class:`FilterMaxTransport`. Setup tries
+  38,400 baud, then 9,600 baud if the initial handshake is silent, and retains the working rate.
   The full-plate 450 nm absorbance path has been directly validated against an F5 and produced
   results consistent with the corresponding SoftMax Pro workflow.
   """
@@ -100,20 +103,48 @@ class FilterMaxF5:
     self._errors: List[FilterMaxDeviceError] = []
 
   async def setup(self) -> None:
-    await self.io.setup()
-    try:
-      info = await self.get_instrument_info()
-      if info.device_code != _F5_DEVICE_CODE or info.model != "Anthos Fluoro":
-        raise FilterMaxIdentityError(
-          f"Expected FilterMax F5 device code {_F5_DEVICE_CODE}, received "
-          f"{info.model!r} / {info.device_code}"
-        )
+    """Connect at 38,400 or 9,600 baud and verify the instrument identity.
+
+    Only a silent initial ENQ permits trying the next rate. Once a byte is received,
+    protocol and identity failures propagate without retrying the command.
+    """
+    if self._setup_complete:
+      return
+    self._instrument_info = None
+    for baudrate in _STARTUP_BAUDRATES:
+      self.io.baudrate = baudrate
+      logger.info("[%s] connecting to %s at %d baud", self.name, self.port, baudrate)
+      await self.io.setup()
+      try:
+        info = await self.get_instrument_info()
+        if info.device_code != _F5_DEVICE_CODE or info.model != "Anthos Fluoro":
+          raise FilterMaxIdentityError(
+            f"Expected FilterMax F5 device code {_F5_DEVICE_CODE}, received "
+            f"{info.model!r} / {info.device_code}"
+          )
+      except _HandshakeTimeout as exc:
+        await self.io.stop()
+        logger.info("[%s] no initial handshake response at %d baud", self.name, baudrate)
+        if baudrate == _STARTUP_BAUDRATES[-1]:
+          attempted = ", ".join(str(rate) for rate in _STARTUP_BAUDRATES)
+          raise FilterMaxTimeoutError(
+            f"No FilterMax handshake response on {self.port!r}; "
+            f"attempted baud rates: {attempted} (7E1, no flow control)"
+          ) from exc
+        continue
+      except BaseException:
+        await self.io.stop()
+        raise
       self._instrument_info = info
       self._setup_complete = True
-      logger.info("[%s] connected to FilterMax F5 serial %s", self.name, info.serial_number)
-    except BaseException:
-      await self.io.stop()
-      raise
+      logger.info(
+        "[%s] connected to FilterMax F5 serial %s on %s at %d baud",
+        self.name,
+        info.serial_number,
+        self.port,
+        baudrate,
+      )
+      return
 
   async def stop(self) -> None:
     if self._read_active:

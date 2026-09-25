@@ -34,6 +34,10 @@ class _CancelRequested(Exception):
   pass
 
 
+class _HandshakeTimeout(FilterMaxTimeoutError):
+  """No byte arrived in response to the initial host ENQ."""
+
+
 def checksum(data: bytes) -> int:
   """Return the captured modulo-256 checksum."""
 
@@ -90,7 +94,10 @@ class FilterMaxTransport:
     deadline = time.monotonic() + timeout
     async with self._send_lock:
       await self.io.write(bytes((ENQ,)))
-      await self._expect(ACK, deadline)
+      try:
+        await self._expect(ACK, deadline)
+      except FilterMaxTimeoutError as exc:
+        raise _HandshakeTimeout("Timed out waiting for ACK to the initial FilterMax ENQ") from exc
       await self.io.write(build_frame(payload))
       await self._expect(ACK, deadline)
       await self.io.write(bytes((EOT,)))

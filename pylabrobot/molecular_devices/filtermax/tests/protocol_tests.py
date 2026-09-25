@@ -12,6 +12,7 @@ from pylabrobot.molecular_devices.filtermax.protocol import (
   ENQ,
   EOT,
   FilterMaxTransport,
+  _HandshakeTimeout,
   build_frame,
 )
 
@@ -83,8 +84,17 @@ class TestFilterMaxProtocol(unittest.IsolatedAsyncioTestCase):
 
   async def test_timeout_with_silent_device(self) -> None:
     transport = FilterMaxTransport(FakeSerial(b""))  # type: ignore[arg-type]
-    with self.assertRaises(FilterMaxTimeoutError):
+    with self.assertRaises(_HandshakeTimeout):
       await transport.send_request("STAT", timeout=0.001)
+
+  async def test_timeout_after_initial_ack_is_not_handshake_timeout(self) -> None:
+    """An acknowledged command must not be eligible for baud detection retries."""
+    io = FakeSerial(bytes((ACK,)))
+    transport = FilterMaxTransport(io)  # type: ignore[arg-type]
+    with self.assertRaises(FilterMaxTimeoutError) as caught:
+      await transport.send_request("STAT", timeout=0.001)
+    self.assertNotIsInstance(caught.exception, _HandshakeTimeout)
+    self.assertEqual(io.writes, [bytes((ENQ,)), build_frame("STAT")])
 
   async def test_device_error_and_cancel(self) -> None:
     e62 = "- E62: ABS Led 7 ADCValue: 16277 Gain 255 LedHighPoti 44 LedLowPoti 255"
