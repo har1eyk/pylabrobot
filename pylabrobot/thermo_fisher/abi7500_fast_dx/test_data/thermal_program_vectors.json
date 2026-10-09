@@ -1,0 +1,199 @@
+{
+  "source": {
+    "binary_sha256": "9dbff7366d38a6c43b3ba363dd007b40f65d0dead3c1d3b9eb09428f91a8102f",
+    "rvas": {
+      "AddSegment": "0x3b3ec",
+      "AddSetpoint": "0x3b4ae",
+      "GetFullMethodBytes": "0x3b7f1",
+      "CopyMethod": "0x39785"
+    },
+    "method": "Offline x86 emulation of native record builders. memcpy implemented; ramp-validation callback returns accepted, so these are wire-format vectors, not device acceptance tests. Header retained from capture."
+  },
+  "vectors": [
+    {
+      "name": "captured-program",
+      "cycles": [
+        {
+          "repetitions": 1,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        },
+        {
+          "repetitions": 2,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            },
+            {
+              "hold": 60,
+              "temperature": 600,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        }
+      ],
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c025800000064"
+    },
+    {
+      "name": "cycle-count",
+      "cycles": [
+        {
+          "repetitions": 1,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        },
+        {
+          "repetitions": 3,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            },
+            {
+              "hold": 60,
+              "temperature": 600,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        }
+      ],
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020003020000000000000300000f03b6000000640300003c025800000064"
+    },
+    {
+      "name": "temperature",
+      "cycles": [
+        {
+          "repetitions": 1,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        },
+        {
+          "repetitions": 2,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            },
+            {
+              "hold": 60,
+              "temperature": 623,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        }
+      ],
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c026f00000064"
+    },
+    {
+      "name": "hold",
+      "cycles": [
+        {
+          "repetitions": 1,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        },
+        {
+          "repetitions": 2,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            },
+            {
+              "hold": 45,
+              "temperature": 600,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        }
+      ],
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300002d025800000064"
+    },
+    {
+      "name": "increments-and-ramp",
+      "cycles": [
+        {
+          "repetitions": 1,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            }
+          ]
+        },
+        {
+          "repetitions": 2,
+          "steps": [
+            {
+              "hold": 15,
+              "temperature": 950,
+              "hold_increment": 0,
+              "temperature_increment": 0,
+              "ramp": 100
+            },
+            {
+              "hold": 60,
+              "temperature": 600,
+              "hold_increment": -2,
+              "temperature_increment": -3,
+              "ramp": 50
+            }
+          ]
+        }
+      ],
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c0258fffefd32"
+    }
+  ]
+}

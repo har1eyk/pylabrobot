@@ -57,6 +57,7 @@ class USB(IOBase):
     max_workers: int = 1,
     read_endpoint_address: Optional[int] = None,
     write_endpoint_address: Optional[int] = None,
+    send_zero_length_packet: bool = True,
   ):
     """Initialize an io.USB object.
 
@@ -75,6 +76,8 @@ class USB(IOBase):
       configuration_callback: A callback that takes the device object as an argument and performs
         any necessary configuration. If `None`, `dev.set_configuration()` is called.
       max_workers: The maximum number of worker threads for USB I/O operations.
+      send_zero_length_packet: Append an empty write when the data length is a multiple of the
+        endpoint packet size. Disable for protocols that delimit transfers by an explicit length.
     """
 
     super().__init__()
@@ -98,6 +101,7 @@ class USB(IOBase):
     self.write_endpoint_address = write_endpoint_address
     self.configuration_callback = configuration_callback
     self.max_workers = max_workers
+    self.send_zero_length_packet = send_zero_length_packet
 
     self.dev: Optional[usb.core.Device] = None  # TODO: make this a property
     self.read_endpoint: Optional[usb.core.Endpoint] = None
@@ -146,7 +150,7 @@ class USB(IOBase):
         write_endpoint, data, timeout=int(timeout * 1000)
       ),  # PyUSB expects timeout in milliseconds
     )
-    if len(data) % write_endpoint.wMaxPacketSize == 0:
+    if self.send_zero_length_packet and len(data) % write_endpoint.wMaxPacketSize == 0:
       # send a zero-length packet to indicate the end of the transfer
       await loop.run_in_executor(
         self._write_executor,
@@ -570,6 +574,8 @@ class USB(IOBase):
       d["read_endpoint_address"] = self.read_endpoint_address
     if self.write_endpoint_address is not None:
       d["write_endpoint_address"] = self.write_endpoint_address
+    if not self.send_zero_length_packet:
+      d["send_zero_length_packet"] = False
     return d
 
 

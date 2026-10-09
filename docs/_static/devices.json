@@ -1939,7 +1939,9 @@
     "needs_hardware_testing": true,
     "code_slug": "thermo_fisher/abi7500_fast_dx",
     "doc_slug": "thermo_fisher/abi7500_fast_dx/hello-world",
-    "notes": "Offline packet/camera decoding and EDS filter-data reading; live control and calibrated fluorescence remain unimplemented."
+    "api": "pylabrobot.thermo_fisher.ABI7500FastDx",
+    "api_version": "v1",
+    "notes": "USB connection and identity/status checked on one G2.10 instrument; offline program/camera/EDS codecs available. Thermal-run control and live fluorescence remain unimplemented and unverified."
   },
   {
     "id": "thermo-fisher-alps",

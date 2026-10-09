@@ -1,0 +1,41 @@
+{
+  "camera_frame": 16,
+  "camera_hex": "48616d616d617473752c43393235342d30332c322e32302c312e30352c322e31392c303037303036005fbcebe3c957cc58787ffbfffffdcbb7c363fff9e5bfbd",
+  "geometry_frame": 20,
+  "geometry_hex": "4101f500",
+  "thermal": {
+    "request": {
+      "frame": 2181,
+      "time": 1791555759.029379,
+      "frames": [
+        2181
+      ],
+      "command": 10,
+      "sequence": 2,
+      "error": 0,
+      "payload_hex": "",
+      "packet_hex": "5858ffffffff000f39373030000a000000000002eb",
+      "log_lines": [
+        199,
+        445,
+        909,
+        1086,
+        1276
+      ]
+    },
+    "reply": {
+      "frame": 2190,
+      "time": 1791555759.247858,
+      "command": 10,
+      "sequence": 2,
+      "error": 0,
+      "payload_hex": "47322e3130004150504c303237533033333235383700333235383700333237353053303333323538370033323538370033323538370033320005000b00050009000900020001",
+      "packet_hex": "5858ffffffff005539373030000a00000000000247322e3130004150504c303237533033333235383700333235383700333237353053303333323538370033323538370033323538370033320005000b0005000900090002000128",
+      "log_lines": [
+        1087,
+        1277
+      ]
+    }
+  },
+  "note": "Camera/geometry from connect capture; thermal identity from acquisition capture. Original response bytes retained."
+}

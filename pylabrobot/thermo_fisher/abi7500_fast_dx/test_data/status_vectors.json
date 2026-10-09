@@ -1,0 +1,476 @@
+{
+  "source": {
+    "acquire": {
+      "matched_poll_records": 201,
+      "zeroed_vendor_status_log_lines_excluded": [
+        3572,
+        3572
+      ],
+      "log_sha256": "7e6fe9499a58b518422a0717164db2b49c3076b6c505a602937670aa1cc5c887"
+    },
+    "cancel": {
+      "matched_poll_records": 27,
+      "zeroed_vendor_status_log_lines_excluded": [],
+      "log_sha256": "532f8cd151751fabc67c72bc89f500f9f2320904e793ff4f1f3ab2c279b00d29"
+    }
+  },
+  "vectors": [
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 6929,
+        "time": 1791555835.108338,
+        "frames": [
+          6929
+        ],
+        "command": 41,
+        "sequence": 269,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030002900000000010d16",
+        "log_lines": [
+          2105
+        ]
+      },
+      "reply": {
+        "frame": 6958,
+        "time": 1791555835.873113,
+        "command": 41,
+        "sequence": 269,
+        "error": 0,
+        "payload_hex": "00030002000000fa00000411000000ed0000525bffffffff014f00fb010100281a021701041b0f000064a264a264a264a264",
+        "packet_hex": "5858ffffffff004139373030002900000000010d00030002000000fa00000411000000ed0000525bffffffff014f00fb010100281a021701041b0f000064a264a264a264a26445",
+        "log_lines": [
+          2106
+        ]
+      },
+      "poll_log_line": 2107,
+      "expected": {
+        "elapsed_time": 21083,
+        "sample_temperature": 25.1,
+        "cover_temperature": 104.1,
+        "ambient_temperature": 23.7,
+        "block_temperature": 25.0
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 6959,
+        "time": 1791555836.887646,
+        "frames": [
+          6959
+        ],
+        "command": 41,
+        "sequence": 270,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030002900000000010e17",
+        "log_lines": [
+          2108
+        ]
+      },
+      "reply": {
+        "frame": 6968,
+        "time": 1791555837.106513,
+        "command": 41,
+        "sequence": 270,
+        "error": 0,
+        "payload_hex": "00040002000000fd0000040f000000ee00000002ffffffff014f00fb000001011a0a090009020100001a0a09000906200064",
+        "packet_hex": "5858ffffffff004139373030002900000000010e00040002000000fd0000040f000000ee00000002ffffffff014f00fb000001011a0a090009020100001a0a0900090620006491",
+        "log_lines": [
+          2109
+        ]
+      },
+      "poll_log_line": 2111,
+      "expected": {
+        "elapsed_time": 2,
+        "sample_temperature": 25.1,
+        "cover_temperature": 103.9,
+        "ambient_temperature": 23.8,
+        "block_temperature": 25.3
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 7297,
+        "time": 1791555881.700711,
+        "frames": [
+          7297
+        ],
+        "command": 41,
+        "sequence": 307,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001333c",
+        "log_lines": [
+          2293
+        ]
+      },
+      "reply": {
+        "frame": 7306,
+        "time": 1791555881.919757,
+        "command": 41,
+        "sequence": 307,
+        "error": 0,
+        "payload_hex": "00040002000003c20000041f000000e70000002f0000000f014f03ad000002011a0a090009020100001a0a09000906200064",
+        "packet_hex": "5858ffffffff004139373030002900000000013300040002000003c20000041f000000e70000002f0000000f014f03ad000002011a0a090009020100001a0a090009062000647d",
+        "log_lines": [
+          2294
+        ]
+      },
+      "poll_log_line": 2296,
+      "expected": {
+        "elapsed_time": 47,
+        "sample_temperature": 94.1,
+        "cover_temperature": 105.5,
+        "ambient_temperature": 23.1,
+        "block_temperature": 96.2
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 7423,
+        "time": 1791555897.638188,
+        "frames": [
+          7423
+        ],
+        "command": 41,
+        "sequence": 320,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030002900000000014049",
+        "log_lines": [
+          2358
+        ]
+      },
+      "reply": {
+        "frame": 7432,
+        "time": 1791555897.857374,
+        "command": 41,
+        "sequence": 320,
+        "error": 0,
+        "payload_hex": "00040002000003b60000041b000000f40000003effffffff014f03b6010001011a0a090009020100001a0a09000906250064",
+        "packet_hex": "5858ffffffff004139373030002900000000014000040002000003b60000041b000000f40000003effffffff014f03b6010001011a0a090009020100001a0a0900090625006491",
+        "log_lines": [
+          2359
+        ]
+      },
+      "poll_log_line": 2361,
+      "expected": {
+        "elapsed_time": 62,
+        "sample_temperature": 95.0,
+        "cover_temperature": 105.1,
+        "ambient_temperature": 24.4,
+        "block_temperature": 95.0
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 7433,
+        "time": 1791555898.872051,
+        "frames": [
+          7433
+        ],
+        "command": 41,
+        "sequence": 321,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001414a",
+        "log_lines": [
+          2363
+        ]
+      },
+      "reply": {
+        "frame": 7438,
+        "time": 1791555898.98186,
+        "command": 41,
+        "sequence": 321,
+        "error": 0,
+        "payload_hex": "00040002000003b60000041c000000f5000000400000000e014f03b7010002011a0a090009020100001a0a09000906250064",
+        "packet_hex": "5858ffffffff004139373030002900000000014100040002000003b60000041c000000f5000000400000000e014f03b7010002011a0a090009020100001a0a09000906250064aa",
+        "log_lines": [
+          2364
+        ]
+      },
+      "poll_log_line": 2366,
+      "expected": {
+        "elapsed_time": 64,
+        "sample_temperature": 95.1,
+        "cover_temperature": 105.2,
+        "ambient_temperature": 24.5,
+        "block_temperature": 95.0
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 7545,
+        "time": 1791555913.512431,
+        "frames": [
+          7545
+        ],
+        "command": 41,
+        "sequence": 333,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030002900000000014d56",
+        "log_lines": [
+          2423
+        ]
+      },
+      "reply": {
+        "frame": 7550,
+        "time": 1791555913.622775,
+        "command": 41,
+        "sequence": 333,
+        "error": 0,
+        "payload_hex": "00040002000003b500000419000000ff0000004effffffff014f03b6010101011a0a090009020100001a0a09000906260064",
+        "packet_hex": "5858ffffffff004139373030002900000000014d00040002000003b500000419000000ff0000004effffffff014f03b6010101011a0a090009020100001a0a09000906260064b8",
+        "log_lines": [
+          2424
+        ]
+      },
+      "poll_log_line": 2426,
+      "expected": {
+        "elapsed_time": 78,
+        "sample_temperature": 95.0,
+        "cover_temperature": 104.9,
+        "ambient_temperature": 25.5,
+        "block_temperature": 94.9
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 7735,
+        "time": 1791555938.888006,
+        "frames": [
+          7735
+        ],
+        "command": 41,
+        "sequence": 354,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001626b",
+        "log_lines": [
+          2528
+        ]
+      },
+      "reply": {
+        "frame": 7744,
+        "time": 1791555939.107033,
+        "command": 41,
+        "sequence": 354,
+        "error": 0,
+        "payload_hex": "000400020000024e0000041800000117000000680000003c014f0260010102011a0a090009020100001a0a09000906260064",
+        "packet_hex": "5858ffffffff0041393730300029000000000162000400020000024e0000041800000117000000680000003c014f0260010102011a0a090009020100001a0a0900090626006481",
+        "log_lines": [
+          2529
+        ]
+      },
+      "poll_log_line": 2531,
+      "expected": {
+        "elapsed_time": 104,
+        "sample_temperature": 60.8,
+        "cover_temperature": 104.8,
+        "ambient_temperature": 27.9,
+        "block_temperature": 59.0
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 11225,
+        "time": 1791555998.780067,
+        "frames": [
+          11225
+        ],
+        "command": 41,
+        "sequence": 452,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001c4cd",
+        "log_lines": [
+          2914
+        ]
+      },
+      "reply": {
+        "frame": 11238,
+        "time": 1791555999.107588,
+        "command": 41,
+        "sequence": 452,
+        "error": 0,
+        "payload_hex": "00040002000002580000041e00000114000000a4ffffffff014f0258010001021a0a090009020100001a0a09000906300064",
+        "packet_hex": "5858ffffffff00413937303000290000000001c400040002000002580000041e00000114000000a4ffffffff014f0258010001021a0a090009020100001a0a09000906300064ed",
+        "log_lines": [
+          2915
+        ]
+      },
+      "poll_log_line": 2917,
+      "expected": {
+        "elapsed_time": 164,
+        "sample_temperature": 60.0,
+        "cover_temperature": 105.4,
+        "ambient_temperature": 27.6,
+        "block_temperature": 60.0
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 11407,
+        "time": 1791556023.966171,
+        "frames": [
+          11407
+        ],
+        "command": 41,
+        "sequence": 473,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001d9e2",
+        "log_lines": [
+          3019
+        ]
+      },
+      "reply": {
+        "frame": 11416,
+        "time": 1791556024.185078,
+        "command": 41,
+        "sequence": 473,
+        "error": 0,
+        "payload_hex": "00040002000003c20000041d00000110000000bd0000000f014f03b1010002021a0a090009020100001a0a09000906300064",
+        "packet_hex": "5858ffffffff00413937303000290000000001d900040002000003c20000041d00000110000000bd0000000f014f03b1010002021a0a090009020100001a0a09000906300064ef",
+        "log_lines": [
+          3020
+        ]
+      },
+      "poll_log_line": 3022,
+      "expected": {
+        "elapsed_time": 189,
+        "sample_temperature": 94.5,
+        "cover_temperature": 105.3,
+        "ambient_temperature": 27.2,
+        "block_temperature": 96.2
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 11525,
+        "time": 1791556039.700466,
+        "frames": [
+          11525
+        ],
+        "command": 41,
+        "sequence": 486,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001e6ef",
+        "log_lines": [
+          3084
+        ]
+      },
+      "reply": {
+        "frame": 11534,
+        "time": 1791556039.919349,
+        "command": 41,
+        "sequence": 486,
+        "error": 0,
+        "payload_hex": "00040002000003b40000041b00000119000000cdffffffff014f03b6010101021a0a090009020100001a0a09000906320064",
+        "packet_hex": "5858ffffffff00413937303000290000000001e600040002000003b40000041b00000119000000cdffffffff014f03b6010101021a0a090009020100001a0a09000906320064f9",
+        "log_lines": [
+          3085
+        ]
+      },
+      "poll_log_line": 3087,
+      "expected": {
+        "elapsed_time": 205,
+        "sample_temperature": 95.0,
+        "cover_temperature": 105.1,
+        "ambient_temperature": 28.1,
+        "block_temperature": 94.8
+      }
+    },
+    {
+      "session": "acquire",
+      "request": {
+        "frame": 11723,
+        "time": 1791556065.294505,
+        "frames": [
+          11723
+        ],
+        "command": 41,
+        "sequence": 507,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000290000000001fb04",
+        "log_lines": [
+          3189
+        ]
+      },
+      "reply": {
+        "frame": 11732,
+        "time": 1791556065.513355,
+        "command": 41,
+        "sequence": 507,
+        "error": 0,
+        "payload_hex": "00040002000002500000041e0000012f000000e60000003c014f0261010102021a0a090009020100001a0a09000906320064",
+        "packet_hex": "5858ffffffff00413937303000290000000001fb00040002000002500000041e0000012f000000e60000003c014f0261010102021a0a090009020100001a0a09000906320064c6",
+        "log_lines": [
+          3190
+        ]
+      },
+      "poll_log_line": 3192,
+      "expected": {
+        "elapsed_time": 230,
+        "sample_temperature": 60.9,
+        "cover_temperature": 105.4,
+        "ambient_temperature": 30.3,
+        "block_temperature": 59.2
+      }
+    },
+    {
+      "session": "cancel",
+      "request": {
+        "frame": 6273,
+        "time": 1791556676.190314,
+        "frames": [
+          6273
+        ],
+        "command": 41,
+        "sequence": 270,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030002900000000010e17",
+        "log_lines": [
+          2108,
+          4525
+        ]
+      },
+      "reply": {
+        "frame": 6278,
+        "time": 1791556676.294743,
+        "command": 41,
+        "sequence": 270,
+        "error": 0,
+        "payload_hex": "00040002000000fa00000419000000f600000001ffffffff014f00fa000001011a0a090009100100001a0a09000914200064",
+        "packet_hex": "5858ffffffff004139373030002900000000010e00040002000000fa00000419000000f600000001ffffffff014f00fa000001011a0a090009100100001a0a09000914200064ba",
+        "log_lines": [
+          4526
+        ]
+      },
+      "poll_log_line": 4528,
+      "expected": {
+        "elapsed_time": 1,
+        "sample_temperature": 25.0,
+        "cover_temperature": 104.9,
+        "ambient_temperature": 24.6,
+        "block_temperature": 25.0
+      }
+    }
+  ]
+}

@@ -1,6 +1,9 @@
 # Recovered packet formats
 
-These formats describe the reference software, not a hardware-validated Fast Dx protocol.
+These formats describe the reference software and captured traffic. Only the connection, identity
+and status subset has been exercised directly from Ubuntu PLR; see the
+[hardware validation report](hardware-validation.md). Run control and live acquisition remain
+unimplemented and unverified.
 The codecs in `pylabrobot.thermo_fisher.abi7500_fast_dx.protocol` operate entirely offline.
 
 ## Evidence and limits
@@ -92,7 +95,8 @@ Pass the original serial capacity as `decode_serial_read(data, requested_size=ca
 validate the complete wire length and extract only the counted bytes. Without that argument, the
 decoder accepts only an unpadded reply. Feed the extracted bytes into `ThermalPacketDecoder` to
 assemble complete thermal packets. Never feed the unused tail into that decoder or interpret a
-zero count as a complete thermal response. No command retries or live I/O are implemented.
+zero count as a complete thermal response. The observation driver polls empty reads within one
+command deadline, matches the command/address/sequence, and never automatically resends a query.
 
 ## Observed startup and shutdown
 
@@ -159,9 +163,10 @@ These are evidence for capture annotation, not exposed hardware methods:
 | `0x17` | GetInstrumentState | 46 bytes |
 | `0x36` | GetCoverTemp | 6 bytes |
 
-Units, state values, error meanings, and sequence behavior after failures or reconnects still
-require validation. The decoder preserves opaque payloads and errors; it does not treat a valid
-checksum as a successful operation or retry any command.
+The framing decoder preserves opaque payloads and errors; it does not treat a valid checksum as a
+successful operation. The separate extended-status decoder below interprets fields verified against
+native code and vendor logs. Complete state/error enumerations and run reconciliation after failures
+or reconnects still require validation.
 
 ## Acquisition and cancellation captures
 
@@ -197,6 +202,100 @@ The native `StopMethod` routine also emits `0x07` and a setpoint call with argum
 observations are evidence for further recovery, not sufficient validation of a general run API.
 `test_data/usb_run_vectors.json` retains the exact program/start/stop exchange bytes, including
 the two OUT transfer boundaries of the program request. Tests check framing without replaying them.
+
+## Experimental connection and observation
+
+`pylabrobot.thermo_fisher.ABI7500FastDx` exposes `setup()`, `get_identity()`, `get_status()` and
+`stop()`. These operations were checked on one G2.10 instrument with Windows disconnected;
+the class has no run-start, cancellation, or acquisition
+method. Importing or constructing it does not open the instrument. Setup opens USB, checks `CH`,
+sends the captured `Cf` initialization metadata, reads `CF`/`CI`, configures the internal serial
+tunnel with `RP`, flushes it with `RC`, and checks the thermal application mode (`0x2f`) and version
+(`0x0a`). A bootloader response is rejected without attempting a firmware upload. This is a subset
+of vendor startup: no filter homing, lamp configuration or thermal-program commands are sent.
+This reduced initialization sequence succeeded in `abi7500-plr-observe-001`. The opaque `Cf`
+metadata is still specific to the reference handshake; other firmware and startup states are untested.
+
+The connection sends `C:` keepalives every half second, serialized with queries. A keepalive failure,
+malformed reply, cancellation during an exchange, or timeout invalidates the connection. Subsequent
+queries require `stop()` and a new `setup()`. There are no automatic command retries. Each thermal
+response must match the request's command, sequence and address and have a zero error field; error
+packets retain their original numeric code. The timeout covers all fragments and empty serial polls,
+with up to one extra second permitted by the USB transport's integer read-timeout granularity.
+In-flight USB executor calls finish before cancellation releases the transaction lock or closes USB.
+
+The USB transport's `send_zero_length_packet=False` option prevents a second, empty write after
+64-byte chunks. Its default remains true for existing drivers. Camera responses are assembled to
+their exact requested length, and counted serial replies exclude their arbitrary padding. `stop()`
+closes communication; it is not a command to cancel or cool an active run.
+
+The Ubuntu session contains eight matched thermal queries and 167 counted serial reads. Boot and
+status responses arrived in fragments as small as one byte, interspersed with zero-count reads and
+nonzero padded tails. `test_data/ubuntu_observation_vectors.json` retains two complete exchanges
+for transport replay tests. This is a PLR I/O transcript, not a kernel USB capture.
+
+## Extended thermal status
+
+Command `0x29` returns 50 payload bytes. `GetRavenState` (RVA `0x3a8ac`) establishes byte swapping;
+`Ask9700ForStatus` (RVA `0x3c4c5`) supplies sequence progress interpretation. The decoded temperatures
+and elapsed time agree with 228 corresponding human-readable `Poll9700` log records across the
+acquisition and cancellation captures. A vendor log entry with all-zero application status at the
+completion boundary is excluded: it is not a faithful representation of the preceding wire reply.
+`test_data/status_vectors.json` retains representative captured replies and independent log values.
+
+| Payload offset | Format | Interpretation |
+|---|---|---|
+| 1 | byte | Native controller state; full enumeration unverified |
+| 4 | BE32 | Measured block temperature, tenths of a degree Celsius |
+| 8 | BE32 | Measured cover temperature, tenths of a degree Celsius |
+| 12 | BE32 | Measured ambient temperature, tenths of a degree Celsius |
+| 16 | BE32 | Elapsed counter in seconds; can advance while inactive |
+| 20 | BE32 | Remaining hold seconds; `ffffffff` is unavailable; can be stale while inactive |
+| 26 | BE16 | Estimated sample temperature, tenths of a degree Celsius |
+| 28 | byte | Native zero-based cycle-group index |
+| 29 | byte | Native zero-based step index |
+| 30 | byte | Sequence phase: 0 inactive, 1 ramping, 2 holding, 4 paused, 8 modified |
+| 31 | byte | Repetition counter, one based during the captured run |
+
+The decoder retains all 50 original bytes, including unclassified flags and native date records.
+An inactive phase can follow completion, cancellation, or other transitions and does not establish
+which run produced it. Native cycle/step indices can differ from a vendor experiment's stage/step
+indices. Never infer successful completion or ownership of an active run from these fields alone.
+The Ubuntu observation session reported an inactive sequence while elapsed time advanced from
+11557 to 11562 seconds, hold time remained 14 seconds, and cover temperature fell from 105.3 to
+104.8 °C. Neither advancing elapsed time nor a nonzero hold value proves an active sequence;
+an inactive sequence does not imply that the cover is cool.
+
+## Thermal program records
+
+`ThermalProgram` is an offline codec for finite cycle/hold records under `0x12`. The native
+`AddSegment` (RVA `0x3b3ec`) and `AddSetpoint` (`0x3b4ae`) builders, followed by
+`_getFullMethodBytes` (`0x3b7f1`) and `_covertMethod2WriteBuffer` (`0x39785`), reproduce the captured
+98-byte program exactly in isolated x86 emulation. Five fixture vectors also vary cycle count,
+temperature, hold time, increments and ramp percentage. Only memory copying and a successful
+ramp-validation callback are substituted; these vectors validate encoding, not firmware acceptance.
+
+The payload begins with a cycle-group count and 47 metadata bytes. The codec preserves the metadata
+instead of inventing dates or block/mode defaults. This includes method name (17 bytes), user name
+(7), two native date records (9 each), volume (1), block type (2), run mode (1) and tube type (1).
+Each cycle begins with a ten-byte record:
+
+| Offset | Cycle record | Setpoint record |
+|---|---|---|
+| 0 | `02` | `03` |
+| 1 | `00` | `00`; nonzero 9600-emulation flags unsupported |
+| 2–3 | Repetitions byte, step-count byte | BE16 hold seconds |
+| 4–5 | Zero | BE16 temperature in tenths of a degree |
+| 6–7 | Zero | Signed BE16 hold increment per repetition |
+| 8 | Zero | Signed byte temperature increment in tenths of a degree |
+| 9 | Zero | Ramp percentage |
+
+The implemented subset allows one to 99 repetitions, one to seven steps per group, and at most 49
+total group/step records, following the native validator. Holds are finite (0–5939 seconds), and
+temperatures are 4.0–99.9 °C. Pause records and infinite holds are rejected. Exact tenths are required;
+temperatures are not silently rounded. Rate acceptance still depends on the block/firmware.
+Optical collection flags and cover temperature are not in this payload, so uploading these bytes
+alone would not implement a complete experiment. There is deliberately no public upload/replay API.
 
 ## Camera transfer and reference crop
 
@@ -272,10 +371,11 @@ indices. This agreement validates the saved-data decoder, not the conversion fro
 
 ## Evidence needed for control and measurements
 
-Before implementing the standalone `ABI7500FastDx` class:
+Before exposing run execution and calibrated measurements from `ABI7500FastDx`:
 
-- Establish initialization and connection teardown using the working software, including camera
-  settings and the internal serial configuration. Avoid firmware-download paths.
+- Extend the tested connection/status initialization with the thermal and optical setup required
+  for acquisition. Validate additional startup states and teardown after an active run. Avoid
+  firmware-download paths.
 - Match request/response sequences, state transitions, errors, and timeouts across connection,
   run start, progress, completion, cancellation, and reconnection. Determine how to query an active
   run after a lost acknowledgement. A local run ID alone cannot prevent duplicates after reconnect.

@@ -3,11 +3,27 @@
 pylabrobot.thermo_fisher package
 ================================
 
-ABI 7500 Fast Dx protocol tools
--------------------------------
+ABI 7500 Fast Dx
+----------------
 
-Offline packet codecs, camera reconstruction, and saved experiment data. Hardware control remains
-unimplemented; passing offline tests does not validate Fast Dx operation from PLR.
+Experimental USB connection, identity and status queries, plus offline protocol and data tools.
+Connection, identity and status were checked directly from Ubuntu on one G2.10 instrument; see
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/hardware-validation` for the tested scope.
+Run control and live optical acquisition remain unimplemented and unverified.
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    ABI7500FastDx
+    ABI7500DeviceError
+    ABI7500Identity
+    ABI7500Status
+    ThermalStep
+    ThermalCycle
+    ThermalProgram
 
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.protocol
 
