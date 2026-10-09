@@ -1,0 +1,124 @@
+{
+  "source": {
+    "capture": "abi7500-connect-001.pcapng",
+    "capture_sha256": "f78202bd40ec06915d06936a8528644f92bde7d4cd4bf23befedeab6c62e6a35",
+    "shell_log_sha256": "0c713a6844f5483394a9291623ec544d7de7bbd5a5dc60986a7713ad22167685",
+    "description": "Unmodified OUT submission and IN completion payloads from USBPcap1, device 7; all thermal replies match the vendor log. Packet numbers are one-based capture frame numbers."
+  },
+  "empty_reads": [
+    {
+      "request_frame": 39,
+      "reply_frames": [
+        42
+      ],
+      "requested_size": 64,
+      "valid_count": 0,
+      "request_hex": "525220203636",
+      "reply_hex": "0000b7f3e9ffffdfef797aefffff77cf9fff95e7fff7ffffeffcf3ae7fffe779b3ff9cffffb37e9bbfffffb5efedb7ffebfffe77dfffffbe5fdf7fd67ffbffdbaf7d",
+      "packets": []
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "version_split_68_23",
+      "write_frame": 65,
+      "write_hex": "5253202032315858ffffffff000f39373030000a000000000002eb",
+      "thermal_request_hex": "5858ffffffff000f39373030000a000000000002eb",
+      "thermal_reply_hex": "5858ffffffff005539373030000a00000000000247322e3130004150504c303237533033333235383700000000000000000037353053303333323538370000000000000000000000000000000005000b0005000900090002000143",
+      "reply_log_lines": [
+        200,
+        910
+      ],
+      "serial_reads": [
+        {
+          "request_frame": 67,
+          "reply_frames": [
+            70
+          ],
+          "requested_size": 91,
+          "valid_count": 68,
+          "request_hex": "525220203933",
+          "reply_hex": "44005858ffffffff005539373030000a00000000000247322e3130004150504c30323753303333323538370000000000000000003735305330333332353837000000000000007bffdf7bf3fcedffdf77bfffffffbffffdfb9375f77fff",
+          "packets": []
+        },
+        {
+          "request_frame": 71,
+          "reply_frames": [
+            74
+          ],
+          "requested_size": 23,
+          "valid_count": 23,
+          "request_hex": "525220203235",
+          "reply_hex": "170000000000000000000005000b0005000900090002000143",
+          "packets": [
+            "5858ffffffff005539373030000a00000000000247322e3130004150504c303237533033333235383700000000000000000037353053303333323538370000000000000000000000000000000005000b0005000900090002000143"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "version_split_35_56",
+      "write_frame": 369,
+      "write_hex": "5253202032315858ffffffff000f39373030000a0000000000321b",
+      "thermal_request_hex": "5858ffffffff000f39373030000a0000000000321b",
+      "thermal_reply_hex": "5858ffffffff005539373030000a00000000003247322e31300047322e313032375330333332353837003332353837003332373530533033333235383700333235383700333235383700041b0005000b00050009000900020001bd",
+      "reply_log_lines": [
+        587,
+        1052
+      ],
+      "serial_reads": [
+        {
+          "request_frame": 371,
+          "reply_frames": [
+            374
+          ],
+          "requested_size": 91,
+          "valid_count": 35,
+          "request_hex": "525220203933",
+          "reply_hex": "23005858ffffffff005539373030000a00000000003247322e31300047322e313032375330333332353837003332353837000000373530533033333235383700333235383700041b727bf3fcedffdf77bfffffffbffffdfb9375f77fff",
+          "packets": []
+        },
+        {
+          "request_frame": 375,
+          "reply_frames": [
+            378
+          ],
+          "requested_size": 56,
+          "valid_count": 56,
+          "request_hex": "525220203538",
+          "reply_hex": "3800333332353837003332353837003332373530533033333235383700333235383700333235383700041b0005000b00050009000900020001bd",
+          "packets": [
+            "5858ffffffff005539373030000a00000000003247322e31300047322e313032375330333332353837003332353837003332373530533033333235383700333235383700333235383700041b0005000b00050009000900020001bd"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter_motor_state",
+      "write_frame": 93,
+      "write_hex": "5253202032315858ffffffff000f39373030006c00000000000651",
+      "thermal_request_hex": "5858ffffffff000f39373030006c00000000000651",
+      "thermal_reply_hex": "5858ffffffff001139373030006c000000000006000154",
+      "reply_log_lines": [
+        210,
+        456,
+        920
+      ],
+      "serial_reads": [
+        {
+          "request_frame": 95,
+          "reply_frames": [
+            98
+          ],
+          "requested_size": 23,
+          "valid_count": 23,
+          "request_hex": "525220203235",
+          "reply_hex": "17005858ffffffff001139373030006c000000000006000154",
+          "packets": [
+            "5858ffffffff001139373030006c000000000006000154"
+          ]
+        }
+      ]
+    }
+  ]
+}

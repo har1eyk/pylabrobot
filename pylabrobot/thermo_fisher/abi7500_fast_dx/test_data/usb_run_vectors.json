@@ -1,0 +1,58 @@
+{
+  "description": "Unmodified USB payloads from engineering acquisition/cancellation sessions; framing fixtures, not a replayable run API. Full captures kept outside Git.",
+  "vectors": [
+    {
+      "session": "acquire",
+      "capture_sha256": "4a76d6b4b604cfffaad61081dd83eb8fb9a64f18a453c5a48f2a3504738671bd",
+      "command": 18,
+      "sequence": 218,
+      "request_frame": 6581,
+      "usb_write_hex": [
+        "5253203131395858ffffffff00713937303000120000000000da024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a0202",
+        "0a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c025800000064a8"
+      ],
+      "request_packet_hex": "5858ffffffff00713937303000120000000000da024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c025800000064a8",
+      "reply_packet_hex": "5858ffffffff000f3937303000120000000000dacb",
+      "payload_hex": "024d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300000f03b600000064020002020000000000000300000f03b6000000640300003c025800000064"
+    },
+    {
+      "session": "acquire",
+      "capture_sha256": "4a76d6b4b604cfffaad61081dd83eb8fb9a64f18a453c5a48f2a3504738671bd",
+      "command": 19,
+      "sequence": 267,
+      "request_frame": 6913,
+      "usb_write_hex": [
+        "5253202032315858ffffffff000f39373030001300000000010bfe"
+      ],
+      "request_packet_hex": "5858ffffffff000f39373030001300000000010bfe",
+      "reply_packet_hex": "5858ffffffff000f39373030001300000000010bfe",
+      "payload_hex": ""
+    },
+    {
+      "session": "cancel",
+      "capture_sha256": "ca31a95997b6c8a52b17ea17f701da0eb49de87d79bca8b9d22fc198f77cf118",
+      "command": 7,
+      "sequence": 313,
+      "request_frame": 6627,
+      "usb_write_hex": [
+        "5253202032315858ffffffff000f39373030000700000000013920"
+      ],
+      "request_packet_hex": "5858ffffffff000f39373030000700000000013920",
+      "reply_packet_hex": "5858ffffffff000f39373030000700000000013920",
+      "payload_hex": ""
+    },
+    {
+      "session": "cancel",
+      "capture_sha256": "ca31a95997b6c8a52b17ea17f701da0eb49de87d79bca8b9d22fc198f77cf118",
+      "command": 34,
+      "sequence": 315,
+      "request_frame": 6667,
+      "usb_write_hex": [
+        "5253202032335858ffffffff001139373030002200000000013b00fa39"
+      ],
+      "request_packet_hex": "5858ffffffff001139373030002200000000013b00fa39",
+      "reply_packet_hex": "5858ffffffff000f39373030002200000000013b3d",
+      "payload_hex": "00fa"
+    }
+  ]
+}

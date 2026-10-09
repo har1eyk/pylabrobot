@@ -1926,6 +1926,22 @@
     "oem": "https://lifesciences.tecan.com/multimode-plate-reader"
   },
   {
+    "id": "thermo-fisher-abi7500-fast-dx",
+    "vendor": "Thermo Fisher",
+    "name": "ABI 7500 Fast Dx",
+    "kind": "qPCR machine",
+    "capabilities": [
+      "qPCR",
+      "thermocycling",
+      "fluorescence"
+    ],
+    "status": "wip",
+    "needs_hardware_testing": true,
+    "code_slug": "thermo_fisher/abi7500_fast_dx",
+    "doc_slug": "thermo_fisher/abi7500_fast_dx/hello-world",
+    "notes": "Offline packet/camera decoding and EDS filter-data reading; live control and calibrated fluorescence remain unimplemented."
+  },
+  {
     "id": "thermo-fisher-alps",
     "needs_hardware_testing": true,
     "vendor": "Thermo Fisher",

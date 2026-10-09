@@ -1,0 +1,83 @@
+{
+  "source": {
+    "kind": "Vendor thermal-controller debug log, not a USB capture",
+    "file": "7500/config/logs/shell.log",
+    "sha256": "30e4ef8ebdf812c0fade740bb331f6801d85bb7ffd66fc3238acb26986479a79",
+    "application": "7500 Software v2.3",
+    "note": "Small unmodified request/reply samples. Full logs and instrument-specific calibration stay outside Git."
+  },
+  "vectors": [
+    {
+      "name": "motor-state-zero-out",
+      "source_line": 12,
+      "direction": "OUT",
+      "command": 108,
+      "sequence": 4439,
+      "payload_hex": "",
+      "packet_hex": "5858ffffffff000f39373030006c000000001157b3"
+    },
+    {
+      "name": "motor-state-zero-in",
+      "source_line": 13,
+      "direction": "IN",
+      "command": 108,
+      "sequence": 4439,
+      "payload_hex": "0000",
+      "packet_hex": "5858ffffffff001139373030006c0000000011570000b5"
+    },
+    {
+      "name": "motor-state-one-out",
+      "source_line": 3,
+      "direction": "OUT",
+      "command": 108,
+      "sequence": 4436,
+      "payload_hex": "",
+      "packet_hex": "5858ffffffff000f39373030006c000000001154b0"
+    },
+    {
+      "name": "motor-state-one-in",
+      "source_line": 4,
+      "direction": "IN",
+      "command": 108,
+      "sequence": 4436,
+      "payload_hex": "0001",
+      "packet_hex": "5858ffffffff001139373030006c0000000011540001b3"
+    },
+    {
+      "name": "filter-position-out",
+      "source_line": 305,
+      "direction": "OUT",
+      "command": 107,
+      "sequence": 38,
+      "payload_hex": "",
+      "packet_hex": "5858ffffffff000f39373030006b00000000002670"
+    },
+    {
+      "name": "filter-position-in",
+      "source_line": 306,
+      "direction": "IN",
+      "command": 107,
+      "sequence": 38,
+      "payload_hex": "0000",
+      "packet_hex": "5858ffffffff001139373030006b000000000026000072"
+    },
+    {
+      "name": "lamp-state-out",
+      "source_line": 354,
+      "direction": "OUT",
+      "command": 102,
+      "sequence": 54,
+      "payload_hex": "",
+      "packet_hex": "5858ffffffff000f3937303000660000000000367b"
+    },
+    {
+      "name": "lamp-state-in",
+      "source_line": 355,
+      "direction": "IN",
+      "command": 102,
+      "sequence": 54,
+      "payload_hex": "00010000",
+      "packet_hex": "5858ffffffff00133937303000660000000000360001000080"
+    }
+  ]
+}

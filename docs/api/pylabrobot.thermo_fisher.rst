@@ -3,6 +3,45 @@
 pylabrobot.thermo_fisher package
 ================================
 
+ABI 7500 Fast Dx protocol tools
+-------------------------------
+
+Offline packet codecs, camera reconstruction, and saved experiment data. Hardware control remains
+unimplemented; passing offline tests does not validate Fast Dx operation from PLR.
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.protocol
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+  :recursive:
+
+    ABI7500ProtocolError
+    ThermalPacket
+    ThermalPacketDecoder
+    encode_serial_write
+    encode_serial_read
+    decode_serial_read
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.camera
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    CameraGeometry
+    CameraFrame
+    CameraFrameAssembler
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.results
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    SavedFilterData
+    read_eds_filter_data
+
 ALPS Heat Sealers
 -----------------
 
