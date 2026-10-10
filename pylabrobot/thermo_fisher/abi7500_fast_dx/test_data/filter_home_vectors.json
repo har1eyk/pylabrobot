@@ -1,0 +1,122 @@
+{
+  "source_session": "abi7500-acquire-001",
+  "description": "Original home acknowledgements and later motor-busy/stationary observations. Polling begins late; timestamps do not measure exact home duration. No home-position readback is established by this fixture.",
+  "pairs": [
+    {
+      "request": {
+        "frame": 11213,
+        "time": 1791555998.201827,
+        "frames": [
+          11213
+        ],
+        "command": 103,
+        "sequence": 450,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000670000000001c209",
+        "log_lines": [
+          2909
+        ]
+      },
+      "reply": {
+        "frame": 11218,
+        "time": 1791555998.326038,
+        "command": 103,
+        "sequence": 450,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000670000000001c209",
+        "log_lines": [
+          2910
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 15211,
+        "time": 1791556123.95145,
+        "frames": [
+          15211
+        ],
+        "command": 103,
+        "sequence": 602,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006700000000025aa2",
+        "log_lines": [
+          3565
+        ]
+      },
+      "reply": {
+        "frame": 15216,
+        "time": 1791556124.059866,
+        "command": 103,
+        "sequence": 602,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006700000000025aa2",
+        "log_lines": [
+          3566
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 15251,
+        "time": 1791556128.552182,
+        "frames": [
+          15251
+        ],
+        "command": 108,
+        "sequence": 608,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006c000000000260ad",
+        "log_lines": [
+          3586
+        ]
+      },
+      "reply": {
+        "frame": 15256,
+        "time": 1791556128.661377,
+        "command": 108,
+        "sequence": 608,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006c0000000002600001b0",
+        "log_lines": [
+          3587
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 15293,
+        "time": 1791556130.091292,
+        "frames": [
+          15293
+        ],
+        "command": 108,
+        "sequence": 615,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006c000000000267b4",
+        "log_lines": [
+          3607
+        ]
+      },
+      "reply": {
+        "frame": 15298,
+        "time": 1791556130.200767,
+        "command": 108,
+        "sequence": 615,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff001139373030006c0000000002670000b6",
+        "log_lines": [
+          3608
+        ]
+      }
+    }
+  ]
+}

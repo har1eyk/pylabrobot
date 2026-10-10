@@ -10,10 +10,14 @@ from typing import Awaitable, Optional, TypeVar
 
 from pylabrobot.io.usb import USB
 
+from ._export import write_run_archive
 from ._run_journal import RunJournal
 from .acquisition import CameraAcquisition, CameraExposure, OpticalState, _validate_acquisition_id
+from .calibration import UniformityCalibration
 from .camera import CameraGeometry
 from .collection import CollectionPlan, CollectionPoint, CollectionRecord, FluorescenceCollection
+from .fluorescence import BackgroundCalibration
+from .image_processing import PlatePixelMask
 from .protocol import (
   ABI7500ProtocolError,
   ThermalPacket,
@@ -886,16 +890,56 @@ class ABI7500FastDx:
         logger.error("Thermal run %s interrupted; Start will not be resent", run_id)
         raise
 
-  def _read_collections(self, run: ThermalRun) -> tuple[FluorescenceCollection, ...]:
-    """Hydrate existing collection records and partial frames without opening USB."""
+  def _read_collection_records(self, run: ThermalRun) -> tuple[CollectionRecord, ...]:
+    """Read saved progress and validate plan association without loading camera payloads."""
     if run.collection_plan is None:
       raise ABI7500RunError("This thermal run has no optical collection plan")
     journal = self._require_journal()
+    plan = run.collection_plan
     results = []
-    for point in run.collection_plan.points(run.program):
+    for ordinal, point in enumerate(plan.points(run.program), start=1):
       record = journal.get_collection(point.collection_id(run.run_id))
       if record is None:
         continue
+      expected_ids = tuple(
+        f"{record.collection_id}-f{f.position}-e{index}" for f in plan.filters for index in range(3)
+      )
+      if (
+        record.ordinal != ordinal
+        or record.before.run_start_record != run.start_record
+        or record.acquisition_ids != expected_ids
+        or record.homing_requested != (ordinal in plan.home_after_collections)
+        or (
+          record.state == "complete"
+          and plan.park_between_collections
+          and record.parked_optics is None
+        )
+      ):
+        raise ABI7500RunError("Collection checkpoint disagrees with its run and plan")
+      results.append(record)
+    return tuple(results)
+
+  async def get_collection_records(self, run_id: str) -> tuple[CollectionRecord, ...]:
+    """Return saved optical progress without USB traffic or decoding original images.
+
+    Records are in planned order and include complete and uncertain collection intents. Absent
+    points have not been reserved; a complete checkpoint is not a fresh integrity check of its
+    saved image payloads. Use get_collections() to retrieve frames and get_run() to reconcile
+    thermal state. The run lock can delay this call until the current burst finishes or fails.
+    It neither polls the instrument nor starts/resumes acquisition, and works without setup().
+    """
+    _validate_run_id(run_id)
+    async with self._run_lock:
+      run = self._require_journal().get(run_id)
+      if run is None:
+        raise ABI7500RunError(f"Unknown run {run_id!r}")
+      return self._read_collection_records(run)
+
+  def _read_collections(self, run: ThermalRun) -> tuple[FluorescenceCollection, ...]:
+    """Hydrate existing collection records and partial frames without opening USB."""
+    journal = self._require_journal()
+    results = []
+    for record in self._read_collection_records(run):
       frames = []
       for acquisition_id in record.acquisition_ids:
         acquisition = journal.get_acquisition(acquisition_id)
@@ -916,6 +960,78 @@ class ABI7500FastDx:
       if run is None:
         raise ABI7500RunError(f"Unknown run {run_id!r}")
       return self._read_collections(run)
+
+  async def export_run(
+    self,
+    run_id: str,
+    path: Path,
+    *,
+    background: BackgroundCalibration,
+    uniformity: UniformityCalibration,
+    masks: tuple[PlatePixelMask, ...],
+  ) -> Path:
+    """Export a completed optical run as a ZIP of original inputs and per-well CSV tables.
+
+    Reads the saved checkpoint without USB traffic, setup(), or thermal reconciliation. Requires
+    every planned collection to be complete and matched to the run; partial or uncertain runs
+    remain accessible through get_collections(). Processing uses explicitly supplied calibration
+    files and retains their exact bytes, without certifying present validity or physical well
+    orientation. No drift correction, dye unmixing or Ct analysis is applied.
+
+    The archive contains original camera transfers, metadata, calibration files, selected values,
+    all exposure candidates and SHA-256 hashes. Existing destinations are never overwritten.
+    Use an existing directory outside Git; keep the live journal on local, unsynchronized disk.
+    File generation is synchronous and should be performed after the instrument session.
+
+    Args:
+      run_id: Identity of an already completed, journaled optical run.
+      path: New ZIP file in an existing directory.
+      background: Explicitly associated native Background.csv.
+      uniformity: Explicitly associated uniformity.ini.
+      masks: Explicitly associated physical-filter masks, including every planned filter.
+
+    Returns:
+      The path of the completed archive.
+    """
+    _validate_run_id(run_id)
+    async with self._run_lock:
+      run = self._require_journal().get(run_id)
+      if run is None:
+        raise ABI7500RunError(f"Unknown run {run_id!r}")
+      collections = self._read_collections(run)
+      result = write_run_archive(path, run, collections, background, uniformity, masks)
+      logger.info("Exported optical run %s (%d collections) to %s", run_id, len(collections), path)
+      return result
+
+  async def _park_collection_filter(self, *, home: bool = False) -> OpticalState:
+    """Park or home under the collection locks, retaining lamp power 1 and verifying position 0.
+
+    Homing is only called for a reserved collection whose durable intent requires it. No native
+    retry loop is copied: an uncertain home cannot safely be repeated. Neither mode recalibrates.
+    The caller must persist failure and verify the thermal hold after this bounded operation.
+    """
+    optics = await self._query_optics()
+    if (
+      not optics.is_stationary
+      or optics.filter_position not in range(6)
+      or not optics.lamp_enabled
+      or optics.lamp_power != 1
+    ):
+      raise ABI7500RunError("Unexpected optical state before collection parking")
+    if home:
+      await self._thermal_query(0x67, 0)
+      await self._wait_filter(asyncio.get_running_loop().time() + 15)
+    elif optics.filter_position != 0:
+      await self._thermal_query(0x69, 0, b"\x00\x00")
+      await self._wait_filter(asyncio.get_running_loop().time() + 15)
+    parked = await self._query_optics()
+    if (
+      not parked.is_stationary
+      or parked.filter_position != 0
+      or parked.lamp_response != optics.lamp_response
+    ):
+      raise ABI7500RunError("Collection parking readback disagrees with position 0 and lamp state")
+    return parked
 
   async def _collect_point(self, run_id: str, point: CollectionPoint) -> None:
     """Reserve and execute one bounded read under run and USB transaction ownership."""
@@ -958,6 +1074,7 @@ class ABI7500FastDx:
           for f in plan.filters
           for index in range(3)
         ),
+        homing_requested=points.index(point) + 1 in plan.home_after_collections,
       )
       journal.reserve_collection(record)
       async with self._lock:
@@ -1017,6 +1134,18 @@ class ABI7500FastDx:
               record.ordinal,
               setting.position,
             )
+          if plan.park_between_collections:
+            logger.info(
+              "Run %s collection %d closing optics via %s",
+              run_id,
+              record.ordinal,
+              "home" if record.homing_requested else "absolute park",
+            )
+            record = replace(
+              record,
+              parked_optics=await self._park_collection_filter(home=record.homing_requested),
+            )
+            journal.save_collection(record)
           after = ABI7500Status(await self._thermal_query(0x29, 50))
           if not point.matches(after) or after.run_start_record != run.start_record:
             raise ABI7500RunError("Collection crossed a thermal boundary")
@@ -1041,6 +1170,11 @@ class ABI7500FastDx:
     cancellation or ambiguous exposure permanently records an optical failure for this run.
     Repeating this call never repeats an uncertain collection. The overall timeout includes cover
     warmup, ramps, every hold, acquisition and completion reconciliation; budget for all of them.
+    Plans with park_between_collections=True verify absolute position 0 and unchanged lamp power
+    after each burst, before recording completion. Ordinals in home_after_collections send the
+    native asynchronous home once instead of an absolute move and await motor completion.
+    A failed park or home preserves frames but prevents
+    collection replay. A partial/failed burst does not automatically move the wheel.
 
     This does not cancel heating or switch off the lamp on failure. Use cancel_run() for the owned
     thermal run and set_lamp(False) after inactivity; reconnect first after a communication fault.
@@ -1070,13 +1204,15 @@ class ABI7500FastDx:
         run = await self.get_run(run_id)
         if run.collection_error:
           raise ABI7500RunError(f"Optical run cannot resume: {run.collection_error}")
-        records = self._read_collections(run)
-        if any(value.record.state != "complete" for value in records):
+        records = self._read_collection_records(run)
+        if any(record.state != "complete" for record in records):
           raise ABI7500RunError("An uncertain collection cannot be repeated or resumed")
+        if tuple(record.point for record in records) != points[: len(records)]:
+          raise ABI7500RunError("A gap in saved collections prevents acquisition from resuming")
         if run.is_terminal:
           if run.state != "completed" or len(records) != len(points):
             raise ABI7500RunError("Thermal run ended without every planned collection")
-          return records
+          return self._read_collections(run)
         self._remaining(deadline, context="fluorescence observation (including startup)")
         if run.state == "cancelling":
           raise ABI7500RunError("Cancellation prevents optical collection")

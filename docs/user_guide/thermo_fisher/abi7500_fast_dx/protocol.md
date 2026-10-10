@@ -475,6 +475,7 @@ The captured envelopes and native `BudgieManagerEXT.dll` wrappers establish:
 | `0x64` SetLamp | BE16 enable, 0 or 1 | empty acknowledgement | `0x40fbf` |
 | `0x65` SetLampPower | BE16 native power 0 or 1 | empty acknowledgement | `0x40eb9` |
 | `0x66` GetLampState | empty | BE16 enable, then BE16 power | `0x410b1` |
+| `0x67` AsyncHomeFilterWheel | empty | empty acknowledgement; motion is asynchronous | `0x41614` |
 | `0x69` MoveToFWPos | BE16 absolute position | empty acknowledgement | `0x40c4a` |
 | `0x6b` GetFilterPosition | empty | BE16 position | `0x4072d` |
 | `0x6c` RequestFilterMotorState | empty | `0000` stationary, `0001` moving in capture | `0x40d7d` |
@@ -484,8 +485,24 @@ expose `0x76` (calibration position setting), `0x7a` (lamp monitoring/reset), or
 Native errors are raised, not converted into synthetic lamp state. TCWrapper `SetLampState`
 (RVA `0x1e836`) enables the lamp, waits 250 ms, then selects power 0 or 1. HAMCamera (`0x2064a`)
 waits another 250 ms before readback. PLR preserves these delays when a change is required.
-Native `OpenShutter(true)` (`0x1d35b`) is a no-op; false requests absolute filter position 0.
-No additional USB shutter command is needed for this path. Captures include enabled power words 0 and 1; the Ubuntu snapshot observed
+The direct optical helper `OpenShutter(true)` (`0x1d35b`) is a no-op; false requests absolute
+filter position 0. This is distinct from the collection-end **idle** path: `ReadAsync` (`0x4a5c`)
+calls `BudgieManager::OpenShutter(false, true)` (`0xea98`), whose Gemini non-isothermal branch
+dispatches through the HAMCamera idle hook (`0x204e3`), optics helper (`0x1d5da`), and TCWrapper
+(`0x1ea2b`) to `AsyncHomeFilterWheel` (`0x41614`). Requests at frames 11213 and 15211 of the
+vendor acquisition confirm `0x67` after each burst. A timestamp comparison that counts only
+`0x69` moves misses this home operation and cannot establish how long that vendor optical path
+stayed open. Absolute position 0 and homing must not be treated as interchangeable alignment
+operations. PLR's default optional collection parking uses `0x69`, with stationary/position/lamp
+readback. Explicit `CollectionPlan.home_after_collections` ordinals instead send `0x67` once,
+wait up to 15 seconds for motor completion, then require stationary position 0 and unchanged
+lamp words. Original frames 15251–15293 show the motor still busy several seconds after a home
+acknowledgement and later stationary. They do not establish exact motion duration or final
+position. `filter_home_vectors.json` retains the original acknowledgement and motor replies.
+The collection intent records homing before actuation. The native command's retry loop is not
+copied: an ambiguous home makes the collection uncertain and cannot be replayed.
+
+Captures include enabled power words 0 and 1; the Ubuntu snapshot observed
 disabled state `0000 0002`. Power words are not light measurements. PLR uses query-before-change
 setters with final readback and never retries an ambiguous mutation.
 `optical_control_vectors.json` retains representative captured command/reply pairs.
@@ -566,6 +583,11 @@ orientation experiment. Small recorded patches cover all filters and both cycles
 Many reference wells select a saturated fallback. Matching those numbers does not make them valid
 quantitative measurements; the API retains their saturation flags and all three candidates.
 
+A separate {ref}`known-pattern plate session <abi7500-wellmap-validation>` verified the physical
+orientation and labels A1, A4, C9, F3, H7 and H12 in filter 5. All six fluorescein wells matched
+the six brightest regions in three exposures, without changing the processing or calibration.
+This supplements the vendor-output comparison; it does not verify every well or channel.
+
 The [hardware report](hardware-validation.md) records the illumination session with the native
 lamp delays and five-second settling intervals. It produced visible well patterns at filters 1
 and 5, unlike the earlier immediate snapshot. The session does not isolate which delay resolved
@@ -585,7 +607,8 @@ Both captured collections begin with 24 seconds remaining and end with 1 second 
 zero-based group 1/step 1, repetitions 1 and 2. Each contains physical filters 1–5 with three
 exposures each. `collection_schedule_vectors.json` retains the original boundary exchanges and
 frame associations. There is no recovered hardware-trigger or hold-extension handshake in this
-path. Command `0x67` is filter-wheel homing, not an acquisition trigger; PLR does not invoke it.
+path. Command `0x67` is filter-wheel homing, not an acquisition trigger. PLR invokes it only for
+explicitly selected collection-end ordinals and verifies completion before accepting that point.
 
 These entry points are in the installer/reference-PC binaries already used for protocol recovery.
 HS7500 SHA-256 is `97fedadf13db8668c805c91df7a20d1197d569a01d24be8d687cd46c1751c983`;
@@ -614,8 +637,9 @@ intended 30 °C holds. Recorded metadata and final observations are retained in
   without repeating a potentially completed run or exposure.
 - Compare additional acquisitions, including unsaturated measurements, other configurations and
   calibration backups. The exact reference comparison does not cover every native processing mode.
-- Validate physical well labeling with a known plate and dye/channel interpretation separately.
-  Saved filter indices alone do not identify dyes or establish current calibration validity.
+- Extend physical-label validation beyond the six known-pattern wells tested in filter 5;
+  validate dye/channel interpretation separately. Saved filter indices alone do not identify
+  dyes or establish current calibration validity.
 
 Mocked/captured tests establish framing, image reconstruction, processing and run-state behavior.
 The separate hardware report records direct Ubuntu connection, one start/cancel, clean reconnect

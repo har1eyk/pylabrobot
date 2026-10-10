@@ -39,6 +39,7 @@ plan = CollectionPlan(
     CollectionFilter(5, (1.048, 0.090, 0.030)),
   ),
   read_window=45,
+  park_between_collections=True,
 )
 print(plan.points(program))
 ```
@@ -81,11 +82,16 @@ processing-stage comparisons. A separately approved constant-30 °C run also com
 about 6.1% in vendor channel 1 (SYBR/FAM, physical position 5) and 7.5% in vendor channel 2
 (physical position 4). The 35 °C excursions are therefore not required for the decline; its
 cause remains unresolved. See the {ref}`constant-temperature comparison <abi7500-constant30-validation>`.
+A subsequent approved 30 °C run with position-0 parking reduced these declines to about
+0.8% and 0.9%. It confirmed camera-path suppression with the lamp on, but neither proves
+photobleaching nor tests the vendor’s home operation. See the
+{ref}`parking comparison <abi7500-parked-validation>`.
 
 Evaluate control completion and measurement quality separately. Retain all saturation flags;
 compare exposure-normalized candidates only when their source exposures are unsaturated, and
 do not automatically retry if saturation persists. The existing sealed plate can support this
-engineering check. Independent physical well orientation requires a known plate pattern, and
+engineering check. A separate {ref}`known-pattern plate session <abi7500-wellmap-validation>`
+verified physical orientation and six labels in filter 5. Broader label/channel coverage,
 current calibration validity and vendor comparison remain separate questions.
 
 The default window is 45 seconds. Collection starts when the remaining hold time reaches 45–43
@@ -95,11 +101,46 @@ skipping data. Filter moves, exposure time, transfers, status queries and local 
 consume the window. The exposure-duration sum is only a minimum feasibility check; the window
 must be validated on the control host. It is not a measured worst-case bound.
 
+`park_between_collections=True` returns to absolute filter position 0 after every burst,
+including the last, while retaining lamp power 1. It verifies that the wheel is stationary and
+records the native replies in `collection.record.parked_optics` before accepting the collection.
+The parking move and final status check must fit inside the same hold. The default is `False`
+for compatibility with existing plans; older journal records retain that behavior. Changing
+the setting requires a new run identity. Parking does not home the wheel or change calibration.
+
+`home_after_collections=(2, 4)` requests native homing after the second and fourth collection
+of a four-collection plan, with absolute parking after the others. These are **one-based
+collection ordinals**, not thermal step indices. The immutable, sorted tuple requires parking
+enabled and may contain only existing ordinals. An empty tuple preserves ordinary parking;
+older journals never acquire homing implicitly. Each collection's `homing_requested` intent is
+saved before its first movement. The final `parked_optics` readback must show stationary
+position 0 and unchanged lamp power after either operation. A lost acknowledgement, motion
+timeout or failed readback cannot trigger a repeated home, even after reconnecting. Changing
+homing ordinals requires a new run identity.
+
+The vendor's recorded collection-end path sends asynchronous home command `0x67`.
+Native code and the original USB capture confirm that difference. Homing could change optical
+alignment as well as the idle position; position readback alone cannot establish either physical
+alignment or sample illumination. A four-collection Ubuntu session verified two native homes,
+60 images and normal completion; the observed signal changes did not establish an additional
+stability benefit over parking. See the {ref}`homing comparison <abi7500-homing-validation>`
+and [recovered command paths](protocol.md). A subsequent approved two-cycle 35 °C/30 °C session
+combined short exposures, homing after both collections and checkpoint-only progress reads.
+It completed normally with 30 frames and 960 unflagged selections; the SYBR-channel decline
+was 0.95%, compared with 7.72% in the earlier cycling session that left the last filter selected.
+Different lamp warmup and plate history prevent a causal interpretation. See the
+{ref}`combined cycling/homing validation <abi7500-cycling-home-validation>`. A later ten-cycle SYBR-channel-only session completed with
+30 images, ten verified homes and a lossless offline export. It used three exposures per
+collection at physical filter 5; it does not establish ten-cycle performance across all five
+channels. See the {ref}`ten-cycle report <abi7500-sybr10-validation>`.
+
 ## Execute an approved session
 
 Use the same local journal as earlier runs. Begin with a sealed, loaded-ready plate, inactive
 thermal controller, reference camera geometry, stationary filter 0 and lamp enabled at power 1.
-Allow the lamp to settle; the prepared validation uses five seconds. The code below shows the
+Allow the lamp to settle. The two-collection examples used five seconds; the four-collection
+parking/homing comparison used 30 seconds at position 0 before Start. Neither duration alone
+establishes constant optical output. The code below shows the
 collection portion of a session, after those prerequisites have been established:
 
 ```python
@@ -126,6 +167,84 @@ fresh status immediately before exposure and after transfer/readback; run token,
 repetition, holding phase and optical state must agree. The whole burst is checked too. Crossing
 a boundary retains the image but marks the acquisition and collection uncertain.
 
+## Read saved collection progress
+
+`get_collection_records(run_id)` returns the typed checkpoints without USB traffic or loading
+image payloads. It works without `setup()` and includes both complete and uncertain collection
+intents in planned order. Missing points have not been reserved. For progress during a run, use
+the same driver instance as the collector; the run lock may delay the call until the current
+burst finishes or fails. A second controller cannot open the same journal concurrently.
+
+```python
+records = await instrument.get_collection_records(optical_run_id)
+print("Completed collections:", sum(record.state == "complete" for record in records))
+for record in records:
+  print(record.ordinal, record.point, record.state, record.error)
+```
+
+These are the last committed checkpoints, not fresh instrument observations or an integrity
+check of the original images. Use `get_run()` for thermal reconciliation and `get_collections()`
+for complete or partial frames. Thermal completion and complete optical collection are separate
+outcomes; inspect `collection_error` as well. Polling in `collect_fluorescence()` reads these
+small records and only loads the saved images when returning results after normal completion.
+It rejects gaps and uncertain checkpoints instead of filling them with repeated acquisitions.
+This avoids repeatedly decoding the accumulated images while waiting for the next read window;
+USB exchanges, exposure reservation and other journal work still consume host time.
+
+(abi7500-export)=
+## Export a completed run offline
+
+After the instrument session and cleanup, `export_run()` reads the saved local journal without
+calling `setup()` or sending USB commands. Supply the background, uniformity and masks belonging
+to the acquisition, as in the processing example below. Choose a **new file outside Git** in an
+existing directory:
+
+```python
+from pathlib import Path
+
+archive = await instrument.export_run(
+  optical_run_id,
+  Path.home() / "Downloads" / f"{optical_run_id}-results.zip",
+  background=background,
+  uniformity=uniformity,
+  masks=masks,
+)
+print(archive)
+```
+
+It requires a saved, completed thermal run with matching history, no collection error, and every
+planned collection and image in order. It rejects missing, uncertain or mismatched data rather
+than exporting a partial table as a successful experiment. Use `get_collections()` to inspect
+and retain evidence from incomplete sessions. Export does not reconcile current hardware state
+or perform cleanup. Processing and file generation run synchronously, so use it after acquisition.
+
+The ZIP contains:
+
+- `measurements.csv`: one selected result per well/filter/collection, with run and frame identities,
+  physical and vendor filter indices, exposure choice, saturation flag, pre-uniformity integer,
+  corrected value and its exact binary32 bits.
+- `exposures.csv`: all three candidates for every well, including unselected or saturated ones,
+  original pixel/ring counts, background coefficients, exposure-normalized integers, host times
+  and before/after sample-temperature estimates.
+- Original camera `.bin` transfers and acquisition JSON, collection checkpoints, and `run.json`
+  with the thermal program, optical plan, instrument identity and completion evidence.
+- Exact supplied calibration files and masks, `README.txt` describing field meanings and units,
+  and a versioned `manifest.json` with the size and SHA-256 of every other member.
+
+`pre_uniformity_value` is already background/exposure corrected; it is not an uncorrected pixel
+sum. CSV values retain round-trip precision, and saturated fallbacks stay explicitly flagged.
+Stage and cycle are one-based; step and exposure indices are zero-based. The archive retains
+vendor well labels A1–H12. Physical validation is limited to the
+{ref}`six-marker filter-5 check <abi7500-wellmap-validation>`; export itself does not certify
+orientation or current calibration validity. It adds no drift correction, dye unmixing,
+Rn or Ct analysis and is not a vendor EDS file.
+
+Existing destinations are never overwritten. Validation and processing finish before creation;
+ordinary write failures remove the new partial file. A process or power failure can still leave
+an incomplete ZIP: verify the manifest and member hashes before treating it as a completed
+export. These hashes detect content changes, not authenticity. The archive is portable; the live
+journal must remain on local, unsynchronized storage.
+
 ## Preserve identities and recover explicitly
 
 The journal stores the program and optical plan under the run ID. Reusing an ID with a changed
@@ -138,6 +257,9 @@ Missing acknowledgements, interruption, timeout or a missed hold cannot cause au
 replay. Complete points survive reconnects; an uncertain point or recorded `collection_error`
 blocks resuming acquisition. A completed run with all points present returns its saved results
 without USB I/O. `get_collections(run_id)` retrieves partial and complete evidence offline.
+When parking is requested, a failed park or home also makes the collection uncertain, while preserving
+all completed frames. A failed or interrupted burst does not attempt an automatic park through
+a possibly faulted connection; use the explicit recovery and cleanup below.
 
 Neither a failed collector nor `stop()` cancels the instrument or disables the lamp. End the
 session by reconciling the same run ID, calling `cancel_run()` if that run is still owned and

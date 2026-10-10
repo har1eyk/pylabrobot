@@ -166,6 +166,7 @@ class RunJournal:
       or record.ordinal != points.index(record.point) + 1
       or record.before.run_start_record != run.start_record
       or record.acquisition_ids != expected
+      or record.homing_requested != (record.ordinal in run.collection_plan.home_after_collections)
       or record.state != "uncertain"
     ):
       raise ABI7500RunError("Collection does not match its reserved thermal run and plan")

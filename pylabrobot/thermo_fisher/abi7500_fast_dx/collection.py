@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Literal, Mapping, Optional
 
-from .acquisition import CameraAcquisition, CameraExposure
+from .acquisition import CameraAcquisition, CameraExposure, OpticalState
 from .calibration import UniformityCalibration
 from .fluorescence import BackgroundCalibration, CameraFilterResult, FluorescenceFrame
 from .image_processing import PlatePixelMask
@@ -71,15 +71,35 @@ class CollectionPlan:
   must accommodate all filter moves, exposure transfers and status queries on the control host;
   it is not a hardware trigger or a guarantee of subsecond synchronization. No hold is extended.
   The lamp must already be enabled at native power 1; this plan never implicitly changes it.
+  ``park_between_collections`` moves to absolute position 0 after each complete burst, including
+  the last, and verifies stationary readback with the lamp still on. It does not home the wheel.
+  The read window must also accommodate this move. Disabled by default for compatibility with
+  existing acquisition plans; optical extinction is an instrument-specific validation result.
+  ``home_after_collections`` selects one-based collection ordinals that use native asynchronous
+  homing instead of an absolute parking move. It requires parking enabled; other collections
+  still park normally. Homing intent belongs to the durable collection identity and is never
+  replayed after failure. This is not recalibration or a lamp-counter reset.
   """
 
   steps: tuple[tuple[int, int], ...]
   filters: tuple[CollectionFilter, ...]
   read_window: int = 45
+  park_between_collections: bool = False
+  home_after_collections: tuple[int, ...] = ()
 
   def __post_init__(self) -> None:
     """Reject empty, duplicate and unordered settings before any instrument I/O."""
     _integer("read_window", self.read_window, 5, 5939)
+    if type(self.park_between_collections) is not bool:
+      raise ValueError("park_between_collections must be a boolean")
+    if type(self.home_after_collections) is not tuple:
+      raise ValueError("home_after_collections must be an immutable tuple")
+    for ordinal in self.home_after_collections:
+      _integer("home_after_collections ordinal", ordinal, 1, 32760)
+    if self.home_after_collections != tuple(sorted(set(self.home_after_collections))):
+      raise ValueError("Homing ordinals must be unique and in execution order")
+    if self.home_after_collections and not self.park_between_collections:
+      raise ValueError("Homing requires park_between_collections=True")
     if type(self.steps) is not tuple or not self.steps:
       raise ValueError("Collection steps must be a nonempty immutable tuple")
     for pair in self.steps:
@@ -111,6 +131,8 @@ class CollectionPlan:
         if hold < self.read_window:
           raise ValueError("Every selected hold must contain the entire collection window")
         result.append(CollectionPoint(cycle_index, repetition, step_index))
+    if self.home_after_collections and self.home_after_collections[-1] > len(result):
+      raise ValueError("Homing ordinal does not exist in the collection plan")
     return tuple(sorted(result))
 
   def to_dict(self) -> dict[str, Any]:
@@ -119,15 +141,19 @@ class CollectionPlan:
       "steps": [list(pair) for pair in self.steps],
       "filters": [{"position": f.position, "exposures": list(f.exposures)} for f in self.filters],
       "read_window": self.read_window,
+      "park_between_collections": self.park_between_collections,
+      "home_after_collections": list(self.home_after_collections),
     }
 
   @classmethod
   def from_dict(cls, value: Mapping[str, Any]) -> "CollectionPlan":
-    """Restore a validated plan without selecting defaults for missing fields."""
+    """Restore a plan; older records explicitly retain their no-parking behavior."""
     return cls(
       tuple((pair[0], pair[1]) for pair in value["steps"]),
       tuple(CollectionFilter(f["position"], tuple(f["exposures"])) for f in value["filters"]),
       value["read_window"],
+      value.get("park_between_collections", False),
+      tuple(value.get("home_after_collections", ())),
     )
 
 
@@ -143,6 +169,8 @@ class CollectionRecord:
   state: Literal["uncertain", "complete"] = "uncertain"
   after: Optional[ABI7500Status] = None
   error: Optional[str] = None
+  parked_optics: Optional[OpticalState] = None
+  homing_requested: bool = False
 
   @property
   def collection_id(self) -> str:
@@ -152,6 +180,8 @@ class CollectionRecord:
   def __post_init__(self) -> None:
     """Require complete identity and phase evidence before accepting a completed checkpoint."""
     _integer("ordinal", self.ordinal, 1, 32760)
+    if type(self.homing_requested) is not bool:
+      raise ValueError("homing_requested must be a boolean")
     if self.state not in ("uncertain", "complete"):
       raise ValueError("Invalid collection state")
     if not self.point.matches(self.before):
@@ -160,11 +190,19 @@ class CollectionRecord:
       raise ValueError("Collection requires immutable acquisition identities")
     if len(set(self.acquisition_ids)) != len(self.acquisition_ids):
       raise ValueError("Duplicate collection acquisition identity")
+    if self.parked_optics is not None and (
+      not self.parked_optics.is_stationary
+      or self.parked_optics.filter_position != 0
+      or not self.parked_optics.lamp_enabled
+      or self.parked_optics.lamp_power != 1
+    ):
+      raise ValueError("Parked optics require stationary position 0 with lamp power 1")
     if self.state == "complete" and (
       self.after is None
       or not self.point.matches(self.after)
       or self.before.run_start_record != self.after.run_start_record
       or self.error is not None
+      or (self.homing_requested and self.parked_optics is None)
     ):
       raise ValueError("Completed collection requires the same run and hold at both boundaries")
 
@@ -179,6 +217,8 @@ class CollectionRecord:
       "state": self.state,
       "after": None if self.after is None else self.after.raw_payload.hex(),
       "error": self.error,
+      "parked_optics": None if self.parked_optics is None else self.parked_optics.to_dict(),
+      "homing_requested": self.homing_requested,
     }
 
   @classmethod
@@ -193,6 +233,10 @@ class CollectionRecord:
       value["state"],
       None if value["after"] is None else ABI7500Status(bytes.fromhex(value["after"])),
       value["error"],
+      None
+      if value.get("parked_optics") is None
+      else OpticalState.from_dict(value["parked_optics"]),
+      value.get("homing_requested", False),
     )
 
 

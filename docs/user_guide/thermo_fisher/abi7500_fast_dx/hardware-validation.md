@@ -711,3 +711,404 @@ source, before/after journals, original frames, calibration inputs, complete USB
 audits, per-well results, matched comparisons and plots labeled with both numbering systems.
 USB transcript SHA-256:
 `de842bf2dffbc305912147538443d38ac128dd6bf71d7a95a7367dcd6d9f66fb`.
+
+(abi7500-parked-validation)=
+## Parking between collections with the lamp enabled
+
+Session `abi7500-plr-park-001` ran on **2026-10-10, 13:05:55.402–13:10:17.308 UTC**, under
+explicit approval to verify and close the illumination path between collections while keeping
+the lamp warm. It used the existing sealed SYBR Green plate and the same constant-30 °C thermal
+program and 30-image exposure plan as `plr-iso30-001`. The added setting was
+`CollectionPlan(..., park_between_collections=True)`. It commands absolute position 0 after
+both collections, waits for stationary readback, verifies unchanged lamp power 1, and persists
+that evidence before recording a complete collection. The same hold/run identity must still
+match after parking. No home command or calibration write is sent by this option.
+
+### Optical-path check
+
+Before the thermal Start, eight idle diagnostic frames compared lamp-off/filter 5,
+lamp-on/position 0, lamp-on/filter 5, then lamp-on/position 0 again, at 5 and 30 ms each.
+The reported sample temperature was 25.0 °C for these checks. Lamp power 1 settled for five
+seconds before the first parked read; subsequent diagnostics added warmup before the thermal
+run. At **unsaturated 5 ms**, full-image mean counts were:
+
+| State | Mean camera count |
+|---|---|
+| Lamp off, physical filter 5 | 129.296 |
+| Lamp on, position 0 before open read | 134.069 |
+| Lamp on, physical filter 5 | 395.737 |
+| Lamp on, position 0 after open read | 134.050 |
+
+After subtracting the lamp-off baseline, position 0 retained approximately **1.8% of the
+open-path signal**, or **98.2% suppression**. A small exposure-dependent residual remained.
+Both parked observations passed the prepared gate (open-minus-dark mean above 10 counts;
+parked-minus-dark no more than the larger of 3 counts or 5% of open-minus-dark). The 30 ms open
+image clipped 15,073 pixels above 4000, so it is not used to quantify linear attenuation.
+Camera suppression supports the optical-path interpretation; it does **not** directly measure
+excitation irradiance at the sample or prove complete darkness at the wells.
+
+### Synchronized acquisition and comparison
+
+The thermal program completed normally with matching tagged history reporting **212 seconds**.
+There was one prepare/upload/Start, **38 CJ/CC/CD** operations (eight diagnostics plus 30
+scheduled images), no retry, Stop, idle-target write, homing, reconnect or plate movement.
+Lamp enable/power stayed at 1 throughout the two collections and their intervening interval.
+The USB audit validated exact framing, checksums, sequence IDs, counted reads and allowed commands.
+
+| Collection | Scheduled frames | Hold remaining before / after parking | First to last frame | Sample at frame boundaries |
+|---|---|---|---|---|
+| 1 | 15 | 44 / 13 s | 25.322 s | 30.0 °C |
+| 2 | 15 | 45 / 13 s | 25.361 s | 30.0 °C |
+
+First exposures were **101.669 seconds apart**. Both collection records contain stationary
+position 0 and lamp `0001 0001` readback. All **960 selected well measurements were unflagged**;
+unused longer exposures can still clip. Cached retrieval returned identical results with no USB I/O.
+
+The comparison below uses a fixed exposure and the same 96 positive wells in all four images
+(two from each session), with **zero well pixels above 4000**. Values are median
+collection-2/collection-1 ratios after background/exposure correction, before uniformity.
+Channel names identify optical assignments, not spectrally unmixed dye quantities.
+
+| Vendor channel | Physical position | Exposure | Earlier unparked 30 °C | Parked 30 °C |
+|---|---|---|---|---|
+| 1 — SYBR/FAM | 5 | 5 ms | 0.9394 | **0.9921** |
+| 2 — VIC/JOE | 4 | 5 ms | 0.9255 | **0.9905** |
+| 3 — NED/TAMRA/Cy3 | 3 | 5 ms | 0.9908 | 0.9963 |
+| 4 — ROX/Texas Red | 2 | 5 ms | 0.9935 | 0.9961 |
+| 5 — Cy5 | 1 | 540 ms | 0.9894 | 0.9938 |
+
+The SYBR-channel decline was approximately **0.8% instead of 6.1%**, and vendor channel 2
+approximately **0.9% instead of 7.5%**. Ring-subtracted ratios before calibration were 0.99208
+and 0.99050, respectively. Independent original-word/NumPy processing matched all **5,760**
+well/exposure extractions and candidates across both sessions. Calibration hashes matched;
+no drift correction was applied.
+
+This supports a contribution from inter-collection optical state, but does not prove
+photobleaching. Each condition has only one run on the same aged plate; prior illumination,
+time and extra diagnostic warmup differ. Wells are not independent run replicates. The
+vendor sends **`0x67` home after each burst**, verified in both the native collection-end idle
+path and original capture frames 11213/15211. Earlier timing comparisons that counted only
+absolute `0x69` moves overlooked those home commands. The parked session tested an absolute
+move to 0, not homing; a possible alignment benefit from resetting the wheel remains untested.
+Current calibration validity, physical well labeling and assay accuracy remain unverified.
+
+Cleanup confirmed inactive state 2, lamp `0000 0002`, stationary filter 0, and sample/block/cover
+**30.0/29.9/104.6 °C**, then closed USB. No cooling command was sent; the cover remained hot.
+Full evidence stays outside Git in `abi7500-research/captures/abi7500-plr-park-001/`, including
+38 original frames, executed source, journals, calibration inputs, diagnostics, per-well
+comparisons, command audit and plots. USB transcript SHA-256:
+`4c416d40c41caa29e56f458ff6421fc1a6595cbc0bf51fad01b28d3eb9cfc09c`.
+
+(abi7500-homing-validation)=
+## Native homing versus absolute parking
+
+Session `abi7500-plr-home-001` ran on **2026-10-10, 13:28:20.961–13:35:58.309 UTC**, with explicit
+approval for one four-collection, 60-image comparison. It used the existing sealed plate,
+persistent journal, lamp power 1 and a common **30-second warmup at position 0** before Start.
+The thermal program repeated 30 °C/40 s then 30 °C/60 s four times. Collection began in each
+second hold with the same short exposures: physical position 1 at 540/180/60 ms; positions 2–5
+at 30/10/5 ms. `park_between_collections=True, home_after_collections=(2, 4)` requested end
+operations **park → home → park → home**, without extra diagnostic images.
+
+### Control and timing
+
+The 400 seconds of programmed holds completed normally, with matching tagged history reporting
+**416 seconds**. The first active observation followed Start acknowledgement by 1.002 seconds.
+All 60 frames had a reported sample temperature of **30.0 °C** immediately before exposure and
+after transfer. Both native homes returned stationary position 0 and unchanged lamp `0001 0001`.
+The homing operation is private to an explicitly reserved collection; it is not an untracked
+public reset command. Plan ordinals and `homing_requested` are persisted before movement.
+
+| Collection | End operation | Hold remaining before collection / after closure | First to last frame | Command dispatch to first stationary observation |
+|---|---|---|---|---|
+| 1 | Absolute park (`0x69`) | 45 / 12 s | 26.121 s | 3.471 s |
+| 2 | Native home (`0x67`) | 45 / 9 s | 26.288 s | 5.955 s |
+| 3 | Absolute park (`0x69`) | 44 / 11 s | 26.826 s | 3.591 s |
+| 4 | Native home (`0x67`) | 45 / 9 s | 26.757 s | 6.000 s |
+
+The home waits observed 33 and 34 busy motor replies before stationary readback. Dispatch-to-readback
+intervals include USB/polling latency; they are not exact mechanical motion durations. Each
+operation fit within its hold. Lamp commands remained unchanged between collections. The full
+USB audit verified framing/checksums, sequence IDs, transfer counts and the allowed command list:
+one prepare/upload/Start, **60 CJ/CC/CD**, exactly two home commands, and no Stop, idle-target,
+plate movement, firmware/calibration/counter write, reconnect or command retry. Cached collection
+retrieval returned identical saved results without USB I/O.
+
+### Signal and image comparison
+
+All **1,920 selected well/channel/collection measurements were unflagged** by the native saturation
+rule. Unused longer exposures can still clip. The table compares the same **96 positive wells
+across all four collections**, requiring zero well pixels above 4000 at the fixed exposure.
+Values are median next-collection/preceding-collection ratios after background/exposure correction,
+before uniformity. Channel labels do not identify unmixed dye quantities.
+
+| Vendor channel | Physical position | Exposure | 1 → 2, after park | 2 → 3, after home | 3 → 4, after park |
+|---|---|---|---|---|---|
+| 1 — SYBR/FAM | 5 | 5 ms | **0.99182** | **0.99529** | **0.99574** |
+| 2 — VIC/JOE | 4 | 5 ms | 0.99005 | 0.99327 | 0.99478 |
+| 3 — NED/TAMRA/Cy3 | 3 | 5 ms | 0.99689 | 0.99937 | 1.00093 |
+| 4 — ROX/Texas Red | 2 | 5 ms | 0.99660 | 0.99897 | 0.99973 |
+| 5 — Cy5 | 1 | 540 ms | 0.99363 | 0.99596 | 0.99779 |
+
+SYBR-channel declines were **0.82%, 0.47% and 0.43%**, respectively; vendor channel 2 declines
+were 0.99%, 0.67% and 0.52%. The first-exposure intervals were 102.044, 102.729 and 101.327 seconds.
+The operations are assigned to the interval *after* their collection, not to the images taken
+before the operation. The final home validates control/readback only: it has no subsequent image.
+
+Independent original-word cropping and NumPy ROI/ring extraction reproduced all **5,760 unique
+well/exposure extractions and candidates**. Ring-subtracted SYBR ratios before calibration were
+0.99181, 0.99528 and 0.99573. Fourier whole-image registration estimated at most 0.02 pixel per
+axis across the first parked interval, 0.02 after home and 0.01 after the final parked interval,
+considering all 15 matched exposure pairs per interval. These are descriptive registration
+estimates, not physical alignment bounds, and do not exclude optical changes other than translation.
+
+This validates native collection-end homing on the reference C9254-03/G2.10 instrument within
+this tested timing budget. It does **not** demonstrate an additional alignment or stability
+benefit over absolute parking: the last parked interval was similar to the home interval and
+might retain a home-induced alignment change. There is only one fixed-order run on an aged
+plate, with one imaged home interval and two parked intervals. Lamp warmup, plate history and
+time remain potential contributors; wells are not independent run replicates. No drift correction
+or automatic switch to homing was added. Homing remains explicit and older plans keep their
+original behavior. Current calibration validity, physical well labeling, photobleaching mechanism,
+broader thermal programs and quantitative assay accuracy remain unverified.
+
+Cleanup confirmed inactive state 2, stationary filter 0, lamp `0000 0002`, and sample/block/cover
+**30.0/30.0/105.2 °C**, then closed USB. The cover remained hot; no cooling command was sent.
+Full evidence is outside Git in `abi7500-research/captures/abi7500-plr-home-001/`: original frames,
+source, journals, calibration inputs, complete USB trace, movement timings, well measurements,
+independent comparisons and plots. USB transcript SHA-256:
+`9e4485c61085740326765abc59d074db2f6e3d2de45d10768fb084c56749a690`.
+
+
+(abi7500-cycling-home-validation)=
+## Two thermal cycles with collection-end homing
+
+Session `abi7500-plr-cychome-001` ran on **2026-10-10, 14:00:31.851–14:04:28.959 UTC**,
+with fresh approval for one next-step session. It combined the previously checked thermal
+program and short exposures with native homing after **both** collections and the scheduler's
+checkpoint-only progress reads. The existing sealed plate was retained.
+
+The program repeated **35 °C/15 s then 30 °C/60 s twice**, with collection in each 30 °C hold.
+Physical filter 1 used 540/180/60 ms; filters 2–5 used 30/10/5 ms. The thermal upload and exposure
+choices match `plr-lowexp-001`. This session used lamp power 1 and a **30-second warmup at
+position 0**, compared with five seconds in that earlier session. The plan explicitly set
+`park_between_collections=True, home_after_collections=(1, 2)`, with a 45-second read window
+and 900-second overall observation budget. There were **30 scheduled images and no diagnostic
+exposures**. Thermal timing remained on the instrument.
+
+### Completion, timing and saved progress
+
+The 150 seconds of programmed holds completed normally; matching tagged run history reported
+**197 seconds** including the thermal transitions. The first active observation followed Start
+acknowledgement by **1.024 seconds**. Every frame's before/after status identified
+the intended run and hold, and reported sample **30.0 °C**. Both homes returned stationary
+position 0 with lamp `0001 0001` before the collection was accepted.
+
+| Collection | Hold remaining before collection / after closure | First to last frame | Home dispatch to first stationary observation |
+|---|---|---|---|
+| 1 | 44 / 8 s | 27.110 s | 6.154 s |
+| 2 | 44 / 7 s | 27.763 s | 5.947 s |
+
+The observed home intervals include USB and polling latency. Motor polling observed
+34 and 33 busy replies, respectively. Both operations fit inside their holds; the second home
+has no following acquisition and validates motion/readback only. First exposures were
+**96.202 seconds** apart.
+
+The full transcript audit verified packet framing/checksums, sequence IDs and the permitted
+command list: one prepare/upload/Start, **30 CJ/CC/CD**, ten absolute filter selections and two
+native homes. There was no Stop, idle-target write, plate-loading movement, reconnect, retry,
+firmware change or calibration/counter write. Lamp commands remained unchanged between reads.
+Saved progress returned the same checkpoints as the collection results, and both the explicit
+progress read and repeated completed-result retrieval caused **zero USB I/O**. Progress polling
+uses checkpoints without reloading accumulated image payloads; this run does not establish a
+worst-case timing bound for longer programs.
+
+### Fluorescence comparison
+
+All **960 selected well/channel/cycle measurements were unflagged** by the native saturation
+rule. Some unused longer exposures still clip. Independent cropping and NumPy ROI/ring
+processing reproduced all **2,880 current well/exposure extractions and candidates**; with the
+two earlier comparison sessions, 8,640 such comparisons matched.
+
+The table uses the same **96 positive, unclipped wells in all six observations** and fixed
+exposures. Ratios are median cycle-2/cycle-1 background/exposure-corrected candidates before
+uniformity. Channel labels do not identify unmixed dye quantities.
+
+| Vendor channel | Physical filter | Fixed exposure | Earlier 35/30 °C, last filter selected | Earlier constant 30 °C, absolute park | This 35/30 °C run, native home |
+|---|---|---|---|---|---|
+| 1 — SYBR/FAM | 5 | 5 ms | 0.92276 | 0.99210 | 0.99054 |
+| 2 — VIC/JOE | 4 | 5 ms | 0.89784 | 0.99055 | 0.98877 |
+| 3 — NED/TAMRA/Cy3 | 3 | 5 ms | 0.98692 | 0.99629 | 0.99693 |
+| 4 — ROX/Texas Red | 2 | 5 ms | 0.99172 | 0.99615 | 0.99580 |
+| 5 — Cy5 | 1 | 540 ms | 0.98769 | 0.99376 | 0.99368 |
+
+SYBR-channel decline was **0.95%**, versus **7.72%** in the earlier cycling session and 0.79%
+in the constant-30 °C parking session. Channel 2 declined 1.12%, versus 10.22% and 0.95%.
+The current SYBR ratio before calibration (ring-subtracted pixels) was 0.99053, so calibration
+processing does not create this difference. Whole-image Fourier registration estimated shifts
+of at most 0.01 pixel per axis across all 15 matched exposure pairs; these are descriptive
+estimates, not physical alignment bounds.
+
+This validates the combined two-cycle acquisition, native homing and updated scheduler on the
+reference instrument. The smaller signal decline is consistent with the earlier closed-path
+results, but does not isolate a mechanism or show homing superior to absolute parking. These
+are chronological sessions on one aged plate, with different prior illumination and lamp
+warmup; the constant-temperature comparison also differs in thermal timing. There is only one
+between-collection interval in the current run. Wells are not independent run replicates, and
+plotted well percentiles are not confidence intervals. Photobleaching, current calibration
+validity, physical well labeling, longer/hotter programs and quantitative assay accuracy remain
+unverified. No drift normalization or automatic change to collection defaults was introduced.
+
+Cleanup confirmed inactive state 2, stationary filter 0, lamp `0000 0002`, and sample/block/cover
+**30.0/30.0/105.3 °C**, then closed USB. The cover remained hot; no cooling command was sent.
+The 159-test ABI package, scoped typing and lint/format checks covered the unchanged driver
+source before this run; six offline runner scenarios checked success and failure cleanup.
+Full evidence remains outside Git in `abi7500-research/captures/abi7500-plr-cychome-001/`,
+including source snapshots, journals, calibration inputs, original frames, USB trace,
+measurements and comparisons. Transcript SHA-256:
+`5c4be1060a0e9f619137e09dc4441d60b1033eeb4b064538cbe7c17af3f5baf3`.
+
+
+(abi7500-sybr10-validation)=
+## Ten-cycle SYBR-channel acquisition and portable export
+
+The approved `abi7500-plr-sybr10-001` session ran **2026-10-10, 14:25:23.872–14:42:10.185 UTC**
+on the reference C9254-03/G2.10 instrument from Ubuntu, with the existing sealed plate.
+It repeated **35 °C/15 s then 30 °C/60 s ten times**, for 750 seconds of programmed holds.
+Each 30 °C hold collected **30/10/5 ms** at physical filter **5** (vendor channel 1, SYBR/FAM),
+giving **30 images and 960 selected well/cycle measurements**. Other channels were not collected.
+The plan used a 45-second read window, native home after all ten collections, lamp power 1,
+30-second lamp warmup at position 0 and an **1800-second overall observation budget**.
+This was an engineering time series, not an amplification experiment.
+
+### Control, timing and original data
+
+The program completed normally with matching tagged history of **964 seconds**.
+The first active observation followed Start acknowledgement by 1.030 seconds.
+Every frame was associated with the intended run and hold; all before/after sample estimates
+were **30.0 °C**. Every home verified stationary position 0 with the lamp
+still enabled. Home dispatch to first stationary observation ranged from **5.970 to
+6.158 seconds**, including polling latency.
+
+| Cycle | Hold remaining before / after collection and home | First frame to last frame | Median 5 ms signal / cycle 1 |
+|---|---|---|---|
+| 1 | 45 / 30 s | 3.869 s | 1.00000 |
+| 2 | 45 / 30 s | 3.696 s | 0.98952 |
+| 3 | 44 / 30 s | 3.864 s | 0.98473 |
+| 4 | 45 / 30 s | 3.578 s | 0.98188 |
+| 5 | 45 / 30 s | 3.760 s | 0.97912 |
+| 6 | 45 / 30 s | 3.813 s | 0.97639 |
+| 7 | 44 / 29 s | 3.807 s | 0.97430 |
+| 8 | 44 / 29 s | 3.858 s | 0.97142 |
+| 9 | 44 / 29 s | 3.930 s | 0.96921 |
+| 10 | 44 / 29 s | 3.759 s | 0.96691 |
+
+The byte audit verified one prepare/upload/Start, 30 CJ/CC/CD sequences, ten physical-filter-5
+selections and ten native homes. No Stop, idle-target write, reconnect or acquisition replay
+occurred. Progress reads and cached completed-result retrieval added no USB traffic.
+This validates ten repeats on this host within this tested budget; it is not a worst-case timing
+bound or a validation of longer, hotter or multi-channel programs.
+
+### Measurements and export
+
+**0 of 960 selected results** were flagged by the native saturation
+rule. Unused exposure candidates, including any clipped pixels, remain available. Independent
+NumPy cropping and ROI/ring calculations reproduced all **2,880 well/exposure extractions and
+normalized candidates**; independent exposure selection and binary32 uniformity multiplication
+matched all **960 selected results**.
+
+The fixed-5-ms trend used the same **96 positive wells with zero well pixels above 4000
+in every cycle**. The median cycle-10/cycle-1 ratio was **0.96691** after background
+and exposure correction (-3.31% change), with well 5th–95th percentiles
+0.95993–0.97878. The corresponding ring-subtracted ratio was
+**0.96690**. These percentiles describe wells, not confidence
+intervals or independent run replicates. Whole-image registration estimated at most
+0.02 pixel per axis relative to cycle 1; this is not
+a physical alignment bound.
+
+The three-image bursts change illumination duration and timing compared with earlier
+fifteen-image collections. One chronological series on an aged plate cannot isolate
+photobleaching, lamp drift or other mechanisms. No correction was applied to remove temporal
+drift. Calibration validity, physical well labeling and quantitative assay accuracy remain
+unverified.
+
+After cleanup, `export_run()` produced a portable ZIP. Its 30 original images matched byte for
+byte, and all 960 selected values plus 2,880 exposure candidates matched the saved evidence.
+Export issued **zero USB calls** and left the journal unchanged. Original images, calibration
+bytes, saturated candidates, metadata and content hashes are retained.
+
+Cleanup confirmed inactive state 2, stationary filter 0 and lamp `0000 0002`;
+sample/block/cover were **30.0/29.9/105.2 °C**.
+The cover remained hot; closing USB did not cool it. The executed source matched the version
+with 166 passing package tests; six offline runner scenarios covered setup rejection and failure
+cleanup. Full evidence remains outside Git in `abi7500-research/captures/abi7500-plr-sybr10-001/`.
+USB transcript SHA-256: `6a2691b932dfd162a039d579887705a87b205a02e6fb1aa9411b3dcf6243b11f`.
+
+(abi7500-wellmap-validation)=
+## Physical well labels with a known-pattern fluorescein plate
+
+The approved `abi7500-plr-wellmap-001` session ran **2026-10-10,
+15:36:49.610–15:38:51.489 UTC** on the reference instrument from Ubuntu.
+The operator loaded a VWR **89218-296** 96-well plate with a clear cover and confirmed
+**A1 at the back-left**, viewed from the front of the instrument. Wells **A1, A4, C9, F3,
+H7 and H12** each contained **20 µL of 3.2 µM fluorescein**; the other 90 wells were empty.
+The physical labels and orientation are operator-provided ground truth. The diluent and exact
+seal product were not reported; empty wells are not solvent-matched blanks.
+
+PLR executed one **30 °C/60-second hold**, collecting **5, 10 and 30 ms**, in that order,
+at physical filter **5** (vendor channel 1). Lamp power was 1, with 30 seconds of warmup
+at position 0, a 45-second read window and one native home after the burst.
+Thermal completion was normal, with matching tagged history of **68 seconds**.
+The collection and home began with 44 seconds remaining and finished with 29 seconds remaining.
+The three-frame interval was **3.735 seconds**; every before/after sample estimate was **30.0 °C**.
+
+### Label and image processing checks
+
+**All six expected wells were the six brightest regions in every image**, both by raw ROI mean
+and by ring-subtracted sum. No rotation, mask, labeling or calibration adjustment was made to
+obtain the match. Independent NumPy reconstruction of the original camera payloads reproduced
+the PLR crop; independent ROI and ring calculations matched all **288 well/exposure extractions**.
+
+| Exposure | Positive-well raw mean range | Empty-well raw mean range | Native saturated wells |
+|---|---|---|---|
+| 5 ms | 350.43–545.79 | 129.28–134.64 | None |
+| 10 ms | 573.81–969.61 | 130.29–139.82 | None |
+| 30 ms | 1448.19–2403.40 | 133.34–157.86 | A4, C9, F3, H7 |
+
+The 5 ms and 10 ms images had no clipped well pixels. At 30 ms the four flagged wells also
+contained clipped pixels. All candidates and flags were retained; exposure selection produced
+**96 results with no selected saturation flags**, using shorter images where required.
+These raw pixel statistics establish signal separation, not a concentration calibration.
+
+The six-marker pattern distinguishes the expected mapping from row reversal, column reversal,
+180° reversal and column-major labeling. The expected mapping matched all six markers;
+those alternatives matched 0, 0, 2 and 2 respectively. This validates the physical orientation
+and **these six labels in filter 5 on this plate**. It does not exclude every arbitrary
+permutation of all 96 wells or establish other channels, current calibration validity,
+spectral unmixing or quantitative assay accuracy.
+
+### Cleanup and preserved evidence
+
+The byte audit verified one load, one prepare/upload/Start, three CJ/CC/CD sequences,
+one filter selection and one native home. There was no Stop, idle-temperature write, reconnect
+or exposure replay. After normal completion and matching run-history reconciliation,
+cleanup disabled the lamp and verified stationary filter 0. A single journaled `0x72`
+plate-release command was acknowledged; `0x73` polling confirmed state 2 → 1 → 0.
+USB was then closed. The last sample/block/cover readings were **30.0/29.8/105.0 °C**;
+the cover remained hot. Plate release in this session used the audited research runner;
+`stop()` still only closes communication and does not release or cool the instrument.
+
+The preceding separately approved `abi7500-plr-release-001` session used the same release command
+after reconciling the completed ten-cycle run. The operator confirmed that the drawer opened
+before loading this known-pattern plate. No firmware or calibration changes were made.
+
+Offline `export_run()` retained all three original camera transfers byte for byte, all 96 selected
+values and all 288 candidates, with zero USB operations and an unchanged journal. The portable
+archive is `plr-wellmap-001-results.zip`, SHA-256
+`f517de3dc9dfdd163e0833c03bd54caaea5c26d14ec2832eee5b45d73816f7cc`.
+The unchanged driver passed **166 package tests** before this session; eight offline runner
+scenarios checked setup rejection, success and failure cleanup, including ambiguous release.
+Full frames, calibration inputs, USB trace, source snapshots, operator confirmation, independent
+analysis and the plate-map figure remain outside Git in
+`abi7500-research/captures/abi7500-plr-wellmap-001/`.
+USB transcript SHA-256: `27bc8cf4c97b4d3702c3c132789b182c2958d579eed6e8971c659cf19a6c2a9c`.

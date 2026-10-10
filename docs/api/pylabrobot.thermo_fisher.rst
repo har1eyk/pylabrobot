@@ -13,16 +13,21 @@ Experimental thermal/optical run control requires a persistent journal. Wider th
 cancellation and recovery after communication faults remain hardware unverified.
 Direct Ubuntu sessions verified illuminated snapshots at filter positions 1 and 5 and lamp
 shutdown. Offline camera processing reproduces all 960 vendor well integers and corrected values
-from one recorded acquisition. Thirty images were collected within two scheduled holds, followed
-by timeout/cancellation before final-hold completion. Normal optical-run completion and optical
-recovery remain unverified;
+from one recorded acquisition. Thirty images were collected within two scheduled holds and the
+thermal program completed normally. Optional collection-end parking keeps the lamp enabled and
+verifies stationary position 0; explicit collection ordinals can request native homing instead.
+Optical fault recovery remains unverified;
 current calibration validity is not established. See
 :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/thermal-runs` for limits and recovery behavior.
+``get_collection_records(run_id)`` reads saved optical progress without USB traffic or loading
+camera payloads; ``get_collections(run_id)`` retrieves the original complete or partial images.
+``export_run(run_id, path, background=..., uniformity=..., masks=...)`` packages a completed
+optical run as a ZIP containing original images, calibration files, per-well CSV tables and
+content hashes, without instrument I/O. See the export example in the collection guide below.
 Snapshot behavior is documented in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/raw-snapshots`.
 See :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/optics-and-measurements` for optical control,
 calibration provenance and measurement limits. The experimental collection scheduler is documented
-in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`; two complete collections were
-checked, but the complete thermal program has not yet finished normally with optical acquisition.
+in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
 
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx
 

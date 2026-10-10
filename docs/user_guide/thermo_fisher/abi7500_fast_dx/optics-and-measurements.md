@@ -222,6 +222,11 @@ The API verifies a complete, stationary, unchanged acquisition and matching filt
 It retains the entire acquisition, original mask bytes and their SHA-256. It cannot verify an
 active instrument/mask association or physical A1 orientation from these files alone.
 
+The {ref}`known-pattern plate validation <abi7500-wellmap-validation>` independently checked
+physical orientation and labels A1, A4, C9, F3, H7 and H12 in filter 5 using three images of
+fluorescein wells. The existing crop, rotation and masks matched without modification.
+That experiment does not establish every well/channel or certify current calibration.
+
 The parser supports the reference 96-well, uint16 matrix format and rejects unsupported schemas,
 references, sizes, out-of-image coordinates, empty masks, truncation and trailing bytes. It uses
 every nonzero mask entry once, rather than generating circles or weighting pixels by mask values.
