@@ -274,6 +274,18 @@ The Ubuntu observation session reported an inactive sequence while elapsed time 
 104.8 °C. Neither advancing elapsed time nor a nonzero hold value proves an active sequence;
 an inactive sequence does not imply that the cover is cool.
 
+## Internal plate state and release
+
+Native `TC9700Control::EjectPlate` dispatches empty command `0x72`; `GetBlockState` uses `0x73`
+with a two-byte big-endian reply. Captured states are unloaded 0, moving 1 and loaded 2. A release
+acknowledgement precedes motion completion. The external drawer position and plate presence are
+not established by this response. `plate_release_vectors.json` retains original successful and
+cancelled vendor-run release exchanges plus the Ubuntu status/release transfers.
+
+The public {ref}`plate API <abi7500-plate-release>` requires matching finished-run evidence and
+parked, dark optics, commits release intent before dispatch, then observes motion without replay.
+This is distinct from `0x71` loading during run preparation and from thermal cancellation.
+
 ## Thermal program records
 
 `ThermalProgram` encodes finite cycle/hold records under `0x12`. The native

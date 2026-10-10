@@ -269,6 +269,13 @@ or switch journals. A cancellation request can obtain the run lock between compl
 cancelling the Python collector task interrupts its current operation and records uncertainty.
 Hardware recovery after an ambiguous exposure remains unverified.
 
+After terminal cleanup, call `release_plate(run_id)` to confirm the internal plate mechanism is
+unloaded, then close USB in a `finally` block. Release independently checks fresh matching history
+and inactivity; a cached completed result cannot authorize another run's plate. An uncertain
+release must be reconciled with the same ID before other actuation. See
+{ref}`plate release and recovery <abi7500-plate-release>` and the complete cleanup example in the
+[notebook](hello-world.ipynb). Releasing the plate does not cool the heated cover.
+
 ## Process saved collections offline
 
 ```python

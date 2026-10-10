@@ -59,8 +59,8 @@ class RunJournal:
         )
         versions = self._db.execute("SELECT version FROM format").fetchall()
         if not versions:
-          self._db.execute("INSERT INTO format VALUES (1)")
-        elif versions != [(1,)]:
+          self._db.execute("INSERT INTO format VALUES (2)")
+        elif versions not in ([(1,)], [(2,)]):
           raise ABI7500RunError("Unsupported thermal run journal format")
       return self._db
     except BaseException:
@@ -90,6 +90,10 @@ class RunJournal:
         raise ABI7500RunError("Journal belongs to a different instrument or firmware")
       if not prior.is_terminal and prior.run_id != permitted_run:
         raise ABI7500RunError(f"Resolve run {prior.run_id!r} before another action")
+      if prior.plate_release_state == "uncertain" and prior.run_id != permitted_run:
+        raise ABI7500RunError(
+          f"Resolve plate release for run {prior.run_id!r} before another action"
+        )
     for key, value in db.execute("SELECT acquisition_id, record FROM acquisitions"):
       acquisition = CameraAcquisition.from_dict(json.loads(value))
       if acquisition.acquisition_id != key:
@@ -104,6 +108,10 @@ class RunJournal:
     """Hold process ownership and refuse optics changes during an unresolved thermal run."""
     self._check_owner(camera_description, thermal_version)
 
+  def check_plate_release(self, run: ThermalRun) -> None:
+    """Allow observation of this run's release while blocking other unresolved operations."""
+    self._check_owner(run.camera_description, run.thermal_version, run.run_id)
+
   def reserve(self, run: ThermalRun) -> None:
     """Persist a unique intent, refusing another unresolved run or a different instrument."""
     db = self._open()
@@ -115,6 +123,9 @@ class RunJournal:
     """Commit a checkpoint before a subsequent device action and return it unchanged."""
     db = self._open()
     with db:
+      if run.plate_release_state != "not_requested":
+        # Commit the version with the intent so older controllers cannot ignore release state.
+        db.execute("UPDATE format SET version = 2")
       cursor = db.execute(
         "UPDATE runs SET record = ? WHERE run_id = ?", (json.dumps(run.to_dict()), run.run_id)
       )

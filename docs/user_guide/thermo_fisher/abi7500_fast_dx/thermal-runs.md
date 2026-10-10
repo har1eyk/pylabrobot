@@ -21,7 +21,9 @@ The driver checks inactivity, prepares/uploads the program, loads the plate if n
 the loaded state, checks inactivity again, then sends Start once. Ensure the sealed plate is
 physically ready for loading before this operation. It uses the instrument's existing cover
 behavior, which the reference run observed around 105 °C; a low sample setpoint does not limit the
-cover to that temperature. Custom cover settings, Fast mode and plate ejection are not implemented.
+cover to that temperature. Custom cover settings and Fast mode are not implemented.
+After a finished run, `release_plate(run_id)` can release the internal plate mechanism;
+it does not open the external drawer or cool the cover.
 An explicit optional `collection_plan` enables [scheduled optical reads](synchronized-acquisition.md);
 without that plan this API remains thermal-only.
 
@@ -105,6 +107,63 @@ An unresolved timeout is retained in the journal and does not imply physical can
 the host operation; it does not request instrument cancellation. `cancel_run()` does not eject the
 plate or set a cooler cover temperature, and its idle-target acknowledgement does not mean the
 sample has reached 25 °C. Poll status for the actual reported temperatures.
+
+(abi7500-plate-release)=
+## Plate status and explicit release
+
+`get_plate_status()` returns `ABI7500PlateStatus` with the complete two-byte payload, `state_code`
+and `state`: `unloaded` (0), `moving` (1), `loaded` (2), or `unknown`. This is the internal mechanism;
+state 0 does not prove that the external drawer is open, that a plate is present, or that it is cool.
+This query requires a connection but no run journal and does not move the mechanism.
+
+`release_plate(run_id, timeout=30)` requires a journaled `completed`, `cancelled` or `aborted` run on
+G2.10. It checks the connected identity and fresh status/history against the exact run ID, `PLR`
+user label, start record and outcome. The thermal controller must be inactive, the lamp off and
+filter 0 stationary. These checks apply even when `get_run()` returned a cached terminal result.
+An unfinished or `not_started` checkpoint cannot authorize release. Reconcile/cancel an owned
+active run first; ambiguous ownership or failed loading requires inspection, not a release bypass.
+
+For an approved thermal session, after observations or explicit cancellation:
+
+```python
+try:
+    run = await instrument.get_run(run_id)
+    if run.state not in ("completed", "cancelled", "aborted"):
+        raise RuntimeError("Resolve the run before cleanup")
+    if run.plate_release_state != "uncertain":
+        await instrument.set_lamp(False)
+        await instrument.set_filter_position(0)
+    plate = await instrument.release_plate(run_id, timeout=30)
+    print(plate.state)
+finally:
+    await instrument.stop()
+```
+
+Keep hands clear during release. A loaded mechanism receives one empty `0x72` command; the driver
+then polls `0x73` until unloaded and repeats the ownership/optics checks. Already unloaded needs
+no motion. The method does not cool the sample or cover, cancel a run, or acquire images.
+`stop()` only closes communication; it never performs this cleanup implicitly.
+
+`ThermalRun.plate_release_state` is `not_requested`, `uncertain`, or `released`. The driver commits
+`uncertain` **before** dispatch. Lost acknowledgement, timeout, Python cancellation or process
+failure cannot cause a second release command. After a communication fault, call `stop()`/`setup()`
+with the same journal, then `release_plate()` with the same run ID. This only observes the existing
+attempt. Do not repeat the lamp/filter setters while a release is uncertain: the journal blocks
+other actuation until release is confirmed. A still-loaded/moving mechanism times out without
+replaying the command. If the plate moves after confirmed release, the old run ID cannot release
+it again. Do not change IDs or restore an older journal to bypass this guard.
+
+The polling budget starts after acknowledgement (or during reconciliation); each in-flight
+exchange can additionally take up to `command_timeout`. Timeout does not imply that motion stopped.
+Current status and history must still match before an unloaded result is accepted. The journal
+reads format 1 and 2; committing release state upgrades format 1 to 2 in the same transaction so
+older drivers cannot ignore it. Reading an existing format-1 journal alone does not upgrade it.
+
+Original vendor release packets and Ubuntu loaded → moving → unloaded transfers are retained in
+`plate_release_vectors.json`. The {ref}`known-pattern report <abi7500-wellmap-validation>` records
+successful research-runner release and the preceding operator-confirmed drawer opening. Public
+API guards, restart behavior and injected failures are tested offline; the public method itself
+and ambiguous-failure recovery still need a separately approved hardware session.
 
 ## Remaining hardware validation
 

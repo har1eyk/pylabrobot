@@ -7,6 +7,8 @@ from typing import Literal, Optional
 from .protocol import ABI7500ProtocolError
 
 SequencePhase = Literal["inactive", "ramping", "holding", "paused", "modified", "unknown"]
+PlateState = Literal["unloaded", "moving", "loaded", "unknown"]
+_PLATE_STATES: dict[int, PlateState] = {0: "unloaded", 1: "moving", 2: "loaded"}
 _PHASES: dict[int, SequencePhase] = {
   0: "inactive",
   1: "ramping",
@@ -24,6 +26,32 @@ def _terminated_ascii(data: bytes) -> str:
     return data.split(b"\x00", 1)[0].decode("ascii")
   except UnicodeDecodeError as exc:
     raise ABI7500ProtocolError("Identification string is not ASCII") from exc
+
+
+@dataclass(frozen=True)
+class ABI7500PlateStatus:
+  """Internal plate mechanism state from command 0x73, preserving the original reply.
+
+  ``unloaded`` means the internal mechanism has released the plate. It does not establish that
+  the external drawer is open, that a plate is present, or that the heated cover has cooled.
+  """
+
+  raw_payload: bytes
+
+  def __post_init__(self) -> None:
+    """Require the complete immutable two-byte block-state response."""
+    if not isinstance(self.raw_payload, bytes) or len(self.raw_payload) != 2:
+      raise ABI7500ProtocolError("Plate status must contain two bytes")
+
+  @property
+  def state_code(self) -> int:
+    """Return the big-endian native code, including unrecognized values."""
+    return int.from_bytes(self.raw_payload, "big")
+
+  @property
+  def state(self) -> PlateState:
+    """Interpret captured states without treating an unknown code as stationary."""
+    return _PLATE_STATES.get(self.state_code, "unknown")
 
 
 @dataclass(frozen=True)

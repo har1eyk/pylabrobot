@@ -11,6 +11,9 @@ Connection/status, a completed 35 °C/60-second hold and one start/cancel were c
 :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/hardware-validation` for the tested scope.
 Experimental thermal/optical run control requires a persistent journal. Wider thermal programs, startup
 cancellation and recovery after communication faults remain hardware unverified.
+``get_plate_status()`` reports the internal mechanism state; ``release_plate(run_id)`` requires a
+freshly verified finished run, lamp off and stationary filter 0. Its durable intent prevents command
+replay after an uncertain response. See the plate-release section in the thermal-run guide.
 Direct Ubuntu sessions verified illuminated snapshots at filter positions 1 and 5 and lamp
 shutdown. Offline camera processing reproduces all 960 vendor well integers and corrected values
 from one recorded acquisition. Thirty images were collected within two scheduled holds and the
@@ -39,6 +42,7 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     ABI7500DeviceError
     ABI7500Identity
     ABI7500Status
+    ABI7500PlateStatus
     ABI7500History
     ABI7500RunError
     ThermalRun

@@ -40,5 +40,5 @@ from .image_processing import (
 )
 from .results import SavedFilterData, read_eds_filter_data
 from .run import ABI7500History, ABI7500RunError, ThermalRun
-from .status import ABI7500Identity, ABI7500Status
+from .status import ABI7500Identity, ABI7500PlateStatus, ABI7500Status
 from .thermal_program import ThermalCycle, ThermalProgram, ThermalStep

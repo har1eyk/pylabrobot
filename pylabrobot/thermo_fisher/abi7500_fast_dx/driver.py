@@ -33,7 +33,7 @@ from .run import (
   _validate_run_id,
   _validate_run_program,
 )
-from .status import ABI7500Identity, ABI7500Status
+from .status import ABI7500Identity, ABI7500PlateStatus, ABI7500Status
 from .thermal_program import ThermalProgram
 
 logger = logging.getLogger(__name__)
@@ -333,11 +333,20 @@ class ABI7500FastDx:
     """Read the last thermal history header; this need not describe the active sequence."""
     return ABI7500History(await self._exchange(0x19, 94))
 
+  async def get_plate_status(self) -> ABI7500PlateStatus:
+    """Query the internal plate mechanism without moving it or requiring a run journal.
+
+    The captured codes are unloaded (0), moving (1) and loaded (2). Other codes remain unknown.
+    Unloaded does not mean the external drawer is open or the heated cover is cool.
+    """
+    return ABI7500PlateStatus(await self._exchange(0x73, 2))
+
   def _require_journal(self) -> RunJournal:
     """Require durable identity tracking before exposing any run mutation."""
     if self._journal is None:
       raise ABI7500RunError(
-        "Run control, snapshots and optical control require a persistent run_journal path"
+        "Run control, plate release, snapshots and optical control require a persistent "
+        "run_journal path"
       )
     return self._journal
 
@@ -761,6 +770,117 @@ class ABI7500FastDx:
         return run
       await self._check_run_identity(run)
       return await self._observe_run(run)
+
+  def _check_release_status(self, run: ThermalRun, status: ABI7500Status) -> None:
+    """Require fresh inactivity and the same native run token before accepting plate motion."""
+    if (
+      status.phase != "inactive"
+      or status.state_code not in (1, 2)
+      or status.run_start_record != run.start_record
+    ):
+      raise ABI7500RunError(
+        "Plate release requires an inactive controller on the same finished run"
+      )
+
+  async def _check_release_state(self, run: ThermalRun) -> tuple[ABI7500Status, ABI7500History]:
+    """Bracket matching terminal history and parked, dark optics with current thermal status."""
+    self._check_release_status(run, await self.get_status())
+    history = await self.get_history()
+    expected = "completed" if run.state == "completed" else "aborted"
+    if (
+      history.method_name != run.run_id
+      or history.user_name != "PLR"
+      or history.run_start_record != run.start_record
+      or history.outcome != expected
+    ):
+      raise ABI7500RunError("Plate release history does not match the finished run")
+    optics = await self.get_optical_state()
+    if (
+      not optics.is_stationary
+      or optics.filter_position != 0
+      or optics.lamp_enabled
+      or optics.lamp_power not in (0, 1, 2)
+    ):
+      raise ABI7500RunError("Plate release requires lamp off and stationary filter 0")
+    status = await self.get_status()
+    self._check_release_status(run, status)
+    return status, history
+
+  async def _wait_plate_release(self, run: ThermalRun, timeout: float) -> ABI7500PlateStatus:
+    """Observe a single release attempt; never repeat the command after any failure."""
+    deadline = asyncio.get_running_loop().time() + timeout
+    while True:
+      await asyncio.sleep(min(0.5, self._remaining(deadline, context="plate release")))
+      self._remaining(deadline, context="plate release")
+      plate = await self.get_plate_status()
+      self._remaining(deadline, context="plate release")
+      self._check_release_status(run, await self.get_status())
+      self._remaining(deadline, context="plate release")
+      if plate.state == "unloaded":
+        return plate
+      if plate.state == "unknown":
+        raise ABI7500RunError(f"Unknown plate state during release ({plate.state_code})")
+
+  async def release_plate(self, run_id: str, *, timeout: float = 30.0) -> ABI7500PlateStatus:
+    """Release the plate after an identified finished run, confirming the unloaded state.
+
+    Requires the same persistent journal, a completed/cancelled/aborted run on G2.10, fresh
+    matching inactive status/history, lamp off and stationary filter 0. Keep hands clear of the
+    mechanism. This does not open the external drawer or cool the sample or heated cover.
+
+    An unloaded plate needs no motion. Otherwise one release intent is committed before command
+    0x72. Repeated calls, including after stop()/setup() or a process restart, only observe that
+    attempt: they cannot resend it. An uncertain release blocks other journaled actuation until
+    this method confirms unloaded. Keep the same run ID; a different ID cannot retry a release.
+    A plate reloaded after confirmed release is refused for that run.
+
+    ``timeout`` bounds motion polling after acknowledgement (or on reconciliation). An in-flight
+    exchange can additionally take up to command_timeout; it is allowed to finish before the
+    connection is closed. A timeout or lost reply is not evidence that the mechanism stopped.
+    Fresh ownership/optics checks are repeated after observing unloaded.
+    """
+    _validate_run_id(run_id)
+    if not math.isfinite(timeout) or timeout <= 0:
+      raise ValueError("timeout must be finite and positive")
+    async with self._run_lock:
+      journal = self._require_journal()
+      run = journal.get(run_id)
+      if run is None:
+        raise ABI7500RunError(f"Unknown run {run_id!r}")
+      if (
+        run.state not in ("completed", "cancelled", "aborted")
+        or run.start_record is None
+        or run.start_record in (bytes(9), run.baseline_start_record)
+        or run.thermal_version != "G2.10"
+      ):
+        raise ABI7500RunError("Plate release requires a reconciled finished run on G2.10")
+      journal.check_plate_release(run)
+      await self._check_run_identity(run)
+      await self._check_release_state(run)
+      plate = await self.get_plate_status()
+      if plate.state == "unknown":
+        raise ABI7500RunError(f"Unknown plate state ({plate.state_code}); refusing release")
+      if plate.state != "unloaded":
+        if run.plate_release_state == "released":
+          raise ABI7500RunError(
+            "Plate moved after confirmed release; this run cannot release again"
+          )
+        if run.plate_release_state == "not_requested":
+          if plate.state != "loaded":
+            raise ABI7500RunError("Plate is already moving; refusing a release command")
+          self._check_release_status(run, await self.get_status())
+          run = journal.save(replace(run, plate_release_state="uncertain"))
+          logger.info("Releasing plate after run %s; command will not be replayed", run_id)
+          await self._exchange(0x72, 0)
+        else:
+          logger.info("Reconciling plate release for run %s without repeating motion", run_id)
+        plate = await self._wait_plate_release(run, timeout)
+      status, history = await self._check_release_state(run)
+      journal.save(
+        replace(run, plate_release_state="released", last_status=status, history=history)
+      )
+      logger.info("Plate release confirmed for run %s; cover may remain hot", run_id)
+      return plate
 
   async def _load_run_plate(self, timeout: float) -> None:
     """Load an unloaded plate once, then poll the captured block-state transition to 2."""
@@ -1304,7 +1424,7 @@ class ABI7500FastDx:
         raise
 
   async def stop(self) -> None:
-    """Close USB and stop keepalives; this does not cancel a run or switch off the lamp.
+    """Close USB and stop keepalives; this does not cancel, release the plate or disable the lamp.
 
     Safe to call repeatedly. Use cancel_run() for run cancellation;
     disconnecting a control computer is not evidence that an instrument has stopped heating.

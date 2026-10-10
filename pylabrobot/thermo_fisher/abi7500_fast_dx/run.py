@@ -11,6 +11,7 @@ from .status import ABI7500Status, _terminated_ascii
 from .thermal_program import ThermalProgram
 
 HistoryOutcome = Literal["completed", "aborted", "no_result", "unknown"]
+PlateReleaseState = Literal["not_requested", "uncertain", "released"]
 RunState = Literal[
   "preparing",
   "starting",
@@ -153,6 +154,7 @@ class ThermalRun:
   idle_temperature_set: bool = False
   collection_plan: Optional[CollectionPlan] = None
   collection_error: Optional[str] = None
+  plate_release_state: PlateReleaseState = "not_requested"
 
   def __post_init__(self) -> None:
     """Reject malformed checkpoints before they can authorize instrument writes."""
@@ -176,6 +178,8 @@ class ThermalRun:
       self.collection_plan.points(self.program)
     if self.collection_error is not None and not isinstance(self.collection_error, str):
       raise ValueError("Collection error must be text")
+    if self.plate_release_state not in ("not_requested", "uncertain", "released"):
+      raise ValueError("Invalid plate release state")
 
   @property
   def wire_program(self) -> ThermalProgram:
@@ -209,6 +213,7 @@ class ThermalRun:
       "idle_temperature_set": self.idle_temperature_set,
       "collection_plan": None if self.collection_plan is None else self.collection_plan.to_dict(),
       "collection_error": self.collection_error,
+      "plate_release_state": self.plate_release_state,
     }
 
   @classmethod
@@ -235,4 +240,5 @@ class ThermalRun:
       if data.get("collection_plan") is None
       else CollectionPlan.from_dict(data["collection_plan"]),
       collection_error=data.get("collection_error"),
+      plate_release_state=data.get("plate_release_state", "not_requested"),
     )
