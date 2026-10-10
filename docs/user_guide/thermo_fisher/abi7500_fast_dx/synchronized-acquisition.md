@@ -274,7 +274,10 @@ unloaded, then close USB in a `finally` block. Release independently checks fres
 and inactivity; a cached completed result cannot authorize another run's plate. An uncertain
 release must be reconciled with the same ID before other actuation. See
 {ref}`plate release and recovery <abi7500-plate-release>` and the complete cleanup example in the
-[notebook](hello-world.ipynb). Releasing the plate does not cool the heated cover.
+[notebook](hello-world.ipynb). The public release path and duplicate checks after clean reconnect
+were verified in a separate {ref}`lamp-off hold session <abi7500-trayapi-validation>`; recovery
+after ambiguous communication failure remains unverified. Releasing the plate does not cool the
+heated cover.
 
 ## Process saved collections offline
 

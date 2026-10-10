@@ -1941,7 +1941,7 @@
     "doc_slug": "thermo_fisher/abi7500_fast_dx/hello-world",
     "api": "pylabrobot.thermo_fisher.ABI7500FastDx",
     "api_version": "v1",
-    "notes": "Experimental USB thermal/optical control with guarded plate release. Mild-cycle imaging and six filter-5 physical labels checked. Public release API and fault recovery need hardware validation; current calibration validity unverified."
+    "notes": "Experimental USB thermal/optical control. Mild-cycle imaging, six filter-5 physical labels and public plate release with clean reconnect checked. Broader programs and ambiguous-failure recovery remain unverified; current calibration validity unverified."
   },
   {
     "id": "thermo-fisher-alps",

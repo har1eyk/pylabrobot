@@ -161,9 +161,10 @@ older drivers cannot ignore it. Reading an existing format-1 journal alone does 
 
 Original vendor release packets and Ubuntu loaded → moving → unloaded transfers are retained in
 `plate_release_vectors.json`. The {ref}`known-pattern report <abi7500-wellmap-validation>` records
-successful research-runner release and the preceding operator-confirmed drawer opening. Public
-API guards, restart behavior and injected failures are tested offline; the public method itself
-and ambiguous-failure recovery still need a separately approved hardware session.
+successful research-runner release and the preceding operator-confirmed drawer opening. A separate
+{ref}`public API session <abi7500-trayapi-validation>` verified release after a completed mild hold,
+then repeated the call on the same connection and a fresh driver without another release command.
+Injected failures are tested offline; ambiguous-failure recovery still needs hardware validation.
 
 ## Remaining hardware validation
 

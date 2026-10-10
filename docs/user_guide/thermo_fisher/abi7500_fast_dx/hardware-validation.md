@@ -1112,3 +1112,64 @@ Full frames, calibration inputs, USB trace, source snapshots, operator confirmat
 analysis and the plate-map figure remain outside Git in
 `abi7500-research/captures/abi7500-plr-wellmap-001/`.
 USB transcript SHA-256: `27bc8cf4c97b4d3702c3c132789b182c2958d579eed6e8971c659cf19a6c2a9c`.
+
+
+(abi7500-trayapi-validation)=
+## Public plate release, duplicate calls and clean reconnect
+
+The approved `abi7500-plr-trayapi-001` session ran **2026-10-10,
+16:52:31.867–16:54:07.332 UTC** from Ubuntu with the same sealed patterned VWR 89218-296
+plate. The operator confirmed A1 at the back-left, the drawer closed and hands clear.
+PLR executed one **30 °C/60-second hold with the lamp off**, then used the public
+`release_plate("plr-trayapi-001")` method. No fluorescence images were collected.
+
+### Completed hold and explicit cleanup
+
+The instrument began inactive at sample/block **25.0/25.0 °C**, cover **105.2 °C**,
+filter 0 stationary, lamp off and plate state 0. The driver loaded the internal mechanism once
+and sent one prepare/upload/Start sequence. An initial observation spanning startup remained
+uncertain until fresh evidence established ownership, without another Start. The hold completed
+normally with matching tagged history of **69 seconds**, including the ramp. Holding-phase
+sample estimates ranged **29.8–30.2 °C** during initial settling and remained 30.0 °C later;
+these readings are not independent temperature calibration.
+
+Public lamp-off/filter-0 cleanup verified the existing states and sent no optical mutation.
+`release_plate()` checked the finished run against fresh identity/status/history and optics,
+committed release intent, then sent **one `0x72` command**. Status polling observed loaded 2 →
+moving 1 → unloaded 0. Dispatch to the first unloaded observation was **5.458 seconds**,
+including polling latency. The final run checkpoint recorded `plate_release_state="released"`.
+
+### Repetition and durable ownership
+
+| Check | Result | Additional release commands |
+|---|---|---|
+| First public release after normal completion | Unloaded confirmed | 1 |
+| Repeat call on the same connection | Unloaded confirmed | 0 |
+| Repeat after closing USB and creating a fresh driver over the same journal | Unloaded confirmed | 0 |
+
+The fresh connection performed the normal camera/serial-bridge setup; its release check issued
+only observation commands. Across both connections the byte audit found exactly one load,
+one prepare/upload/Start and one release. There was no Stop, idle-temperature write,
+lamp/filter mutation or camera exposure. No communication failure was deliberately induced.
+
+The first durable release write upgraded the live journal from format **1 to 2**. All **12 prior
+run records** were unchanged; one completed record was added for this session. The second driver
+read the released checkpoint and did not replay motion. This validates clean reconnect and
+repetition after confirmed success. It does **not** validate recovery after lost acknowledgements,
+process failure during motion, jams or other ambiguous hardware failures; those guards remain
+covered by offline tests.
+
+Cleanup ended with inactive state 2, unloaded plate state 0, stationary filter 0 and lamp off,
+then closed USB. Last sample/block/cover readings were **30.0/29.9/105.5 °C**. Internal release
+does not establish that the external drawer has been opened or that the heated cover has cooled.
+No firmware or calibration changes were made.
+
+The executed runtime matched the version with **186 passing package tests**, including 20 plate
+status/release tests. Seven additional offline session-runner scenarios covered success,
+preflight refusal, interrupted Start/status, lost release reply, wrong reconnect identity and
+an aborted run. Full USB transfers, source snapshots, operator confirmation, journal backups and
+byte audit remain outside Git in `abi7500-research/captures/abi7500-plr-trayapi-001/`.
+USB transcript SHA-256 values:
+
+- First connection: `2b0c03a0ceec4c14088f9a71428daac46beb19d98d4e5828a55147c1e3ff3124`.
+- Fresh-driver connection: `94bcef8bb2453e55d165d5beea5cf05b4a5da43e32d50becd2713cf1a95732d0`.

@@ -13,7 +13,9 @@ Experimental thermal/optical run control requires a persistent journal. Wider th
 cancellation and recovery after communication faults remain hardware unverified.
 ``get_plate_status()`` reports the internal mechanism state; ``release_plate(run_id)`` requires a
 freshly verified finished run, lamp off and stationary filter 0. Its durable intent prevents command
-replay after an uncertain response. See the plate-release section in the thermal-run guide.
+replay after an uncertain response. Release after a completed mild hold and repeated calls across
+a clean reconnect were checked on G2.10; ambiguous-failure recovery remains hardware unverified.
+See the plate-release section in the thermal-run guide.
 Direct Ubuntu sessions verified illuminated snapshots at filter positions 1 and 5 and lamp
 shutdown. Offline camera processing reproduces all 960 vendor well integers and corrected values
 from one recorded acquisition. Thirty images were collected within two scheduled holds and the
