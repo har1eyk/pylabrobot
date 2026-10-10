@@ -1,0 +1,708 @@
+{
+  "source_capture_sha256": "4a76d6b4b604cfffaad61081dd83eb8fb9a64f18a453c5a48f2a3504738671bd",
+  "exposures": [
+    {
+      "frame": 2563,
+      "command_hex": "434a202020322c2020323536",
+      "reply_hex": "0001"
+    },
+    {
+      "frame": 3453,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 3701,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 3857,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 4043,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 4291,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 4451,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 4635,
+      "command_hex": "434a202020322c2020393030",
+      "reply_hex": "8403"
+    },
+    {
+      "frame": 4971,
+      "command_hex": "434a202020322c2020333030",
+      "reply_hex": "2c01"
+    },
+    {
+      "frame": 5159,
+      "command_hex": "434a202020322c2020313030",
+      "reply_hex": "6400"
+    },
+    {
+      "frame": 5347,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 5587,
+      "command_hex": "434a202020322c2020323535",
+      "reply_hex": "ff00"
+    },
+    {
+      "frame": 5763,
+      "command_hex": "434a202020322c2020203835",
+      "reply_hex": "5500"
+    },
+    {
+      "frame": 5949,
+      "command_hex": "434a202020322c2031303438",
+      "reply_hex": "1804"
+    },
+    {
+      "frame": 6317,
+      "command_hex": "434a202020322c2020203930",
+      "reply_hex": "5a00"
+    },
+    {
+      "frame": 6449,
+      "command_hex": "434a202020322c2020203330",
+      "reply_hex": "1e00"
+    },
+    {
+      "frame": 8083,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 8331,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 8487,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 8665,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 8909,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 9065,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 9243,
+      "command_hex": "434a202020322c2020393030",
+      "reply_hex": "8403"
+    },
+    {
+      "frame": 9575,
+      "command_hex": "434a202020322c2020333030",
+      "reply_hex": "2c01"
+    },
+    {
+      "frame": 9763,
+      "command_hex": "434a202020322c2020313030",
+      "reply_hex": "6400"
+    },
+    {
+      "frame": 9957,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 10205,
+      "command_hex": "434a202020322c2020323535",
+      "reply_hex": "ff00"
+    },
+    {
+      "frame": 10381,
+      "command_hex": "434a202020322c2020203835",
+      "reply_hex": "5500"
+    },
+    {
+      "frame": 10571,
+      "command_hex": "434a202020322c2031303438",
+      "reply_hex": "1804"
+    },
+    {
+      "frame": 10947,
+      "command_hex": "434a202020322c2020203930",
+      "reply_hex": "5a00"
+    },
+    {
+      "frame": 11075,
+      "command_hex": "434a202020322c2020203330",
+      "reply_hex": "1e00"
+    },
+    {
+      "frame": 12077,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 12325,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 12485,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 12663,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 12907,
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400"
+    },
+    {
+      "frame": 13063,
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00"
+    },
+    {
+      "frame": 13241,
+      "command_hex": "434a202020322c2020393030",
+      "reply_hex": "8403"
+    },
+    {
+      "frame": 13581,
+      "command_hex": "434a202020322c2020333030",
+      "reply_hex": "2c01"
+    },
+    {
+      "frame": 13761,
+      "command_hex": "434a202020322c2020313030",
+      "reply_hex": "6400"
+    },
+    {
+      "frame": 13951,
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02"
+    },
+    {
+      "frame": 14199,
+      "command_hex": "434a202020322c2020323535",
+      "reply_hex": "ff00"
+    },
+    {
+      "frame": 14375,
+      "command_hex": "434a202020322c2020203835",
+      "reply_hex": "5500"
+    },
+    {
+      "frame": 14561,
+      "command_hex": "434a202020322c2031303438",
+      "reply_hex": "1804"
+    },
+    {
+      "frame": 14937,
+      "command_hex": "434a202020322c2020203930",
+      "reply_hex": "5a00"
+    },
+    {
+      "frame": 15069,
+      "command_hex": "434a202020322c2020203330",
+      "reply_hex": "1e00"
+    }
+  ],
+  "frame_sequence": [
+    {
+      "frame": 12077,
+      "action": "write",
+      "hex": "434a202020322c2020353430"
+    },
+    {
+      "frame": 12080,
+      "action": "read",
+      "hex": "1c02"
+    },
+    {
+      "frame": 12081,
+      "action": "write",
+      "hex": "4343"
+    },
+    {
+      "frame": 12083,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12086,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12087,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12090,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12091,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12094,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12095,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12098,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12099,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12102,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12103,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12106,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12107,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12110,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12111,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12114,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12115,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12118,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12119,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12122,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12123,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12126,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12127,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12130,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12131,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12134,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12135,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12138,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12139,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12142,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12143,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12146,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12147,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12150,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12151,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12154,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12155,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12158,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12159,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12162,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12163,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12166,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12167,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12170,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12171,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12174,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12175,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12178,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12179,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12182,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12183,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12186,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12187,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12190,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12191,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12194,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12195,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12198,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12199,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12202,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12203,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12206,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12207,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12210,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12211,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12214,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12215,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12218,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12219,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12222,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12223,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12226,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12227,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12230,
+      "action": "read",
+      "hex": "6e6f742072"
+    },
+    {
+      "frame": 12231,
+      "action": "write",
+      "hex": "434820202035"
+    },
+    {
+      "frame": 12234,
+      "action": "read",
+      "hex": "7265616479"
+    },
+    {
+      "frame": 12235,
+      "action": "write",
+      "hex": "4344202036342c3234353820"
+    }
+  ],
+  "optical_queries": [
+    {
+      "request": {
+        "frame": 2081,
+        "time": 1791555754.233711,
+        "frames": [
+          2081
+        ],
+        "command": 102,
+        "sequence": 56,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000660000000000387d"
+      },
+      "reply": {
+        "frame": 2086,
+        "time": 1791555754.341289,
+        "command": 102,
+        "sequence": 56,
+        "error": 0,
+        "payload_hex": "00010000",
+        "packet_hex": "5858ffffffff00133937303000660000000000380001000082"
+      }
+    },
+    {
+      "request": {
+        "frame": 2213,
+        "time": 1791555759.794253,
+        "frames": [
+          2213
+        ],
+        "command": 108,
+        "sequence": 6,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006c00000000000651"
+      },
+      "reply": {
+        "frame": 2218,
+        "time": 1791555759.903855,
+        "command": 108,
+        "sequence": 6,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006c000000000006000154"
+      }
+    },
+    {
+      "request": {
+        "frame": 2413,
+        "time": 1791555766.841387,
+        "frames": [
+          2413
+        ],
+        "command": 107,
+        "sequence": 38,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b00000000002670"
+      },
+      "reply": {
+        "frame": 2418,
+        "time": 1791555766.950214,
+        "command": 107,
+        "sequence": 38,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff001139373030006b000000000026000072"
+      }
+    }
+  ]
+}

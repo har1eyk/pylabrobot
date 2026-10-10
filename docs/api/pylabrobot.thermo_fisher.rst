@@ -7,9 +7,22 @@ ABI 7500 Fast Dx
 ----------------
 
 Experimental USB connection, identity and status queries, plus offline protocol and data tools.
-Connection, identity and status were checked directly from Ubuntu on one G2.10 instrument; see
+Connection/status, a completed 35 °C/60-second hold and one start/cancel were checked on G2.10; see
 :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/hardware-validation` for the tested scope.
-Run control and live optical acquisition remain unimplemented and unverified.
+Experimental thermal/optical run control requires a persistent journal. Wider thermal programs, startup
+cancellation and recovery after communication faults remain hardware unverified.
+Direct Ubuntu sessions verified illuminated snapshots at filter positions 1 and 5 and lamp
+shutdown. Offline camera processing reproduces all 960 vendor well integers and corrected values
+from one recorded acquisition. Thirty images were collected within two scheduled holds, followed
+by timeout/cancellation before final-hold completion. Normal optical-run completion and optical
+recovery remain unverified;
+current calibration validity is not established. See
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/thermal-runs` for limits and recovery behavior.
+Snapshot behavior is documented in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/raw-snapshots`.
+See :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/optics-and-measurements` for optical control,
+calibration provenance and measurement limits. The experimental collection scheduler is documented
+in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`; two complete collections were
+checked, but the complete thermal program has not yet finished normally with optical acquisition.
 
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx
 
@@ -21,9 +34,20 @@ Run control and live optical acquisition remain unimplemented and unverified.
     ABI7500DeviceError
     ABI7500Identity
     ABI7500Status
+    ABI7500History
+    ABI7500RunError
+    ThermalRun
     ThermalStep
     ThermalCycle
     ThermalProgram
+    CameraAcquisition
+    CameraExposure
+    OpticalState
+    CollectionFilter
+    CollectionPlan
+    CollectionPoint
+    CollectionRecord
+    FluorescenceCollection
 
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.protocol
 
@@ -57,6 +81,49 @@ Run control and live optical acquisition remain unimplemented and unverified.
 
     SavedFilterData
     read_eds_filter_data
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.calibration
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    UniformityCalibration
+    UniformityCorrectedData
+    WellMeasurement
+    apply_uniformity
+    read_eds_uniformity
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.image_processing
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    OpticalBlackImage
+    PlatePixelMask
+    CameraWellData
+    WellPixelMeasurement
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.fluorescence
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    BackgroundCalibration
+    ExtractedWell
+    FluorescenceFrame
+    CameraWellMeasurement
+    CameraFilterResult
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.exposure_selection
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    ExposureSelection
 
 ALPS Heat Sealers
 -----------------

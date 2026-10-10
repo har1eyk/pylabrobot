@@ -94,6 +94,11 @@ class ABI7500Status:
     return _PHASES.get(self.sequence_state_code, "unknown")
 
   @property
+  def run_start_record(self) -> bytes:
+    """Return the opaque native start date record; it can describe the previous run."""
+    return self.raw_payload[32:41]
+
+  @property
   def block_temperature(self) -> float:
     """Return measured block temperature."""
     return float(struct.unpack_from(">I", self.raw_payload, 4)[0]) / 10.0

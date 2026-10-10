@@ -1,4 +1,4 @@
-"""Offline thermal-program records, validated against native encoding and USB capture.
+"""Thermal-program records, validated against native encoding and USB capture.
 
 These objects encode the thermal controller's cycle/hold records, not a complete qPCR experiment.
 Optical collection settings and cover temperature are configured separately by the vendor. Encoding
@@ -107,12 +107,13 @@ class ThermalCycle:
 
 @dataclass(frozen=True)
 class ThermalProgram:
-  """A lossless subset of the 0x12 program-upload payload, for offline protocol work.
+  """A lossless subset of the 0x12 program-upload payload.
 
   ``metadata`` retains the 47 bytes after the cycle-count byte: name/user strings, native date
   records, volume, block type, run mode and tube type. These fields must come from a compatible
   reference program; their presence is not hardware compatibility validation. In particular, a
-  saved experiment's acquisition flags are not part of this thermal payload.
+  saved experiment's acquisition flags are not part of this thermal payload. The experimental
+  run API applies additional configuration restrictions before accepting a program for execution.
   """
 
   metadata: bytes

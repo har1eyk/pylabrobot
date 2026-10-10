@@ -1,0 +1,1207 @@
+{
+  "binary_sha256": "97fedadf13db8668c805c91df7a20d1197d569a01d24be8d687cd46c1751c983",
+  "function_rva": "0x4de24",
+  "method": "Original x86 selection instructions; allocation redirected to isolated memory; free and diagnostic logging disabled. No OS, file, network or hardware calls.",
+  "vectors": [
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        180,
+        60
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        60,
+        180,
+        540
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        180,
+        540,
+        60
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        30,
+        30,
+        90
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        90,
+        90,
+        30
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        5,
+        5,
+        5
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        540,
+        0,
+        0
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        180,
+        0
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 1,
+      "result": 2002
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        60
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 2,
+      "result": 3003
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 0,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 1,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 2,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 3,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 4,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 5,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 6,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    },
+    {
+      "exposure_milliseconds": [
+        0,
+        0,
+        0
+      ],
+      "saturation_flags": 7,
+      "values": [
+        1001,
+        2002,
+        3003
+      ],
+      "selected_index": 0,
+      "result": 1001
+    }
+  ]
+}

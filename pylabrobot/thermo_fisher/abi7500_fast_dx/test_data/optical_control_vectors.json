@@ -1,0 +1,590 @@
+{
+  "source": "abi7500-acquire-001 USBPcap thermal pairs",
+  "source_sha256": "074cce1c7599f604591aa83e1bd8b49262700d3bfc557c508353f2e318294f4b",
+  "vectors": [
+    {
+      "request": {
+        "frame": 2081,
+        "time": 1791555754.233711,
+        "frames": [
+          2081
+        ],
+        "command": 102,
+        "sequence": 56,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000660000000000387d",
+        "log_lines": [
+          1250
+        ]
+      },
+      "reply": {
+        "frame": 2086,
+        "time": 1791555754.341289,
+        "command": 102,
+        "sequence": 56,
+        "error": 0,
+        "payload_hex": "00010000",
+        "packet_hex": "5858ffffffff00133937303000660000000000380001000082",
+        "log_lines": [
+          1251
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2097,
+        "time": 1791555754.56069,
+        "frames": [
+          2097
+        ],
+        "command": 100,
+        "sequence": 58,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006400000000003a000180",
+        "log_lines": [
+          1256
+        ]
+      },
+      "reply": {
+        "frame": 2102,
+        "time": 1791555754.669494,
+        "command": 100,
+        "sequence": 58,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006400000000003a7d",
+        "log_lines": [
+          1257
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2103,
+        "time": 1791555754.935078,
+        "frames": [
+          2103
+        ],
+        "command": 101,
+        "sequence": 59,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff001139373030006500000000003b000081",
+        "log_lines": [
+          1259
+        ]
+      },
+      "reply": {
+        "frame": 2108,
+        "time": 1791555755.044188,
+        "command": 101,
+        "sequence": 59,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006500000000003b7f",
+        "log_lines": [
+          1260
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2213,
+        "time": 1791555759.794253,
+        "frames": [
+          2213
+        ],
+        "command": 108,
+        "sequence": 6,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006c00000000000651",
+        "log_lines": [
+          209,
+          455,
+          919,
+          1096,
+          1286
+        ]
+      },
+      "reply": {
+        "frame": 2218,
+        "time": 1791555759.903855,
+        "command": 108,
+        "sequence": 6,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006c000000000006000154",
+        "log_lines": [
+          210,
+          456,
+          920,
+          1097,
+          1287
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2295,
+        "time": 1791555762.747361,
+        "frames": [
+          2295
+        ],
+        "command": 108,
+        "sequence": 19,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006c0000000000135e",
+        "log_lines": [
+          248,
+          494,
+          958,
+          1135,
+          1325
+        ]
+      },
+      "reply": {
+        "frame": 2300,
+        "time": 1791555762.856982,
+        "command": 108,
+        "sequence": 19,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff001139373030006c000000000013000060",
+        "log_lines": [
+          1136,
+          1326
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2413,
+        "time": 1791555766.841387,
+        "frames": [
+          2413
+        ],
+        "command": 107,
+        "sequence": 38,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b00000000002670",
+        "log_lines": [
+          305,
+          551,
+          1192,
+          1382
+        ]
+      },
+      "reply": {
+        "frame": 2418,
+        "time": 1791555766.950214,
+        "command": 107,
+        "sequence": 38,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff001139373030006b000000000026000072",
+        "log_lines": [
+          306,
+          552,
+          1193,
+          1383
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2425,
+        "time": 1791555767.171952,
+        "frames": [
+          2425
+        ],
+        "command": 105,
+        "sequence": 40,
+        "error": 0,
+        "payload_hex": "0000",
+        "packet_hex": "5858ffffffff0011393730300069000000000028000072",
+        "log_lines": [
+          311,
+          557,
+          1198,
+          1388
+        ]
+      },
+      "reply": {
+        "frame": 2430,
+        "time": 1791555767.278961,
+        "command": 105,
+        "sequence": 40,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006900000000002870",
+        "log_lines": [
+          312,
+          558,
+          1199,
+          1389
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2735,
+        "time": 1791555772.530938,
+        "frames": [
+          2735
+        ],
+        "command": 105,
+        "sequence": 58,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006900000000003a000185",
+        "log_lines": [
+          1445
+        ]
+      },
+      "reply": {
+        "frame": 2740,
+        "time": 1791555772.638784,
+        "command": 105,
+        "sequence": 58,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006900000000003a82",
+        "log_lines": [
+          1446
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2787,
+        "time": 1791555774.280895,
+        "frames": [
+          2787
+        ],
+        "command": 107,
+        "sequence": 66,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b0000000000428c",
+        "log_lines": [
+          1469
+        ]
+      },
+      "reply": {
+        "frame": 2792,
+        "time": 1791555774.386334,
+        "command": 107,
+        "sequence": 66,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff001139373030006b00000000004200018f",
+        "log_lines": [
+          1470
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2799,
+        "time": 1791555774.600666,
+        "frames": [
+          2799
+        ],
+        "command": 105,
+        "sequence": 68,
+        "error": 0,
+        "payload_hex": "0002",
+        "packet_hex": "5858ffffffff0011393730300069000000000044000290",
+        "log_lines": [
+          1475
+        ]
+      },
+      "reply": {
+        "frame": 2804,
+        "time": 1791555774.716478,
+        "command": 105,
+        "sequence": 68,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000690000000000448c",
+        "log_lines": [
+          1476
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2853,
+        "time": 1791555776.466659,
+        "frames": [
+          2853
+        ],
+        "command": 107,
+        "sequence": 77,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b00000000004d97",
+        "log_lines": [
+          670,
+          1502
+        ]
+      },
+      "reply": {
+        "frame": 2858,
+        "time": 1791555776.575373,
+        "command": 107,
+        "sequence": 77,
+        "error": 0,
+        "payload_hex": "0002",
+        "packet_hex": "5858ffffffff001139373030006b00000000004d00029b",
+        "log_lines": [
+          671,
+          1503
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2865,
+        "time": 1791555776.794766,
+        "frames": [
+          2865
+        ],
+        "command": 105,
+        "sequence": 79,
+        "error": 0,
+        "payload_hex": "0003",
+        "packet_hex": "5858ffffffff001139373030006900000000004f00039c",
+        "log_lines": [
+          676,
+          1508
+        ]
+      },
+      "reply": {
+        "frame": 2870,
+        "time": 1791555776.903752,
+        "command": 105,
+        "sequence": 79,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006900000000004f97",
+        "log_lines": [
+          677,
+          1509
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2913,
+        "time": 1791555778.42782,
+        "frames": [
+          2913
+        ],
+        "command": 107,
+        "sequence": 87,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b000000000057a1",
+        "log_lines": [
+          700,
+          1532
+        ]
+      },
+      "reply": {
+        "frame": 2918,
+        "time": 1791555778.536485,
+        "command": 107,
+        "sequence": 87,
+        "error": 0,
+        "payload_hex": "0003",
+        "packet_hex": "5858ffffffff001139373030006b0000000000570003a6",
+        "log_lines": [
+          701,
+          1533
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2929,
+        "time": 1791555778.857412,
+        "frames": [
+          2929
+        ],
+        "command": 105,
+        "sequence": 89,
+        "error": 0,
+        "payload_hex": "0004",
+        "packet_hex": "5858ffffffff00113937303000690000000000590004a7",
+        "log_lines": [
+          706,
+          1538
+        ]
+      },
+      "reply": {
+        "frame": 2934,
+        "time": 1791555778.96642,
+        "command": 105,
+        "sequence": 89,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f393730300069000000000059a1",
+        "log_lines": [
+          707,
+          1539
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2977,
+        "time": 1791555780.513525,
+        "frames": [
+          2977
+        ],
+        "command": 107,
+        "sequence": 97,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b000000000061ab",
+        "log_lines": [
+          1562
+        ]
+      },
+      "reply": {
+        "frame": 2982,
+        "time": 1791555780.622333,
+        "command": 107,
+        "sequence": 97,
+        "error": 0,
+        "payload_hex": "0004",
+        "packet_hex": "5858ffffffff001139373030006b0000000000610004b1",
+        "log_lines": [
+          1563
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2989,
+        "time": 1791555780.842037,
+        "frames": [
+          2989
+        ],
+        "command": 105,
+        "sequence": 99,
+        "error": 0,
+        "payload_hex": "0005",
+        "packet_hex": "5858ffffffff00113937303000690000000000630005b2",
+        "log_lines": [
+          1568
+        ]
+      },
+      "reply": {
+        "frame": 2994,
+        "time": 1791555780.950359,
+        "command": 105,
+        "sequence": 99,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f393730300069000000000063ab",
+        "log_lines": [
+          1569
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 3037,
+        "time": 1791555782.48207,
+        "frames": [
+          3037
+        ],
+        "command": 107,
+        "sequence": 107,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030006b00000000006bb5",
+        "log_lines": [
+          1592
+        ]
+      },
+      "reply": {
+        "frame": 3042,
+        "time": 1791555782.591297,
+        "command": 107,
+        "sequence": 107,
+        "error": 0,
+        "payload_hex": "0005",
+        "packet_hex": "5858ffffffff001139373030006b00000000006b0005bc",
+        "log_lines": [
+          1593
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 6743,
+        "time": 1791555823.383737,
+        "frames": [
+          6743
+        ],
+        "command": 101,
+        "sequence": 242,
+        "error": 0,
+        "payload_hex": "0001",
+        "packet_hex": "5858ffffffff00113937303000650000000000f2000139",
+        "log_lines": [
+          2024
+        ]
+      },
+      "reply": {
+        "frame": 6748,
+        "time": 1791555823.495044,
+        "command": 101,
+        "sequence": 242,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000650000000000f236",
+        "log_lines": [
+          2025
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 6749,
+        "time": 1791555823.747155,
+        "frames": [
+          6749
+        ],
+        "command": 102,
+        "sequence": 243,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f3937303000660000000000f338",
+        "log_lines": [
+          2027
+        ]
+      },
+      "reply": {
+        "frame": 6754,
+        "time": 1791555823.85586,
+        "command": 102,
+        "sequence": 243,
+        "error": 0,
+        "payload_hex": "00010001",
+        "packet_hex": "5858ffffffff00133937303000660000000000f3000100013e",
+        "log_lines": [
+          2028
+        ]
+      }
+    }
+  ]
+}

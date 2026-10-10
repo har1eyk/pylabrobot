@@ -1,0 +1,162 @@
+{
+  "binary_sha256": "9dbff7366d38a6c43b3ba363dd007b40f65d0dead3c1d3b9eb09428f91a8102f",
+  "method": "Isolated original x86 OPB correction and ROI iteration; diagnostic logging stubbed, MSVCRT _ftol modeled by x87 FISTTP. AOI memory reconstructed from decoded masks, not a test of native MFC deserialization. No hardware or vendor OS imports.",
+  "reference_capture": {
+    "path": "captures/abi7500-acquire-001/received/abi7500-acquire-001-analysis/camera-031.bin",
+    "input_sha256": "a0281d8f0adc9cce4135d5b384936a4ff368bb0f4a0ac3fde3bbf2e4e440281e",
+    "corrected_sha256": "f89f7e8b92b69c5ad1d0eaee998536ad2c8aacf3c5257ff944ce928592e7451c",
+    "optical_black_offset": 129
+  },
+  "synthetic_cases": [
+    {
+      "black": 0,
+      "first_black_adjusted": 1,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        128,
+        129,
+        255,
+        256,
+        257,
+        65128,
+        126,
+        127
+      ],
+      "sha256": "504e579db4c07426ec0d5334953ee62f21f195e9a1d4d61836f0a0e969eb92b9"
+    },
+    {
+      "black": 1,
+      "first_black_adjusted": 2,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        127,
+        128,
+        254,
+        255,
+        256,
+        65127,
+        125,
+        126
+      ],
+      "sha256": "99493b7596527ec1edb7e45f5f2cffafba30520a38a03a40a9e3914ab349e1e4"
+    },
+    {
+      "black": 127,
+      "first_black_adjusted": 128,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        1,
+        2,
+        128,
+        129,
+        130,
+        65001,
+        65535,
+        0
+      ],
+      "sha256": "36e8a23931cee5b0dffe182de64d17f3350fd92a1fb11f4978440e6510dbf4ff"
+    },
+    {
+      "black": 128,
+      "first_black_adjusted": 129,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "sha256": "fa89500167a6c4b6d926aae859e0a31515c84962eaf21f14a166cab79992bbfd"
+    },
+    {
+      "black": 129,
+      "first_black_adjusted": 130,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        0,
+        0,
+        126,
+        127,
+        128,
+        64999,
+        65533,
+        65534
+      ],
+      "sha256": "22e8344601955b9a111e8b0ee2873f80b9009279a430634c23ce2e001bd898ca"
+    },
+    {
+      "black": 65535,
+      "first_black_adjusted": 65535,
+      "input_pixels": [
+        0,
+        1,
+        127,
+        128,
+        129,
+        65000,
+        65534,
+        65535
+      ],
+      "output_pixels": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        127,
+        128
+      ],
+      "sha256": "0beededb684738e2aa18f1ff91b79ff9e078351f0e4f82250c1aa70535f4b032"
+    }
+  ]
+}

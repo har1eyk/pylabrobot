@@ -1,0 +1,44 @@
+{
+  "source": {
+    "session": "abi7500-plr-lowexp-001",
+    "transcript_sha256": "215febf6a20292f7bf11427fd1aee8a4947820a20b6dab7c2ababdfec65db844"
+  },
+  "exposures": [
+    {
+      "command_hex": "434a202020322c2020353430",
+      "reply_hex": "1c02",
+      "milliseconds": 540,
+      "count": 2
+    },
+    {
+      "command_hex": "434a202020322c2020313830",
+      "reply_hex": "b400",
+      "milliseconds": 180,
+      "count": 2
+    },
+    {
+      "command_hex": "434a202020322c2020203630",
+      "reply_hex": "3c00",
+      "milliseconds": 60,
+      "count": 2
+    },
+    {
+      "command_hex": "434a202020322c2020203330",
+      "reply_hex": "1e00",
+      "milliseconds": 30,
+      "count": 8
+    },
+    {
+      "command_hex": "434a202020322c2020203130",
+      "reply_hex": "0a00",
+      "milliseconds": 10,
+      "count": 8
+    },
+    {
+      "command_hex": "434a202020322c2020202035",
+      "reply_hex": "0500",
+      "milliseconds": 5,
+      "count": 8
+    }
+  ]
+}

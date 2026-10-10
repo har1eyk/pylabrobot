@@ -1,0 +1,1806 @@
+{
+  "source": {
+    "session": "abi7500-plr-cancel-001",
+    "date": "2026-10-09",
+    "description": "Original PLR USB transport bytes and checkpoints from one Ubuntu G2.10 thermal-only start/cancel; no payload substitutions. Two connections to the same run; Start once.",
+    "transcripts": {
+      "usb-hex.jsonl": "06b755d6fa69bfc469990a31b692e4e5fe045386932b4531d4e7317382e13afb",
+      "continuation/usb-hex.jsonl": "3f96fda0ff8decdd358bb4fc4aee769ed28b2d6b58fbe52a6ada9b79c326fe88"
+    }
+  },
+  "checkpoints": {
+    "start_acknowledged": {
+      "run_id": "plr-cancel-001",
+      "program_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "camera_description": "Hamamatsu,C9254-03,2.20,1.05,2.19,007006",
+      "thermal_version": "G2.10",
+      "baseline_start_record": "1a0a09000910010000",
+      "state": "starting",
+      "start_acknowledged": true,
+      "start_record": null,
+      "status_hex": "00020002000000fa00000253000000ee00003ff80000000e014f00fa010000011a0a090009100100001a0a09000913370064",
+      "history_hex": "000700000002000100011a0a090009100100001a0a090009102b00640000002a00140258037a0000000003b600004d736d616c6c00657374000000000000004d617961000000000000000000000000000000000000000000000000000000",
+      "cancel_requested": false,
+      "idle_temperature_set": false
+    },
+    "early_startup": {
+      "run_id": "plr-cancel-001",
+      "program_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "camera_description": "Hamamatsu,C9254-03,2.20,1.05,2.19,007006",
+      "thermal_version": "G2.10",
+      "baseline_start_record": "1a0a09000910010000",
+      "state": "starting",
+      "start_acknowledged": true,
+      "start_record": null,
+      "status_hex": "00030002000000fa00000252000000ee00003ff90000000e014f00fa010000011a0a090009100100001a0a09000913370064",
+      "history_hex": "0007ffff00020001ffff1a0a090009100100001a0a090009102b00640000002a00140258037a0000000003b600004d736d616c6c00657374000000000000004d617961000000000000000000000000000000000000000000000000000000",
+      "cancel_requested": false,
+      "idle_temperature_set": false
+    },
+    "late_startup": {
+      "run_id": "plr-cancel-001",
+      "program_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "camera_description": "Hamamatsu,C9254-03,2.20,1.05,2.19,007006",
+      "thermal_version": "G2.10",
+      "baseline_start_record": "1a0a09000910010000",
+      "state": "starting",
+      "start_acknowledged": true,
+      "start_record": null,
+      "status_hex": "00030002000000fa00000405000000f5000041070000000e014f00fa010000011a0a090009100100001a0a09000913370064",
+      "history_hex": "0007ffff00020001ffff1a0a090009100100001a0a090009102b00640000002a00140258037a0000000003b600004d736d616c6c00657374000000000000004d617961000000000000000000000000000000000000000000000000000000",
+      "cancel_requested": false,
+      "idle_temperature_set": false
+    },
+    "running": {
+      "run_id": "plr-cancel-001",
+      "program_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "camera_description": "Hamamatsu,C9254-03,2.20,1.05,2.19,007006",
+      "thermal_version": "G2.10",
+      "baseline_start_record": "1a0a09000910010000",
+      "state": "running",
+      "start_acknowledged": true,
+      "start_record": "1a0a09010135220000",
+      "status_hex": "00040002000000f900000407000000f500000001ffffffff014f00fa000001011a0a090101352200001a0a09010136270064",
+      "history_hex": "00070000000200fd00001a0a090101352200001a0a090009102b00640000000000140258037a00000000015e0000706c722d63616e63656c2d303031000000504c5200000000000000000000000000000000000000000000000000000000",
+      "cancel_requested": false,
+      "idle_temperature_set": false
+    },
+    "cancelled": {
+      "run_id": "plr-cancel-001",
+      "program_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "camera_description": "Hamamatsu,C9254-03,2.20,1.05,2.19,007006",
+      "thermal_version": "G2.10",
+      "baseline_start_record": "1a0a09000910010000",
+      "state": "cancelled",
+      "start_acknowledged": true,
+      "start_record": "1a0a09010135220000",
+      "status_hex": "000200020000010800000408000000f5000000030000003b014f00fc000000011a0a090101352200001a0a09010135240064",
+      "history_hex": "000700000002000100011a0a090101352200001a0a09010135240064000000020014025800fa00000000015e0000706c722d63616e63656c2d303031000000504c5200000000000000000000000000000000000000000000000000000000",
+      "cancel_requested": true,
+      "idle_temperature_set": true
+    }
+  },
+  "checkpoint_times": {
+    "start_acknowledged": "2026-10-09T19:10:57.105987+00:00",
+    "early_startup": "2026-10-09T19:10:57.702913+00:00",
+    "late_startup": "2026-10-09T19:15:27.624039+00:00",
+    "running": "2026-10-09T19:15:29.656769+00:00",
+    "cancelled": "2026-10-09T19:15:32.219647+00:00"
+  },
+  "exchanges": {
+    "prepare": {
+      "command": 27,
+      "sequence": 10,
+      "request_hex": "5858ffffffff000f39373030001b00000000000a04",
+      "reply_hex": "5858ffffffff000f39373030001b00000000000a04",
+      "request_payload_hex": "",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:10:49.210908+00:00",
+      "completed_utc": "2026-10-09T19:10:49.270033+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        2,
+        1,
+        1,
+        0,
+        11,
+        1,
+        0,
+        5
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f39373030001b00000000000a04"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000643f00001a0a090009133730002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000643f00001a0a090009133730002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000643f00001a0a090009133730002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0200585800001a0a090009133730002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203231"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff5800001a0a09000913373000290000000001"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff5800001a0a090009133730002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203139"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff5800001a0a0900091337300029000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203139"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ffff000f39373030001b00300029000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "010000ff000f3937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202037"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000000ff000f39"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202037"
+        },
+        {
+          "operation": "read",
+          "data_hex": "05000000000a04"
+        }
+      ]
+    },
+    "upload": {
+      "command": 18,
+      "sequence": 11,
+      "request_hex": "5858ffffffff005339373030001200000000000b01706c722d63616e63656c2d303031000000504c5200000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064fa",
+      "reply_hex": "5858ffffffff000f39373030001200000000000bfc",
+      "request_payload_hex": "01706c722d63616e63656c2d303031000000504c5200000000630a02020a0b0c0000620a02020a030100001400020000020001010000000000000300003c015e00000064",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:10:50.271251+00:00",
+      "completed_utc": "2026-10-09T19:10:50.606639+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        7,
+        0,
+        0,
+        5,
+        1,
+        1,
+        1,
+        0,
+        6
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202038395858ffffffff005339373030001200000000000b01706c722d63616e63656c2d303031000000504c5200000000630a02020a0b0c0000620a0202"
+        },
+        {
+          "operation": "write",
+          "data_hex": "0a030100001400020000020001010000000000000300003c015e00000064fa"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000a04373030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "07005858ffffffff0030001b0030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203136"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00005858ffffffff0030001b00300029"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203136"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00005858ffffffff0030001b00300029"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203136"
+        },
+        {
+          "operation": "read",
+          "data_hex": "05000f39373030ff0030001b00300029"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203131"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01000039373030ff003000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203130"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01001239373030ff0030"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01000039373030ff00"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000039373030ff"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0600000000000bfc"
+        }
+      ]
+    },
+    "load": {
+      "command": 113,
+      "sequence": 13,
+      "request_hex": "5858ffffffff000f39373030007100000000000d5d",
+      "reply_hex": "5858ffffffff000f39373030007100000000000d5d",
+      "request_payload_hex": "",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:10:51.166488+00:00",
+      "completed_utc": "2026-10-09T19:10:51.225944+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        11,
+        1,
+        0,
+        6
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f39373030007100000000000d5d"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000c0000600073000030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000c0000600073000030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000000c0000600073000030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01005800000c0000600073000030002900000000014500"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203232"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01005800000c00006000730000300029000000000145"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203231"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff00000c000060007300003000290000000001"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff00000c0000600073000030002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ffffff000f39373030007130002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "010000ffff000f3937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000000ffff000f39"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0600000000000d5d"
+        }
+      ]
+    },
+    "start": {
+      "command": 19,
+      "sequence": 25,
+      "request_hex": "5858ffffffff000f3937303000130000000000190b",
+      "reply_hex": "5858ffffffff000f3937303000130000000000190b",
+      "request_payload_hex": "",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:10:57.046285+00:00",
+      "completed_utc": "2026-10-09T19:10:57.103017+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        3,
+        0,
+        11,
+        0,
+        7
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f3937303000130000000000190b"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000133700644f00001a0a090030007300000000001300"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000133700644f00001a0a090030007300000000001300"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000133700644f00001a0a090030007300000000001300"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "03005858ff644f00001a0a090030007300000000001300"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00005858ff644f00001a0a090030007300000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ffffff000f39373030001330007300000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ffffff000f3937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "07000000000000190b"
+        }
+      ]
+    },
+    "stop": {
+      "command": 7,
+      "sequence": 567,
+      "request_hex": "5858ffffffff000f3937303000070000000002371f",
+      "reply_hex": "5858ffffffff000f3937303000070000000002371f",
+      "request_payload_hex": "",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:15:30.264562+00:00",
+      "completed_utc": "2026-10-09T19:15:30.894134+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        6,
+        1,
+        0,
+        11,
+        1,
+        0,
+        2
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f3937303000070000000002371f"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000001362700643000001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "06005858ffffffff00001a0a0938000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203137"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01000058ffffffff00001a0a0938000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203136"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000058ffffffff00001a0a09380000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203136"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b000f39373030000700000000380000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202035"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100023937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202034"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000239"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202034"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0200371f"
+        }
+      ]
+    },
+    "idle": {
+      "command": 34,
+      "sequence": 570,
+      "request_hex": "5858ffffffff001139373030002200000000023a00fa39",
+      "reply_hex": "5858ffffffff000f39373030002200000000023a3d",
+      "request_payload_hex": "00fa",
+      "payload_hex": "",
+      "started_utc": "2026-10-09T19:15:31.622683+00:00",
+      "completed_utc": "2026-10-09T19:15:31.690781+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        0,
+        3,
+        0,
+        11,
+        0,
+        7
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032335858ffffffff001139373030002200000000023a00fa39"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000090101352400648000001a38000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000090101352400648000001a38000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000090101352400648000001a38000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000090101352400648000001a38000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203233"
+        },
+        {
+          "operation": "read",
+          "data_hex": "03005858ff352400648000001a38000000000000004d61"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00005858ff352400648000001a38000000000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ffffff000f39373030002238000000000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ffffff000f3937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "070000000000023a3d"
+        }
+      ]
+    },
+    "plate_unloaded": {
+      "command": 115,
+      "sequence": 12,
+      "request_hex": "5858ffffffff000f39373030007300000000000c5e",
+      "reply_hex": "5858ffffffff001139373030007300000000000c000060",
+      "request_payload_hex": "",
+      "payload_hex": "0000",
+      "started_utc": "2026-10-09T19:10:51.107777+00:00",
+      "completed_utc": "2026-10-09T19:10:51.166045+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        3,
+        1,
+        1,
+        0,
+        11,
+        0,
+        7
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f39373030007300000000000c5e"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000bfc0030001b00300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000bfc0030001b00300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000bfc0030001b00300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "03005858ff000bfc0030001b00300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203232"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff000bfc0030001b00300029000000000145"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203231"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff000bfc0030001b003000290000000001"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff58ff000bfc0030001b0030002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ff0011393730300073000030002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff001139373030"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "07000000000c000060"
+        }
+      ]
+    },
+    "plate_loading": {
+      "command": 115,
+      "sequence": 14,
+      "request_hex": "5858ffffffff000f39373030007300000000000e60",
+      "reply_hex": "5858ffffffff001139373030007300000000000e000163",
+      "request_payload_hex": "",
+      "payload_hex": "0001",
+      "started_utc": "2026-10-09T19:10:51.726236+00:00",
+      "completed_utc": "2026-10-09T19:10:51.788024+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        3,
+        1,
+        1,
+        1,
+        0,
+        11,
+        1,
+        1,
+        0,
+        4
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f39373030007300000000000e60"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000d5d3730300071300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000d5d3730300071300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000000000000d5d3730300071300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "03005858ff000d5d3730300071300029000000000145000200"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203232"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff000d5d3730300071300029000000000145"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203231"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff000d5d37303000713000290000000001"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff000d5d373030007130002900000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203139"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff58ff000d5d3730300071300029000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203139"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b000011393730300073000000300029000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100001139373030"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202037"
+        },
+        {
+          "operation": "read",
+          "data_hex": "01000011393730"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202036"
+        },
+        {
+          "operation": "read",
+          "data_hex": "000000113937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202036"
+        },
+        {
+          "operation": "read",
+          "data_hex": "04000e000163"
+        }
+      ]
+    },
+    "plate_loaded": {
+      "command": 115,
+      "sequence": 23,
+      "request_hex": "5858ffffffff000f39373030007300000000001769",
+      "reply_hex": "5858ffffffff001139373030007300000000001700026d",
+      "request_payload_hex": "",
+      "payload_hex": "0002",
+      "started_utc": "2026-10-09T19:10:56.811870+00:00",
+      "completed_utc": "2026-10-09T19:10:56.872645+00:00",
+      "valid_serial_counts": [
+        0,
+        0,
+        0,
+        3,
+        1,
+        1,
+        0,
+        11,
+        1,
+        1,
+        0,
+        5
+      ],
+      "usb_operations": [
+        {
+          "operation": "write",
+          "data_hex": "5253202032315858ffffffff000f39373030007300000000001769"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000001600016b30300073300073000000000013000168"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000001600016b30300073300073000000000013000168"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000001600016b30300073300073000000000013000168"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203235"
+        },
+        {
+          "operation": "read",
+          "data_hex": "03005858ff1600016b30300073300073000000000013000168"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203232"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff1600016b30300073300073000000000013"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203231"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100ff58ff1600016b303000733000730000000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0000ff58ff1600016b3030007330007300000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220203230"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0b00ff0011393730300073000030007300000000"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202039"
+        },
+        {
+          "operation": "read",
+          "data_hex": "010000001139373030"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202038"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0100000011393730"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202037"
+        },
+        {
+          "operation": "read",
+          "data_hex": "00000000113937"
+        },
+        {
+          "operation": "write",
+          "data_hex": "525220202037"
+        },
+        {
+          "operation": "read",
+          "data_hex": "0500001700026d"
+        }
+      ]
+    }
+  }
+}

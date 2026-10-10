@@ -1,9 +1,14 @@
 # Recovered packet formats
 
-These formats describe the reference software and captured traffic. Only the connection, identity
-and status subset has been exercised directly from Ubuntu PLR; see the
-[hardware validation report](hardware-validation.md). Run control and live acquisition remain
-unimplemented and unverified.
+These formats describe the reference software and captured traffic. Connection, identity, status
+and thermal-only start/cancel and 35 °C/60-second completion have been exercised from Ubuntu; see the
+[hardware validation report](hardware-validation.md). Thermal-only run control is experimental and
+limited to the reported sessions on G2.10; wider programs and fault recovery remain unverified.
+Direct Ubuntu snapshots verified illuminated well patterns at filters 1 and 5, with lamp-off and
+filter-0 restoration. Offline camera processing matches all 960 saved values from one recorded
+vendor acquisition. A scheduled Ubuntu session completed two mild cycles normally with 30 frames
+and matching run history. Broader thermal programs, current calibration validity and optical
+recovery remain unverified.
 The codecs in `pylabrobot.thermo_fisher.abi7500_fast_dx.protocol` operate entirely offline.
 
 ## Evidence and limits
@@ -199,16 +204,19 @@ not a thermal packet error code. Capture includes normal application disconnecti
 Both sessions contain an identical 98-byte thermal program payload under command `0x12`, followed
 by a `0x13` start request. Cancellation adds a `0x07` stop and a `0x22` request with payload `00 fa`.
 The native `StopMethod` routine also emits `0x07` and a setpoint call with argument 250. These
-observations are evidence for further recovery, not sufficient validation of a general run API.
+observations support the experimental thermal-only API; they do not validate its hardware behavior.
 `test_data/usb_run_vectors.json` retains the exact program/start/stop exchange bytes, including
 the two OUT transfer boundaries of the program request. Tests check framing without replaying them.
 
 ## Experimental connection and observation
 
 `pylabrobot.thermo_fisher.ABI7500FastDx` exposes `setup()`, `get_identity()`, `get_status()` and
-`stop()`. These operations were checked on one G2.10 instrument with Windows disconnected;
-the class has no run-start, cancellation, or acquisition
-method. Importing or constructing it does not open the instrument. Setup opens USB, checks `CH`,
+`stop()`. These operations were checked on one G2.10 instrument with Windows disconnected.
+`get_history()`, `start_run()`, `get_run()` and `cancel_run()` also succeeded in thermal-only
+Ubuntu sessions: one start/cancel and one completed 35 °C/60-second hold. See
+[thermal runs](thermal-runs.md) for remaining limits. Importing or
+constructing the class does not open the instrument.
+Setup opens USB, checks `CH`,
 sends the captured `Cf` initialization metadata, reads `CF`/`CI`, configures the internal serial
 tunnel with `RP`, flushes it with `RC`, and checks the thermal application mode (`0x2f`) and version
 (`0x0a`). A bootloader response is rejected without attempting a firmware upload. This is a subset
@@ -268,7 +276,7 @@ an inactive sequence does not imply that the cover is cool.
 
 ## Thermal program records
 
-`ThermalProgram` is an offline codec for finite cycle/hold records under `0x12`. The native
+`ThermalProgram` encodes finite cycle/hold records under `0x12`. The native
 `AddSegment` (RVA `0x3b3ec`) and `AddSetpoint` (`0x3b4ae`) builders, followed by
 `_getFullMethodBytes` (`0x3b7f1`) and `_covertMethod2WriteBuffer` (`0x39785`), reproduce the captured
 98-byte program exactly in isolated x86 emulation. Five fixture vectors also vary cycle count,
@@ -295,7 +303,64 @@ total group/step records, following the native validator. Holds are finite (0–
 temperatures are 4.0–99.9 °C. Pause records and infinite holds are rejected. Exact tenths are required;
 temperatures are not silently rounded. Rate acceptance still depends on the block/firmware.
 Optical collection flags and cover temperature are not in this payload, so uploading these bytes
-alone would not implement a complete experiment. There is deliberately no public upload/replay API.
+alone would not implement a complete qPCR experiment. The public run API restricts configuration
+to the captured Standard/20 µL/block-2/tube-0 header and stamps the method/user labels for ownership.
+It exposes no raw upload or command replay method.
+
+## Thermal history and run identity
+
+`GetHistoryHead` (RVA `0x437ac`) queries `0x19` for 94 bytes. `FormatHistoryRecordHeader`
+(`0x44185`) labels the following fields; the completed and cancelled captures provide one history
+reply each. Both preserve the uploaded method/user labels at offsets 46 and 63. No current-run
+method readback has been established: history can lag the active sequence.
+
+| Offset | Format | Meaning |
+|---|---|---|
+| 6 | BE16 | Outcome: 0 completed normally, 1 aborted early, 253 no final result (`no_result`) |
+| 10 | 9 bytes | Native run start date record |
+| 19 | 9 bytes | Native run end date record |
+| 28 | BE32 | Run duration, seconds |
+| 32 | BE16 | Reaction volume, µL |
+| 46 | 17 bytes | NUL-terminated method label, matching the captured uploaded name |
+| 63 | 7 bytes | NUL-terminated user label, matching the captured uploaded user |
+
+The history start record matches bytes 32–40 of extended status for the corresponding run. These
+bytes remain opaque; neither clock synchronization nor timestamp uniqueness is assumed. Initial
+status replies after an acknowledged `0x13` still contain the preceding run's date, indices and
+elapsed counter. The controller can report state 3 with inactive sequence phase while starting.
+The PLR driver requires fresh evidence before reporting active progress, and never infers completion
+from sequence inactivity alone.
+
+The native formatter describes code 253 as no run since power-on, but the direct Ubuntu session
+also returned it during active ramping, with the fresh PLR method/user labels and start record.
+PLR therefore reports `no_result`, without inferring inactivity. During cover warmup, state 3 and
+inactive sequence phase persisted for about 273 seconds with the previous run's history. Active
+progress, rather than the acknowledgement alone, established that the thermal step had begun.
+
+The separate Ubuntu hold session reached holding phase with 60 seconds remaining at elapsed 13,
+then 1 second remaining at elapsed 72, and recorded normal completion at elapsed 73. A transient
+inactive/state-6 reply preceded inactive/state-2 status. PLR kept the transition `uncertain` until
+the recognized idle state and matching completed history agreed. No broad meaning is assigned to
+state 6. The last target remained 35 °C after normal completion; no automatic idle-target command
+is part of `get_run()` or connection teardown.
+
+The experimental lifecycle uses `0x1b`, a one-second native preparation delay, `0x12`, a half-second
+native upload delay, plate-state query `0x73`, optional load `0x71`, then `0x13`. The captures show
+plate state 1 during motion, 2 after loading, and 0 after unloading. The driver polls loading to
+state 2 and rechecks thermal inactivity before Start. Optical initialization and automatic plate
+ejection are not part of this thermal-only sequence. Cancellation uses `0x07` only for an identified
+active sequence, confirms inactivity, then sends `0x22` with `00fa` (25 °C idle target).
+
+`test_data/run_control_vectors.json` retains the unmodified vendor reference exchanges.
+`test_data/ubuntu_run_vectors.json` retains original Ubuntu upload/load/start/stop/idle exchanges and
+checkpoints, including preserved `plr-cancel-001` / `PLR` labels and a fresh matching history record.
+`test_data/ubuntu_hold_vectors.json` retains the completed hold's exchanges and status/history
+observations, including both boundary transitions and the `plr-hold-001` / `PLR` completed record.
+Other fault tests use explicitly synthetic PLR labels; they do not validate real fault recovery.
+The native `CreateMethod`
+routine (`0x3b156`) supports a 16-character method name and six-character user name. PLR writes the
+explicit run ID into these existing fields and uses `PLR` for the user; no firmware field or
+device-side idempotency token is invented.
 
 ## Camera transfer and reference crop
 
@@ -304,10 +369,42 @@ The offline `camera` module reconstructs the complete CD payload and the image p
 
 | Operation | Captured format |
 |---|---|
-| Set camera exposure parameters | `CJ   2,  540` (example; preserve both integers pending unit validation) |
+| Set camera exposure | `CJ   2,  540`: two-byte reply, requested exposure 540 ms; reply `1c 02` |
 | Start capture | `CC` |
-| Poll readiness | `CH   5`, replying `ready` when ready |
+| Poll readiness | `CH   5`, replying `not r` while busy and `ready` when ready |
 | Read image | `CD  64,2458 `, including the final space |
+
+`ARPAPI_SetExposuretime` (ArpLib RVA `0x1900`) accepts a double in seconds. For camera version
+2.10 and later, the setter encodes `CJ%4d,%5d`, with response length 2 and
+`trunc((seconds + 0.00049) * 1000)`. The x87 arithmetic is at `0x1a01`–`0x1a11`; the constants
+at `0xcce8` and `0xcce0` are 0.00049 and 1000. Earlier firmware uses different CE formats and
+is not supported by the snapshot API. The native accepted range is 0.005–50 seconds; PLR limits
+experimental snapshots to 1.048 seconds, the longest setting in this capture.
+
+All 46 CJ replies echo the requested millisecond value as a little-endian uint16. This confirms
+the command setting, not independently measured sensor integration time. The capture contains
+1,053 `not r` and 47 `ready` replies. ArpLib's capture thread at RVA `0x1c00` sends CC once,
+waits 10 ms between readiness polls, then reads CD. Its abort path contains `Cc`; PLR does not
+expose that unvalidated abort operation. All 46 CC-to-CD sequences contain only CH polling,
+including the exposures lasting over a second; no idle `C:` occurs inside them. The native
+idle routine at RVA `0x1070` checks an activity flag set by camera commands. PLR holds the USB
+transaction lock throughout the exposure/read, excluding its idle heartbeat until completion.
+`camera_commands.json` retains all exposure echoes and
+the complete camera command sequence associated with the retained image fixture (CC frame
+12081, CD frame 12235), plus native optical query packets.
+
+The direct Ubuntu `plr-lowexp-001` session also acknowledged 5, 10 and 30 ms requests, eight of
+each, alongside two requests each at 60, 180 and 540 ms. All 30 exposures produced complete
+images. `ubuntu_short_exposure_vectors.json` retains the six exact CJ command/reply pairs and
+their counts; 5 ms returns `05 00`. This confirms command acceptance and retrieval, not an
+independent measurement of sensor integration time or exposure linearity.
+
+Snapshot metadata queries use command `0x6b` for the two-byte big-endian filter index, `0x6c`
+for the two-byte motor state (`00 00` stationary), and `0x66` for the four-byte lamp reply.
+Native wrappers are at BudgieManagerEXT RVAs `0x4072d`, `0x40d7d`, and `0x410b1`. Lamp enable
+and power are two big-endian words; raw bytes remain available. The implementation compares
+original optical replies before and after capture
+without moving the filter or changing the lamp. See [snapshot limits](raw-snapshots.md).
 
 For the 321 × 245 wire dimensions, the reference library requests
 `2 × (floor(321 × 245 / 64) + 1)` blocks of 64 bytes: 157,312 bytes. This contains 157,290 bytes of
@@ -369,26 +466,159 @@ these members without extracting the ZIP, preserving their original bytes, integ
 acquisition indices, and vendor ordering. It rejects malformed arrays and duplicate acquisition
 indices. This agreement validates the saved-data decoder, not the conversion from pixels to wells.
 
-## Evidence needed for control and measurements
+## Lamp/filter control and uniformity correction
 
-Before exposing run execution and calibrated measurements from `ABI7500FastDx`:
+The captured envelopes and native `BudgieManagerEXT.dll` wrappers establish:
 
-- Extend the tested connection/status initialization with the thermal and optical setup required
-  for acquisition. Validate additional startup states and teardown after an active run. Avoid
-  firmware-download paths.
-- Match request/response sequences, state transitions, errors, and timeouts across connection,
-  run start, progress, completion, cancellation, and reconnection. Determine how to query an active
-  run after a lost acknowledgement. A local run ID alone cannot prevent duplicates after reconnect.
-- Extend the verified image transfer and crop with exposure units, exposure selection/combination,
-  channel identity, and robust association with thermal collection events. Preserve original bytes
-  alongside metadata.
-- Recover ROI geometry and calibration processing from the same instrument's files and reference
-  outputs. Preserve separate raw and corrected measurements. Do not assume an evenly spaced well
-  grid or infer orientation from a plausible image.
-- Compare frames and per-well values from the same acquisition against vendor outputs, with
-  explicit orientation, channel, cycle, and numerical-tolerance checks. Keep synchronized timing
-  on the instrument where required.
+| Command | Request payload | Reply | Native RVA |
+| --- | --- | --- | --- |
+| `0x64` SetLamp | BE16 enable, 0 or 1 | empty acknowledgement | `0x40fbf` |
+| `0x65` SetLampPower | BE16 native power 0 or 1 | empty acknowledgement | `0x40eb9` |
+| `0x66` GetLampState | empty | BE16 enable, then BE16 power | `0x410b1` |
+| `0x69` MoveToFWPos | BE16 absolute position | empty acknowledgement | `0x40c4a` |
+| `0x6b` GetFilterPosition | empty | BE16 position | `0x4072d` |
+| `0x6c` RequestFilterMotorState | empty | `0000` stationary, `0001` moving in capture | `0x40d7d` |
 
-Tests establish packet framing, camera transfer reconstruction, the reference image copy, and
-saved filter-array decoding. They do not validate live PLR acquisition/cancellation, timeout
-recovery, duplicate-run prevention, physical well orientation, or calibrated fluorescence.
+`WaitForFilterMove` (`0x421e3`) polls at 100 ms with a 15-second limit. The driver does not
+expose `0x76` (calibration position setting), `0x7a` (lamp monitoring/reset), or implicit homing.
+Native errors are raised, not converted into synthetic lamp state. TCWrapper `SetLampState`
+(RVA `0x1e836`) enables the lamp, waits 250 ms, then selects power 0 or 1. HAMCamera (`0x2064a`)
+waits another 250 ms before readback. PLR preserves these delays when a change is required.
+Native `OpenShutter(true)` (`0x1d35b`) is a no-op; false requests absolute filter position 0.
+No additional USB shutter command is needed for this path. Captures include enabled power words 0 and 1; the Ubuntu snapshot observed
+disabled state `0000 0002`. Power words are not light measurements. PLR uses query-before-change
+setters with final readback and never retries an ambiguous mutation.
+`optical_control_vectors.json` retains representative captured command/reply pairs.
+
+`GeminiUniformityPreprocessing.repackageRawDataForPlatform` converts saved signed 64-bit well
+values to Java float. Its `applyUniformity` multiplies by
+`coefficients[filter][well // 12][well % 12]` using float multiplication. It does not subtract the
+background file in this branch. `GeminiUniformityCalibration` reads `[uniformity]` matrices;
+`[uniformity_spectra]` is a separate field and must not replace those factors.
+The original vendor method and PLR agree bit-for-bit on all 960 values from `acquire-complete.eds`,
+using its embedded calibration (SHA-256
+`ae3a560ea0aadf9b08060ceac4584f865b603df046bbe2faebf1974eac7b86d0`).
+The EDS SHA-256 is `4e5804a8bcf8902f3bf2bafce504e7a4e5ee827cc7634d08793da61ae5652faf`.
+`uniformity_vectors.json` contains synthetic coefficients and another 480 original-Java outputs,
+including int64 rounding boundaries; full calibration backups remain outside Git.
+
+Offline mask recovery identifies `PlateMask` schema 10, `CMNImageAOI` schema 2, and
+`CMNImageMatrix` schema 1. Each of five committed `.aoi` files contains 96 serialized pixel masks, and all five occur
+byte-for-byte in the backed-up `Calibration.sda`. This is not a live configuration query.
+`ExtractObjects` (`0xbb28`) delegates to `0x2bc3a`. The recovered reference path is described below;
+other optional reduction, dark-reference and hot-pixel configurations are not inferred from it.
+The saved-array uniformity API and the camera reconstruction API preserve different source objects.
+See [measurement limits](optics-and-measurements.md).
+
+The offline `image_processing` module supports diagnostic extraction from those saved masks.
+The MFC stream uses 16-bit class tags, schemas 10/2/1 and a 96-object list. AOI outlines contain
+signed row/column pairs; the nonzero uint16 matrix entries select pixels relative to the outline's
+minimum row/column. Native first/next iterators at RVAs `0x95a20`/`0x95a50` select these pixels in
+row-major order. Original files and uninterpreted statistics/footer bytes are retained.
+
+HAMCamera's correction at BudgieManagerEXT RVA `0x200c7` consumes the OPB=1 320×245 image. It
+truncates the mean of the first 640 pixels, removes five rows, and stores
+`max(0, pixel - offset + 128)` in uint16 (including native wrap on overflow). OPB=1 has a different
+one-pixel horizontal origin from the default OPB=0 view. These must not be treated as the same crop.
+Isolated original x86 execution matched 48 saved frames and six arithmetic boundary cases.
+Diagnostic logging was stubbed and the MSVCRT integer conversion modeled using x87 truncation.
+All 480 decoded mask regions also matched native iterator execution using reconstructed AOI
+memory. These checks establish individual stages, not MFC-deserializer or end-to-end fluorescence
+parity. Diagnostic sums include zero pixels and do not implement vendor reduction settings.
+
+## Reference camera-to-vendor reconstruction
+
+The matching native `HS7500.dll` has SHA-256
+`97fedadf13db8668c805c91df7a20d1197d569a01d24be8d687cd46c1751c983`.
+BudgieManagerEXT has SHA-256
+`9dbff7366d38a6c43b3ba363dd007b40f65d0dead3c1d3b9eb09428f91a8102f`.
+Recovery of their called routines and comparison with the original acquisition establish:
+
+| Stage | Native evidence | Implemented reference behavior |
+|---|---|---|
+| Mask orientation | Budgie wrapper `0x17eca`, HAMCamera `0x2035b` | Rotate the OPB=0 320×240 crop 180° before masks |
+| Well extraction | Budgie `0x74627`, ROI statistics `0x7e2e8` | Sum nonzero image pixels selected by each native mask |
+| Surrounding pixels | Budgie `0x7467b`, dilation `0x8e8f9`/`0x8ea83` | Adjacent eight-neighbor ring, excluding the ROI; subtract nonzero ring mean × nonzero ROI count |
+| Saturation | Native threshold/count path | Flag more than six ROI pixels above 4000 |
+| Exposure/background | HS7500 `0x17552`, `0x3d190`, `0x1d390` | Offset subtraction; scale to 1000 ms using `ceil((ms+0.2746)/0.1702)*0.1702`; subtract slope × 1000; truncate/clip to uint32 |
+| Exposure selection | HS7500 `0x4de24` | Prefer uniquely longest unflagged exposure; fallback to uniquely shortest original exposure, then first on tie |
+| Saved filter order | HS7500 `0x1bb85` | Reverse physical filters: saved index = 6 − physical position |
+
+The exposure selector also preserves the sole-positive-exposure case, even when flagged.
+Eighty isolated native cases exercise unequal/equal times, disabled exposures, every flag
+combination and all five filter-bit positions. Logging and allocator dependencies were isolated;
+this oracle does not communicate with hardware.
+
+`Background.csv` version 5 stores five offset rows then five slope rows in saved-filter order.
+The exact backup SHA-256 is
+`0de05b98e4d19a870ca947c3369140de040897c30afaa3355da2350006db4e48`.
+Its coefficients are parsed directly to binary32. The lower-precision EDS `background.ini` misses
+ten saved integers and is not substituted for this file. Calibration files remain outside Git.
+The reference configuration uses OPB=0 and no additional dark lookup. A separately verified OPB=1
+correction must not be inserted into this path.
+
+The 30 frames associated with stage 2, cycles 1–2 reconstruct **960/960 saved EDS integers exactly**.
+Applying the vendor-verified uniformity stage also matches all 960 corrected binary32 values.
+Native F0–F4 mask files map to physical filters 1–5 and hence saved filters 5–1. These tests verify
+the orientation and indices relative to vendor outputs; they are not an independent labeled-plate
+orientation experiment. Small recorded patches cover all filters and both cycles in
+`fluorescence_vectors.json`; original frames and full calibration files remain outside Git.
+Many reference wells select a saturated fallback. Matching those numbers does not make them valid
+quantitative measurements; the API retains their saturation flags and all three candidates.
+
+The [hardware report](hardware-validation.md) records the illumination session with the native
+lamp delays and five-second settling intervals. It produced visible well patterns at filters 1
+and 5, unlike the earlier immediate snapshot. The session does not isolate which delay resolved
+the earlier dark image or establish quantitative calibration.
+
+## Status-driven optical scheduling
+
+The native Windows implementation schedules optical reads on the host while thermal timing stays
+on the controller. `BudgieManager::EstimateReadTime_PCR` (Budgie RVA `0x120bb`) benchmarks a complete
+configured read. HS7500 preparation (`0x118ae`) checks collection holds against that budget plus a
+margin. `Poll9700` (`0x143bd`) starts a read when the hold countdown in milliseconds is at most the
+estimated duration plus margin, suppressing duplicates by group/step/repetition. Budgie
+`ReadAsync` (`0x4a5c`) compares the thermal indices before and after the burst.
+
+The matching reference log gives a measured read budget of **22,593 ms** plus **2,000 ms** margin.
+Both captured collections begin with 24 seconds remaining and end with 1 second remaining, at
+zero-based group 1/step 1, repetitions 1 and 2. Each contains physical filters 1–5 with three
+exposures each. `collection_schedule_vectors.json` retains the original boundary exchanges and
+frame associations. There is no recovered hardware-trigger or hold-extension handshake in this
+path. Command `0x67` is filter-wheel homing, not an acquisition trigger; PLR does not invoke it.
+
+These entry points are in the installer/reference-PC binaries already used for protocol recovery.
+HS7500 SHA-256 is `97fedadf13db8668c805c91df7a20d1197d569a01d24be8d687cd46c1751c983`;
+the Budgie hash is listed above. Full decompilation and binaries remain outside Git.
+
+PLR's [collection API](synchronized-acquisition.md) uses a configurable 45-second default window
+because per-frame status and optical checks add overhead. It journals the full collection intent
+and each CJ/CC intent, checks the same run and hold around every image, and retains uncertain data
+without replay. This is a proposed scheduling budget, not a proven worst-case acquisition time.
+An incoherent observation spanning startup is reconciled by further queries without actuation.
+The first Ubuntu attempt ended before exposure. The second acquired 15 frames in each of two
+holds, starting at 44 seconds remaining and ending at 14/13 seconds. A later host observation
+timeout cancelled the final hold. Those captured phase associations and the startup regression
+are documented in the [hardware report](hardware-validation.md). A subsequent approved session
+with a 900-second observation budget completed both cycles normally. Its collections began at
+44/45 seconds remaining and finished at 14/13 seconds; all 30 frame boundaries remained in the
+intended 30 °C holds. Recorded metadata and final observations are retained in
+`ubuntu_sync_completed_vectors.json`.
+
+## Remaining control and measurement validation
+
+- Validate broader thermal programs and cold-cover startup with the longer observation budget.
+  The completed two-cycle optical run began with a warm cover; it does not establish a worst-case
+  acquisition time or a universal session timeout.
+- Validate additional startup states, teardown and recovery after ambiguous communication failures
+  without repeating a potentially completed run or exposure.
+- Compare additional acquisitions, including unsaturated measurements, other configurations and
+  calibration backups. The exact reference comparison does not cover every native processing mode.
+- Validate physical well labeling with a known plate and dye/channel interpretation separately.
+  Saved filter indices alone do not identify dyes or establish current calibration validity.
+
+Mocked/captured tests establish framing, image reconstruction, processing and run-state behavior.
+The separate hardware report records direct Ubuntu connection, one start/cancel, clean reconnect
+during startup, one completed 35 °C/60-second hold, illuminated snapshots and 30 images collected
+within two scheduled holds followed by normal thermal completion. Broader thermal programs and
+fault recovery remain unverified.
