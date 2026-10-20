@@ -256,6 +256,18 @@ class ExportTests(unittest.TestCase):
       self.export()
     self.assertEqual(self.path.read_bytes(), b"keep this existing file")
 
+  def test_fixed_calibration_collection_cannot_use_bracket_export(self) -> None:
+    """Calibration averages must not be interpreted as three-exposure measurements."""
+    plan = self.checkpoint.collection_plan
+    assert plan is not None
+    fixed = replace(plan.filters[0], mode="fixed", exposures=(0.720,))
+    run = replace(self.checkpoint, collection_plan=replace(plan, filters=(fixed,)))
+    with self.assertRaisesRegex(ABI7500RunError, "requires brackets"):
+      write_run_archive(
+        self.path, run, self.collections, self.background, self.uniformity, self.masks
+      )
+    self.assertFalse(self.path.exists())
+
   def test_write_failure_removes_only_new_partial_archive(self) -> None:
     """A failed write cannot leave a misleading success archive or damage another file."""
     other = self.path.with_name("keep.zip")

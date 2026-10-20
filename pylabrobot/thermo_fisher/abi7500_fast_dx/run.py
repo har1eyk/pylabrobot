@@ -44,13 +44,19 @@ def _validate_run_id(run_id: str) -> None:
     raise ValueError("run_id must contain 1–16 ASCII letters, digits, underscores or hyphens")
 
 
-def _validate_run_program(program: ThermalProgram) -> None:
-  """Limit actuation to the reference Standard-mode, 20 µL, block-2 configuration."""
+def _validate_run_program(
+  program: ThermalProgram, *, calibration_startup: bool = False, standby_startup: bool = False
+) -> None:
+  """Limit actuation to captured Standard/block-2 settings and explicit 30 µL startup paths."""
   if not isinstance(program, ThermalProgram):
     raise ValueError("program must be a ThermalProgram")
-  if program.metadata[42:] != bytes.fromhex("1400020000"):
+  allowed: tuple[bytes, ...] = (bytes.fromhex("1400020000"),)
+  if calibration_startup or standby_startup:
+    allowed += (bytes.fromhex("1e00020000"),)
+  if program.metadata[42:] not in allowed:
     raise ValueError(
-      "Run execution supports only the captured Standard/20 µL/block-2 configuration"
+      "Run execution requires captured Standard/block-2 settings: 20 µL, or 30 µL "
+      "with explicit calibration or standby startup"
     )
   for date in (program.metadata[24:33], program.metadata[33:42]):
     if not (
@@ -155,6 +161,11 @@ class ThermalRun:
   collection_plan: Optional[CollectionPlan] = None
   collection_error: Optional[str] = None
   plate_release_state: PlateReleaseState = "not_requested"
+  cover_temperature: Optional[int] = None
+  cover_configured: bool = False
+  start_command: int = 0x13
+  calibration_startup: bool = False
+  standby_startup: bool = False
 
   def __post_init__(self) -> None:
     """Reject malformed checkpoints before they can authorize instrument writes."""
@@ -180,6 +191,35 @@ class ThermalRun:
       raise ValueError("Collection error must be text")
     if self.plate_release_state not in ("not_requested", "uncertain", "released"):
       raise ValueError("Invalid plate release state")
+    if self.cover_temperature is not None and (
+      type(self.cover_temperature) is not int or self.cover_temperature != 90
+    ):
+      raise ValueError("Only the captured 90-degree calibration cover setting is supported")
+    if type(self.cover_configured) is not bool or (
+      self.cover_configured and self.cover_temperature is None
+    ):
+      raise ValueError("Cover verification requires an explicit cover setting")
+    if type(self.start_command) is not int or self.start_command not in (0x13, 0x7E):
+      raise ValueError("Unsupported thermal Start command")
+    if self.start_command == 0x7E and self.cover_temperature is None:
+      raise ValueError("Preserving the cover requires an explicit verified cover setting")
+    if type(self.calibration_startup) is not bool:
+      raise ValueError("calibration_startup must be a boolean")
+    if self.calibration_startup and (
+      self.cover_temperature != 90 or self.start_command != 0x7E or self.collection_plan is None
+    ):
+      raise ValueError("Calibration startup requires a collection plan and 90-degree cover")
+    if type(self.standby_startup) is not bool:
+      raise ValueError("standby_startup must be a boolean")
+    if self.standby_startup and (
+      self.calibration_startup
+      or self.cover_temperature is not None
+      or self.start_command != 0x13
+      or self.collection_plan is None
+    ):
+      raise ValueError(
+        "Standby startup requires a collection plan and normal Start without a cover override"
+      )
 
   @property
   def wire_program(self) -> ThermalProgram:
@@ -214,6 +254,11 @@ class ThermalRun:
       "collection_plan": None if self.collection_plan is None else self.collection_plan.to_dict(),
       "collection_error": self.collection_error,
       "plate_release_state": self.plate_release_state,
+      "cover_temperature": self.cover_temperature,
+      "cover_configured": self.cover_configured,
+      "start_command": self.start_command,
+      "calibration_startup": self.calibration_startup,
+      "standby_startup": self.standby_startup,
     }
 
   @classmethod
@@ -241,4 +286,9 @@ class ThermalRun:
       else CollectionPlan.from_dict(data["collection_plan"]),
       collection_error=data.get("collection_error"),
       plate_release_state=data.get("plate_release_state", "not_requested"),
+      cover_temperature=data.get("cover_temperature"),
+      cover_configured=data.get("cover_configured", False),
+      start_command=data.get("start_command", 0x13),
+      calibration_startup=data.get("calibration_startup", False),
+      standby_startup=data.get("standby_startup", False),
     )

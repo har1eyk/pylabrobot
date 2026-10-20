@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Tuple, Union
 
+from ._background_sda import read_background_sda
 from .acquisition import CameraExposure
 from .calibration import UniformityCalibration, _coefficient, _float32, _integer_float32
 from .camera import CameraFrame, CameraGeometry
@@ -35,19 +36,23 @@ def _background_number(text: str) -> float:
 
 @dataclass(frozen=True)
 class BackgroundCalibration:
-  """The native version-5 Background.csv, retaining its original bytes and SHA-256.
+  """Native background coefficients, retaining the original calibration bytes and SHA-256.
 
-  This file has no instrument identity, expiry or pass flag. Select it from the matching backup;
-  it cannot certify current calibration. The EDS background.ini has lower decimal precision and
-  is deliberately not accepted as a replacement for exact native reconstruction.
+  The captured I809 ``Calibration.sda`` preserves full binary32 precision. Version-5
+  ``Background.csv`` remains supported, but its rounded decimal export can cause one-count
+  differences from native results. Select the file from the matching instrument backup;
+  reading it does not certify current calibration. The lower-precision EDS background.ini
+  is not accepted as a replacement.
   """
 
   source_bytes: bytes
 
   def _rows(self) -> tuple[tuple[float, ...], ...]:
-    """Validate the reference native CSV layout and return five offsets then five slopes."""
+    """Validate a supported native layout and return five offsets then five slopes."""
     if not isinstance(self.source_bytes, bytes) or len(self.source_bytes) > 1024 * 1024:
-      raise ValueError("Expected immutable background CSV bytes, at most 1 MiB")
+      raise ValueError("Expected immutable background calibration bytes, at most 1 MiB")
+    if self.source_bytes.startswith(b"SDS2"):
+      return read_background_sda(self.source_bytes)
     lines = self.source_bytes.decode("utf-8-sig").splitlines()
     if (
       len(lines) != 13
@@ -134,6 +139,8 @@ class FluorescenceFrame:
 
   def __post_init__(self) -> None:
     """Limit extraction to the recovered complete 12-bit reference image and bounded rings."""
+    if not isinstance(self.mask, PlatePixelMask):
+      raise TypeError("Native fluorescence extraction requires a saved vendor PlatePixelMask")
     if self.source.geometry != CameraGeometry(321, 245):
       raise ValueError("Fluorescence extraction requires the reference camera geometry")
     if max(struct.unpack("<76800H", self.image_bytes)) > 4095:

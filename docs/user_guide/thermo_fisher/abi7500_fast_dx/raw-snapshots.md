@@ -17,8 +17,14 @@ It does not require a fresh reaction plate or calibration plates.
 `capture_frame(acquisition_id, exposure=0.256)` checks the camera identity, geometry, readiness,
 thermal inactivity and stationary filter before reserving the ID in the existing `run_journal`.
 Every thermal run in that journal must already be resolved. The implementation supports the
-reference C9254-03 camera firmware 2.20, thermal firmware G2.10, and 321×245 wire geometry.
-Exposure is in seconds, limited to 0.005–1.048, using the reference millisecond conversion.
+C9254-03 camera firmware 2.20 or C9254-02 firmware 2.19, with thermal firmware G2.10 and
+321×245 wire geometry. Other model/firmware combinations remain blocked. The older camera's
+vendor diagnostic capture verifies its exposure echo, readiness polling and complete frame;
+its image reconstruction matches the native image-copy routine byte for byte. This does not
+validate another instrument's well mapping or calibration.
+Exposure is in seconds, limited to 0.005–2, using the reference millisecond conversion.
+The upper limit includes the captured vendor optical-calibration exposure search; it does not
+establish a validated calibration-acquisition workflow from PLR.
 
 ```python
 # Hardware operation: only execute in an approved session, after instrument.setup().

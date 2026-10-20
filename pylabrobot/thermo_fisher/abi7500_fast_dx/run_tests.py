@@ -4,9 +4,12 @@ import asyncio
 import json
 import sqlite3
 import tempfile
+import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from pathlib import Path
+from threading import Event
 from typing import Optional, cast
 from unittest.mock import patch
 
@@ -188,6 +191,46 @@ class RunEvidenceTests(unittest.TestCase):
       finally:
         first.close()
         second.close()
+
+  def test_checkpoint_waits_for_brief_read_only_inspection(self) -> None:
+    """A concurrent read snapshot must not discard a checkpoint when its commit needs the lock."""
+    with tempfile.TemporaryDirectory() as root:
+      path = Path(root) / "run.sqlite3"
+      journal = RunJournal(path)
+      reader_ready, committing = Event(), Event()
+
+      def read_snapshot() -> None:
+        """Hold a read transaction until the writer attempts its checkpoint commit."""
+        reader = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+          reader.execute("BEGIN")
+          reader.execute("SELECT record FROM runs").fetchall()
+          reader_ready.set()
+          if not committing.wait(5):
+            raise AssertionError("Writer did not attempt its commit")
+          time.sleep(0.05)
+        finally:
+          reader.close()
+
+      def observe_commit(statement: str) -> None:
+        """Coordinate the reader with SQLite's actual transaction boundary."""
+        if statement == "COMMIT":
+          committing.set()
+
+      try:
+        journal.reserve(_checkpoint())
+        journal._open().set_trace_callback(observe_commit)
+        with ThreadPoolExecutor(max_workers=1) as executor:
+          reader = executor.submit(read_snapshot)
+          self.assertTrue(reader_ready.wait(5))
+          updated = replace(_checkpoint(), state="not_started")
+          journal.save(updated)
+          reader.result(timeout=5)
+        journal.close()
+        self.assertEqual(journal.get(_RUN_ID), updated)
+      finally:
+        committing.set()
+        journal.close()
 
 
 class RunDriverTests(unittest.IsolatedAsyncioTestCase):

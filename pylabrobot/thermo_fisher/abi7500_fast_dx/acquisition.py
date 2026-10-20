@@ -23,11 +23,11 @@ def _validate_acquisition_id(acquisition_id: str) -> None:
 
 @dataclass(frozen=True)
 class CameraExposure:
-  """A requested exposure in seconds for the recovered C9254-03/2.20 CJ command.
+  """A requested exposure in seconds for the recovered C9254-03/2.20 and C9254-02/2.19 CJ command.
 
-  The experimental snapshot API limits requests to 0.005–1.048 seconds: the native minimum and
-  the longest exposure in the reference capture. This is not a measured effective integration
-  time. The reference setter rounds with a 0.49 ms bias and truncation, rather than Python round.
+  The experimental snapshot API limits requests to 0.005–2 seconds: the native minimum and
+  the longest exposure in the optical-calibration capture. This is not a measured effective
+  integration time. The setter rounds with a 0.49 ms bias and truncation, rather than Python round.
   """
 
   duration: float
@@ -36,8 +36,8 @@ class CameraExposure:
     """Reject unsupported or nonfinite exposure requests before any instrument I/O."""
     if isinstance(self.duration, bool) or not math.isfinite(self.duration):
       raise ValueError("Exposure must be finite")
-    if not 0.005 <= self.duration <= 1.048:
-      raise ValueError("Experimental snapshots support exposures from 0.005 to 1.048 seconds")
+    if not 0.005 <= self.duration <= 2:
+      raise ValueError("Experimental snapshots support exposures from 0.005 to 2 seconds")
 
   @property
   def milliseconds(self) -> int:
@@ -52,6 +52,42 @@ class CameraExposure:
     """Require the captured little-endian millisecond echo before starting an exposure."""
     if reply != self.milliseconds.to_bytes(2, "little"):
       raise ABI7500ProtocolError("Camera exposure reply does not match the requested milliseconds")
+
+
+@dataclass(frozen=True)
+class StoredExposureTimes:
+  """The reference controller's 254-byte exposure table, preserving all original bytes.
+
+  Five physical filters each have three signed big-endian millisecond values, starting at
+  byte two. The leading two bytes and trailing 192 bytes remain uninterpreted. This readback
+  does not establish calibration validity or guarantee that a reported duration is supported
+  by :class:`CameraExposure`. Reading it does not change a PLR collection plan.
+  """
+
+  raw_payload: bytes
+
+  def __post_init__(self) -> None:
+    """Require the immutable, complete reference table before interpreting its fields."""
+    if not isinstance(self.raw_payload, bytes) or len(self.raw_payload) != 254:
+      raise ABI7500ProtocolError("Expected exactly 254 immutable exposure-table bytes")
+
+  def for_filter(self, filter: int) -> tuple[float, float, float]:
+    """Return reported durations in seconds, preserving the instrument's exposure order.
+
+    Args:
+      filter: Physical wheel position 1–5, not the reversed saved/vendor channel number.
+        Physical position 5 corresponds to saved channel 1 on the reference instrument.
+
+    Zero and negative values are retained without treating them as supported exposure requests.
+    """
+    if type(filter) is not int or not 1 <= filter <= 5:
+      raise ValueError("Physical filter must be an integer from 1 to 5")
+    start = 2 + (filter - 1) * 12
+    return (
+      int.from_bytes(self.raw_payload[start : start + 4], "big", signed=True) / 1000,
+      int.from_bytes(self.raw_payload[start + 4 : start + 8], "big", signed=True) / 1000,
+      int.from_bytes(self.raw_payload[start + 8 : start + 12], "big", signed=True) / 1000,
+    )
 
 
 @dataclass(frozen=True)

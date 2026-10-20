@@ -58,11 +58,13 @@ class _OpticalUSB(_ScriptedUSB):
     lamp: bytes = b"\x00\x01\x00\x00",
     motor: int = 0,
     status: bytes = _IDLE,
+    camera: bytes = _CAMERA,
+    version: bytes = _VERSION,
   ) -> None:
     """Queue identity and coherent idle checks without any optical mutations."""
     self.expect_write(b"CF  64")
-    self.expect_read(_CAMERA)
-    self.exchange(0x0A, _VERSION)
+    self.expect_read(camera)
+    self.exchange(0x0A, version)
     self.exchange(0x29, status)
     self.optics(position, lamp, motor)
     self.exchange(0x29, status)

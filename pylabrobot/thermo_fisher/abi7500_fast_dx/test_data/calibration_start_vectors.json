@@ -1,0 +1,223 @@
+{
+  "vendor_session": "abi7500-unit2-dye-rox-001",
+  "vendor_cover_start_pairs": [
+    {
+      "request": {
+        "frame": 2053,
+        "time": 1792431338.581542,
+        "frames": [
+          2053
+        ],
+        "command": 53,
+        "sequence": 127,
+        "error": 0,
+        "payload_hex": "005a0001",
+        "packet_hex": "5858ffffffff001339373030003500000000007f005a0001f2",
+        "log_lines": [
+          956,
+          1603,
+          3481,
+          24173,
+          25966
+        ]
+      },
+      "reply": {
+        "frame": 2058,
+        "time": 1792431338.689674,
+        "command": 53,
+        "sequence": 127,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030003500000000007f93",
+        "log_lines": [
+          957,
+          1604,
+          3482,
+          24174,
+          25967
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2069,
+        "time": 1792431338.909009,
+        "frames": [
+          2069
+        ],
+        "command": 27,
+        "sequence": 129,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030001b0000000000817b",
+        "log_lines": [
+          961,
+          1608,
+          3486,
+          24178,
+          25971
+        ]
+      },
+      "reply": {
+        "frame": 2074,
+        "time": 1792431339.017738,
+        "command": 27,
+        "sequence": 129,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030001b0000000000817b",
+        "log_lines": [
+          962,
+          1609,
+          3487,
+          24179,
+          25972
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2075,
+        "time": 1792431340.025722,
+        "frames": [
+          2075,
+          2077
+        ],
+        "command": 18,
+        "sequence": 130,
+        "error": 0,
+        "payload_hex": "014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001e000200000200010100000000000003000138025800000064",
+        "packet_hex": "5858ffffffff0053393730300012000000000082014d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001e000200000200010100000000000003000138025800000064d4",
+        "log_lines": [
+          24180,
+          25973
+        ]
+      },
+      "reply": {
+        "frame": 2094,
+        "time": 1792431340.463215,
+        "command": 18,
+        "sequence": 130,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030001200000000008273",
+        "log_lines": [
+          964,
+          1611,
+          3489,
+          24181,
+          25974
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2215,
+        "time": 1792431345.09018,
+        "frames": [
+          2215
+        ],
+        "command": 113,
+        "sequence": 147,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f393730300071000000000093e3",
+        "log_lines": [
+          1015,
+          1662,
+          3540,
+          24232,
+          26025
+        ]
+      },
+      "reply": {
+        "frame": 2220,
+        "time": 1792431345.203857,
+        "command": 113,
+        "sequence": 147,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f393730300071000000000093e3",
+        "log_lines": [
+          1016,
+          1663,
+          3541,
+          24233,
+          26026
+        ]
+      }
+    },
+    {
+      "request": {
+        "frame": 2293,
+        "time": 1792431352.246232,
+        "frames": [
+          2293
+        ],
+        "command": 126,
+        "sequence": 160,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030007e0000000000a0fd",
+        "log_lines": [
+          3579,
+          24271,
+          26064
+        ]
+      },
+      "reply": {
+        "frame": 2302,
+        "time": 1792431352.463493,
+        "command": 126,
+        "sequence": 160,
+        "error": 0,
+        "payload_hex": "",
+        "packet_hex": "5858ffffffff000f39373030007e0000000000a0fd",
+        "log_lines": [
+          3580,
+          24272,
+          26065
+        ]
+      }
+    }
+  ],
+  "plr_failed_session": "abi7500-plr-unit2-dye-rox-002",
+  "plr_cover_pairs": [
+    {
+      "command": 54,
+      "request_hex": "5858ffffffff000f3937303000360000000000081d",
+      "reply_hex": "5858ffffffff0015393730300036000000000008006900010068f5",
+      "request_payload_hex": "",
+      "payload_hex": "006900010068"
+    },
+    {
+      "command": 19,
+      "request_hex": "5858ffffffff000f39373030001300000000002f21",
+      "reply_hex": "5858ffffffff000f39373030001300000000002f21",
+      "request_payload_hex": "",
+      "payload_hex": ""
+    },
+    {
+      "command": 54,
+      "request_hex": "5858ffffffff000f39373030003600000000003045",
+      "reply_hex": "5858ffffffff00153937303000360000000000300069000100691e",
+      "request_payload_hex": "",
+      "payload_hex": "006900010069"
+    },
+    {
+      "command": 53,
+      "request_hex": "5858ffffffff0013393730300035000000000031005a0001a4",
+      "reply_hex": "5858ffffffff000f39373030003500000000003145",
+      "request_payload_hex": "005a0001",
+      "payload_hex": ""
+    },
+    {
+      "command": 54,
+      "request_hex": "5858ffffffff000f39373030003600000000003247",
+      "reply_hex": "5858ffffffff001539373030003600000000003200690001006920",
+      "request_payload_hex": "",
+      "payload_hex": "006900010069"
+    }
+  ],
+  "native_mapping": "BudgieManagerEXT.dll TC9700Control::StartMethodNoCoverSetpoint at RVA 0x37ee7 sends 0x7e; StartMethod at 0x37e59 sends 0x13."
+}

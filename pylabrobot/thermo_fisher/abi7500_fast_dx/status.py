@@ -29,6 +29,39 @@ def _terminated_ascii(data: bytes) -> str:
 
 
 @dataclass(frozen=True)
+class ABI7500CoverState:
+  """Native 0x36 readback, recovered from TC9700Control::GetCoverTemp.
+
+  Setpoint is integer degrees Celsius. Mode 1 is the captured calibration control mode;
+  mode 2 is the native alternative, whose behavior has not been validated. The final word
+  remains raw because its units have not been confirmed by a capture. Use get_status()
+  for the independently verified measured cover temperature in degrees Celsius.
+  """
+
+  raw_payload: bytes
+
+  def __post_init__(self) -> None:
+    """Require exactly three immutable big-endian words."""
+    if not isinstance(self.raw_payload, bytes) or len(self.raw_payload) != 6:
+      raise ABI7500ProtocolError("Cover state must contain six bytes")
+
+  @property
+  def setpoint(self) -> int:
+    """Integer-degree target encoded by SetCoverTemp."""
+    return int.from_bytes(self.raw_payload[:2], "big")
+
+  @property
+  def mode(self) -> int:
+    """Native control word, preserved without inventing meanings for unknown values."""
+    return int.from_bytes(self.raw_payload[2:4], "big")
+
+  @property
+  def measured_raw(self) -> int:
+    """Unscaled measurement word; its units remain hardware-unverified."""
+    return int.from_bytes(self.raw_payload[4:], "big")
+
+
+@dataclass(frozen=True)
 class ABI7500PlateStatus:
   """Internal plate mechanism state from command 0x73, preserving the original reply.
 

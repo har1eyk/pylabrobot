@@ -1,0 +1,133 @@
+{
+  "source": "Selected unmodified startup pairs from abi7500-unit2-rox-settled-001. Status polling, preceding application self-tests, redundant lamp enables and vendor 0x75 are not replayed by the PLR startup routine. This fixture establishes the normal Start, metadata and power/load/home order; it does not claim identical application history.",
+  "capture_sha256": "b02a52943dcb9a776769a46eeba7567ef864f7186c620306f9f7946805a83543",
+  "exchanges": [
+    {
+      "command": 27,
+      "request_hex": "5858ffffffff000f39373030001b0000000000c2bc",
+      "reply_hex": "5858ffffffff000f39373030001b0000000000c2bc"
+    },
+    {
+      "command": 18,
+      "request_hex": "5858ffffffff007b3937303000120000000000c3034d736d616c6c00000000000000000000004d617961000000630a02020a0b0c0000620a02020a030100001e000200000200010100000000000003000384025800000064020008010000000000000300003c025800000064020001010000000000000300001e012c000000644b",
+      "reply_hex": "5858ffffffff000f3937303000120000000000c3b4"
+    },
+    {
+      "command": 100,
+      "request_hex": "5858ffffffff00113937303000640000000000c600010c",
+      "reply_hex": "5858ffffffff000f3937303000640000000000c609"
+    },
+    {
+      "command": 101,
+      "request_hex": "5858ffffffff00113937303000650000000000c700000d",
+      "reply_hex": "5858ffffffff000f3937303000650000000000c70b"
+    },
+    {
+      "command": 105,
+      "request_hex": "5858ffffffff00113937303000690000000000cb000015",
+      "reply_hex": "5858ffffffff000f3937303000690000000000cb13"
+    },
+    {
+      "command": 100,
+      "request_hex": "5858ffffffff00113937303000640000000000d0000116",
+      "reply_hex": "5858ffffffff000f3937303000640000000000d013"
+    },
+    {
+      "command": 101,
+      "request_hex": "5858ffffffff00113937303000650000000000d1000118",
+      "reply_hex": "5858ffffffff000f3937303000650000000000d115"
+    },
+    {
+      "command": 128,
+      "request_hex": "5858ffffffff000f3937303000800000000000d332",
+      "reply_hex": "5858ffffffff010d3937303000800000000000d3844b0000021c000000b40000003c0000021c000000b40000003c000003840000012c00000064000002fd000000ff000000550000010e0000005a0000001e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e"
+    },
+    {
+      "command": 113,
+      "request_hex": "5858ffffffff000f3937303000710000000000d424",
+      "reply_hex": "5858ffffffff000f3937303000710000000000d424"
+    },
+    {
+      "command": 103,
+      "request_hex": "5858ffffffff000f3937303000670000000000d91f",
+      "reply_hex": "5858ffffffff000f3937303000670000000000d91f"
+    },
+    {
+      "command": 19,
+      "request_hex": "5858ffffffff000f3937303000130000000000e0d2",
+      "reply_hex": "5858ffffffff000f3937303000130000000000e0d2"
+    }
+  ],
+  "collection_exposures_ms": [
+    [
+      1,
+      540
+    ],
+    [
+      1,
+      180
+    ],
+    [
+      1,
+      60
+    ],
+    [
+      2,
+      540
+    ],
+    [
+      2,
+      180
+    ],
+    [
+      2,
+      60
+    ],
+    [
+      3,
+      900
+    ],
+    [
+      3,
+      300
+    ],
+    [
+      3,
+      100
+    ],
+    [
+      4,
+      765
+    ],
+    [
+      4,
+      255
+    ],
+    [
+      4,
+      85
+    ],
+    [
+      5,
+      270
+    ],
+    [
+      5,
+      90
+    ],
+    [
+      5,
+      30
+    ]
+  ],
+  "home_after_collections": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8
+  ]
+}

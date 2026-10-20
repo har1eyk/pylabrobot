@@ -1,0 +1,161 @@
+{
+  "source": {
+    "session": "abi7500-acquire-001",
+    "capture_sha256": "4a76d6b4b604cfffaad61081dd83eb8fb9a64f18a453c5a48f2a3504738671bd",
+    "description": "Original vendor USB writes and completed reads for two command 0x80 transactions on G2.10. No payload substitutions. Leading table bytes and tail are opaque.",
+    "budgie_sha256": "9dbff7366d38a6c43b3ba363dd007b40f65d0dead3c1d3b9eb09428f91a8102f",
+    "native_read_rva": "0x447f4",
+    "native_table_offset_rva": "0x46220",
+    "native_element_rva": "0x46196",
+    "native_byteswap_rva": "0x45b00"
+  },
+  "expected_seconds": [
+    [
+      0.54,
+      0.18,
+      0.06
+    ],
+    [
+      0.54,
+      0.18,
+      0.06
+    ],
+    [
+      0.9,
+      0.3,
+      0.1
+    ],
+    [
+      0.54,
+      0.255,
+      0.085
+    ],
+    [
+      1.048,
+      0.09,
+      0.03
+    ]
+  ],
+  "exchanges": [
+    {
+      "sequence": 154,
+      "request_hex": "5858ffffffff000f39373030008000000000009af9",
+      "reply_hex": "5858ffffffff010d39373030008000000000009a34000000021c000000b40000003c0000021c000000b40000003c000003840000012c000000640000021c000000ff00000055000004180000005a0000001e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000066",
+      "source_log_lines": {
+        "request": [
+          1731
+        ],
+        "reply": [
+          1732
+        ]
+      },
+      "transfers": [
+        {
+          "action": "write",
+          "frame": 3367,
+          "hex": "5253202032315858ffffffff000f39373030008000000000009af9"
+        },
+        {
+          "action": "write",
+          "frame": 3369,
+          "hex": "525220323737"
+        },
+        {
+          "action": "read",
+          "frame": 3372,
+          "hex": "38005858ffffffff010d39373030008000000000009a34000000021c000000b40000003c0000021c000000b40000003c000003840000012c0000041b0f000064a264a264a264a264a87bf3fcedffdf77bfffffffbffffdfb9375f77ffffffdffbe3b6ef39ffbee7fdffdfffe0ff7bfbf7ffffbffffbffdf7777eff7f2ff7b736bfdbf5ff9efeee789ffeb7d76fdefffe5f5ffffbf6f7df9fefaeddf23f9effd6dffa7ffbfefdf73dbbbeebdceff7befb7fffbffff7eff76dffeb73d9ddfffbceff7ffdeffbb6fedbfffff7ffb7beafdffffffff5fa7fc7f3b92ff3f37bf9ff7fedbe77f7fe7db6fdfdfbeeef97ef7ee3fffefeff36ff5fe2ef7f768f9f7ff3f9eb7ffeee7b7f7dffdbffeffdf73bdff7bbf7fefffd"
+        },
+        {
+          "action": "write",
+          "frame": 3373,
+          "hex": "525220323231"
+        },
+        {
+          "action": "read",
+          "frame": 3376,
+          "hex": "6a0000640000021c000000ff00000055000004180000005a0000001e00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff7bfbf7ffffbffffbffdf7777eff7f2ff7b736bfdbf5ff9efeee789ffeb7d76fdefffe5f5ffffbf6f7df9fefaeddf23f9effd6dffa7ffbfefdf73dbbbeebdceff7befb7fffbffff7eff76dffeb73d9ddfffbceff7ffdeffbb6fedbfffff7ffb7beafdffffffff5fa7fc7f3b92ff3f37b"
+        },
+        {
+          "action": "write",
+          "frame": 3377,
+          "hex": "525220313135"
+        },
+        {
+          "action": "read",
+          "frame": 3380,
+          "hex": "6a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff7bfbf7ffffb"
+        },
+        {
+          "action": "write",
+          "frame": 3381,
+          "hex": "525220202039"
+        },
+        {
+          "action": "read",
+          "frame": 3384,
+          "hex": "070000000000000066"
+        }
+      ]
+    },
+    {
+      "sequence": 244,
+      "request_hex": "5858ffffffff000f3937303000800000000000f453",
+      "reply_hex": "5858ffffffff010d3937303000800000000000f434000000021c000000b40000003c0000021c000000b40000003c000003840000012c000000640000021c000000ff00000055000004180000005a0000001e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c0",
+      "source_log_lines": {
+        "request": [
+          2030
+        ],
+        "reply": [
+          2031
+        ]
+      },
+      "transfers": [
+        {
+          "action": "write",
+          "frame": 6755,
+          "hex": "5253202032315858ffffffff000f3937303000800000000000f453"
+        },
+        {
+          "action": "write",
+          "frame": 6757,
+          "hex": "525220323737"
+        },
+        {
+          "action": "read",
+          "frame": 6760,
+          "hex": "38005858ffffffff010d3937303000800000000000f434000000021c000000b40000003c0000021c000000b40000003c000003840000012c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ff7bfbf7ffffbffffbffdf7777eff7f2ff7b736bfdbf5ff9efeee789ffeb7d76fdefffe5f5ffffbf6f7df9fefaeddf23f9effd6dffa7ffbfefdf73dbbbeebdceff7befb7fffbffff7eff76dffeb73d9ddfffbceff7ffdeffbb6fedbfffff7ffb7beafdffffffff5fa7fc7f3b92ff3f37bf9ff7fedbe77f7fe7db6fdfdfbeeef97ef7ee3fffefeff36ff5fe2ef7f768f9f7ff3f9eb7ffeee7b7f7dffdbffeffdf73bdff7bbf7fefffd"
+        },
+        {
+          "action": "write",
+          "frame": 6761,
+          "hex": "525220323231"
+        },
+        {
+          "action": "read",
+          "frame": 6764,
+          "hex": "6b0000640000021c000000ff00000055000004180000005a0000001e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f7bfbf7ffffbffffbffdf7777eff7f2ff7b736bfdbf5ff9efeee789ffeb7d76fdefffe5f5ffffbf6f7df9fefaeddf23f9effd6dffa7ffbfefdf73dbbbeebdceff7befb7fffbffff7eff76dffeb73d9ddfffbceff7ffdeffbb6fedbfffff7ffb7beafdffffffff5fa7fc7f3b92ff3f37b"
+        },
+        {
+          "action": "write",
+          "frame": 6765,
+          "hex": "525220313134"
+        },
+        {
+          "action": "read",
+          "frame": 6768,
+          "hex": "6b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f7bfbf7fff"
+        },
+        {
+          "action": "write",
+          "frame": 6769,
+          "hex": "525220202037"
+        },
+        {
+          "action": "read",
+          "frame": 6772,
+          "hex": "050000000000c0"
+        }
+      ]
+    }
+  ]
+}

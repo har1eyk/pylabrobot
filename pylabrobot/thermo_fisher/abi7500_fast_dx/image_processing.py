@@ -7,6 +7,7 @@ does not independently verify physical plate orientation or bind a calibration t
 import hashlib
 import struct
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Tuple
 
@@ -144,6 +145,7 @@ class PlatePixelMask:
     with path.open("rb") as stream:
       return cls(stream.read(1024 * 1024 + 1), filter)
 
+  @lru_cache(maxsize=16)
   def _decode(self) -> Tuple[Tuple[Tuple[int, int], ...], ...]:
     """Parse only the recovered PlateMask/CMNImageAOI/CMNImageMatrix schema combination."""
     reader = _MaskReader(self.source_bytes)

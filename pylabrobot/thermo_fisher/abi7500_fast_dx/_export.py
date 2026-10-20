@@ -139,6 +139,10 @@ def _validate_collections(run: ThermalRun, collections: tuple[FluorescenceCollec
   ):
     raise ABI7500RunError("Export requires a completed optical run with matching thermal history")
   plan = run.collection_plan
+  if any(setting.mode != "bracket" for setting in plan.filters):
+    raise ABI7500RunError(
+      "Measurement export requires brackets; retain calibration frames separately"
+    )
   points = plan.points(run.program)
   if tuple(c.record.point for c in collections) != points:
     raise ABI7500RunError("Export requires every planned collection exactly once, in order")

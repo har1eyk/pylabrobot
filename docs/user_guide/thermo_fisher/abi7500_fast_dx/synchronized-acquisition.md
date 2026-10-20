@@ -94,6 +94,60 @@ engineering check. A separate {ref}`known-pattern plate session <abi7500-wellmap
 verified physical orientation and six labels in filter 5. Broader label/channel coverage,
 current calibration validity and vendor comparison remain separate questions.
 
+### Green/reference timing check
+
+Physical filter 5 corresponds to the vendor's green reporter channel; physical filter 2
+corresponds to its ROX-associated channel. Collecting both requires six images per collection,
+two filter moves and collection-end closure. On C9254-02, the approved `plr-u2dual-001` session
+completed three such collections in **18–19 instrument seconds each**, including native homing,
+with **6 seconds remaining** in each 30-second hold. All eighteen images were complete and
+associated with their intended holds. See the {ref}`two-filter timing report <abi7500-dual-timing-validation>`.
+
+The following configuration reproduces that timing check without a PCR reaction. It uses three
+60 °C/30-second holds followed by 30 °C/60-second cooling, with a 25-second read window and native
+home after each burst. The existing sealed dye plate supported the timing check. A later
+{ref}`known ROX/fluorescein layout <abi7500-rox-layout-validation>` supported ROX detection and
+24 filter-2 physical locations during one 30 °C hold; quantitative region boundaries and
+calibrated reporter/reference processing remain unverified.
+Filter 2 exposures below come from this unit's saved table, not a verified setting for the
+user's reaction. Its 540 and 180 ms frames contained clipped pixels; 60 ms did not. The table
+was read without modification.
+
+```python
+program = ThermalProgram(reference_metadata, (
+  ThermalCycle(3, (ThermalStep(60, 30),)),
+  ThermalCycle(1, (ThermalStep(30, 60),)),
+))
+plan = CollectionPlan(
+  steps=((0, 0),),
+  filters=(
+    CollectionFilter(2, (0.540, 0.180, 0.060)),
+    CollectionFilter(5, (0.030, 0.010, 0.005)),
+  ),
+  read_window=25,
+  park_between_collections=True,
+  home_after_collections=(1, 2, 3),
+)
+assert len(plan.points(program)) == 3  # 18 images across the three collection holds.
+```
+
+Constructing this plan does not start the instrument. The session met the prepared acceptance
+criterion of eighteen complete images in their intended holds and at least three reported hold
+seconds remaining after each home. Countdown differences have integer-second resolution; these
+three observations do not establish a worst-case bound or a full forty-cycle two-filter method.
+The 1,800-second observation budget separately covered cover warmup, ramps and cooling.
+No hold is extended if the optical work runs late. After a failure, preserve the original data,
+reconcile/cancel only the owned run, and restore idle optics using the normal recovery procedure.
+
+Scripted USB tests cover ordered two-filter acquisition, concurrent duplicate requests and cached
+retrieval after restart. They also cover insufficient time before/after the second filter move,
+incorrect filter readback, a frame crossing the hold boundary, late homing and a lost fourth
+exposure response. These tests establish failure behavior, **not physical throughput**.
+No raw filter ratio is labeled Rn; a filter-5 diagnostic region map must not be reassigned to
+filter 2 without independent evidence.
+
+### Collection window behavior
+
 The default window is 45 seconds. Collection starts when the remaining hold time reaches 45–43
 seconds. Every selected effective hold must be at least the full window, including hold-time
 increments over repetitions. A missed window fails instead of extending the hold or silently
@@ -166,6 +220,36 @@ actuation. Only coherent evidence of the owned, active run permits a collection.
 fresh status immediately before exposure and after transfer/readback; run token, group, step,
 repetition, holding phase and optical state must agree. The whole burst is checked too. Crossing
 a boundary retains the image but marks the acquisition and collection uncertain.
+
+### Normal Start from lamp standby
+
+`start_run(..., collection_plan=plan, standby_startup=True)` reproduces the captured normal
+experiment's upload → lamp power 1 → exposure-table read → plate load → wheel home → Start `0x13`
+order. Before calling it, enable the lamp at standby power 0 behind stationary filter 0 and allow
+the explicitly planned settling time. This mode requires a collection plan and cannot be combined
+with `calibration_startup` or `cover_temperature`. Normal Start uses the instrument's cover
+behavior, approximately 105 °C in the reference; it does not preserve a saved 90 °C XML setting.
+The default startup remains unchanged.
+
+This mode accepts the captured 20 or 30 µL Standard/block-2/tube-0 controller header. Record the
+actual reaction volume separately when it differs. Startup intent is part of the run identity
+and journal format 6; older controllers refuse that journal. An interrupted lamp transition,
+home or Start is never automatically repeated. Legacy checkpoints restore with
+`standby_startup=False`.
+
+Use `home_after_collections=tuple(range(1, collection_count + 1))` with
+`park_between_collections=True` when the reference homes after every collection. The entire
+collection window must include those moves and PLR's per-image status checks. The native vendor
+window is not automatically a sufficient PLR budget. No thermal hold is extended to finish an
+overrun. Application startup images, prior illumination and operator delays are not reproduced
+by this API. Offline transport tests cover the startup ordering and ambiguous acknowledgements.
+Direct Ubuntu validation on C9254-02/G2.10 completed eight five-filter, three-exposure collections
+with normal Start, approximately 105 °C cover behavior and home after every collection.
+The 55-second window left 20 reported seconds after each complete burst and home. The ROX signal
+differed from the separate Windows reference by a median −1.21% at 540 ms; timing and illumination
+history still differed. See the
+[hardware comparison](hardware-validation.md#normal-start-five-filter-rox-comparison-2026-10-20)
+for per-well variation and the limits of this single-session validation.
 
 ## Read saved collection progress
 

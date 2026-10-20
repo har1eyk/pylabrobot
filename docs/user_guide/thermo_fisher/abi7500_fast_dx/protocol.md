@@ -316,7 +316,10 @@ temperatures are 4.0–99.9 °C. Pause records and infinite holds are rejected. 
 temperatures are not silently rounded. Rate acceptance still depends on the block/firmware.
 Optical collection flags and cover temperature are not in this payload, so uploading these bytes
 alone would not implement a complete qPCR experiment. The public run API restricts configuration
-to the captured Standard/20 µL/block-2/tube-0 header and stamps the method/user labels for ownership.
+to captured Standard/block-2/tube-0 headers and stamps the method/user labels for ownership.
+The default accepts 20 µL. Explicit calibration startup or normal `standby_startup=True`
+additionally accepts the captured 30 µL controller setting; this is not a measurement of the
+actual liquid volume.
 It exposes no raw upload or command replay method.
 
 ## Thermal history and run identity
@@ -604,6 +607,36 @@ The [hardware report](hardware-validation.md) records the illumination session w
 lamp delays and five-second settling intervals. It produced visible well patterns at filters 1
 and 5, unlike the earlier immediate snapshot. The session does not isolate which delay resolved
 the earlier dark image or establish quantitative calibration.
+
+## Stored exposure-table readback
+
+`TC9700Control::ReadExposureTimes` (BudgieManagerEXT RVA `0x447f4`) sends command `0x80`
+with no payload and expects 254 response bytes. The table starts at offset 2 (`0x46220`);
+element addressing is `2 + physical_filter_index * 12 + exposure_index * 4` (`0x46196`),
+with both native indices starting at zero.
+The native accessor reverses each four-byte value into a 32-bit Windows `long` (`0x45390`,
+`0x45b00`), establishing signed big-endian milliseconds on the wire. The leading two bytes and trailing
+192 bytes remain opaque. PLR preserves them and returns durations in seconds without sorting.
+
+Two complete USB exchanges in `stored_exposure_vectors.json` retain the vendor's original
+fragmentation, byte-count prefixes and padding. Their table matches the following CJ commands
+for both completed collection points in `abi7500-acquire-001`:
+
+| Physical filter | Exposure slots in recorded order (ms) |
+|---|---|
+| 1 | 540, 180, 60 |
+| 2 | 540, 180, 60 |
+| 3 | 900, 300, 100 |
+| 4 | 540, 255, 85 |
+| 5 | 1048, 90, 30 |
+
+`get_stored_exposure_times()` exposes only this readback. The native table-writing path
+(`WriteExposureTimes`, RVA `0x449a2`, command `0x7f`) is not implemented. Querying a stored
+table does not establish calibration validity or authorize using its durations for a new run.
+Two {ref}`direct Ubuntu readbacks on G2.10 <abi7500-exptable-validation>` matched the complete
+vendor table. `ubuntu_stored_exposure_vectors.json` retains one full query with all 142 counted
+serial reads, including zero-count replies, one-byte fragments and stale padding. The USB
+operations are losslessly compressed; offline replay checks their exact order and bytes.
 
 ## Status-driven optical scheduling
 

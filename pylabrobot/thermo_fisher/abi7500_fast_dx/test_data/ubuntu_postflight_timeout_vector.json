@@ -1,0 +1,25 @@
+{
+  "source_capture": "abi7500-plr-unit2-dye-rox-008",
+  "usb_log_sha256": "e6bebafdb0b64c3fc3878f172423d73bf5fd9d76240a091afa77fb0cfc297956",
+  "failed_query": {
+    "command": 107,
+    "sequence": 540,
+    "meaning": "filter-position readback after image download",
+    "request_hex": "5858ffffffff000f39373030006b00000000021c68",
+    "request_usb_hex": "5253202032315858ffffffff000f39373030006b00000000021c68",
+    "read_command_hex": "525220203235",
+    "first_empty_reply_hex": "00000000021b00006a3030006c4e0000000004710004000200",
+    "empty_polls": 455,
+    "valid_reply_bytes": 0,
+    "request_utc": "2026-10-20T12:26:19.826708+00:00",
+    "last_empty_reply_utc": "2026-10-20T12:26:24.825957+00:00",
+    "last_read_seconds_from_request": 4.999249962973408,
+    "deadline_seconds": 5,
+    "usb_transfer_errors": 0,
+    "cause": "Unknown; the capture establishes a missing thermal-controller reply, not why it was missing."
+  },
+  "image_transfer_bytes": 157312,
+  "complete_probe_count": 7,
+  "uncertain_probe_count": 1,
+  "final_image_count": 0
+}

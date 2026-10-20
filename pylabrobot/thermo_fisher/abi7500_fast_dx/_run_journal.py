@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Optional
 
 from .acquisition import CameraAcquisition
-from .collection import CollectionRecord
+from .calibration_exposure import CalibrationExposureProbe, CalibrationExposureSearch
+from .collection import CollectionFilter, CollectionRecord
+from .fluorescence import FluorescenceFrame
 from .run import ABI7500RunError, ThermalRun
 
 
@@ -17,6 +19,8 @@ class RunJournal:
   the controller is using the journal; SQLite releases it if the process dies. Keeping the lock
   separate allows checkpoint commits without surrendering controller ownership. Use a local disk,
   not a network or synchronized folder. Opening another journal bypasses this ownership boundary.
+  Checkpoint writes wait up to five seconds for short read-only inspections; controller ownership
+  remains fail-fast. Waiting for a database lock never repeats an instrument command.
   """
 
   def __init__(self, path: Path) -> None:
@@ -24,9 +28,11 @@ class RunJournal:
     self.path = path.expanduser().resolve()
     self._lock: Optional[sqlite3.Connection] = None
     self._db: Optional[sqlite3.Connection] = None
+    self._acquisition_owner: Optional[tuple[str, str, int]] = None
 
   def close(self) -> None:
     """Release journal connections and process ownership; retain all durable checkpoints."""
+    self._acquisition_owner = None
     if self._db is not None:
       self._db.close()
       self._db = None
@@ -42,7 +48,7 @@ class RunJournal:
     try:
       self._lock = sqlite3.connect(str(self.path) + ".lock", timeout=0)
       self._lock.execute("BEGIN EXCLUSIVE")
-      self._db = sqlite3.connect(self.path, timeout=0)
+      self._db = sqlite3.connect(self.path, timeout=5)
       self._db.execute("PRAGMA synchronous=FULL")
       with self._db:
         self._db.execute(
@@ -60,7 +66,7 @@ class RunJournal:
         versions = self._db.execute("SELECT version FROM format").fetchall()
         if not versions:
           self._db.execute("INSERT INTO format VALUES (2)")
-        elif versions not in ([(1,)], [(2,)]):
+        elif versions not in ([(1,)], [(2,)], [(3,)], [(4,)], [(5,)], [(6,)]):
           raise ABI7500RunError("Unsupported thermal run journal format")
       return self._db
     except BaseException:
@@ -94,6 +100,13 @@ class RunJournal:
         raise ABI7500RunError(
           f"Resolve plate release for run {prior.run_id!r} before another action"
         )
+    # This connection validates every acquisition it writes. Recheck historical images after
+    # another connection commits, rather than decoding all previous frames before each exposure.
+    version = int(db.execute("PRAGMA data_version").fetchone()[0])
+    owner = (camera_description, thermal_version, version)
+    if self._acquisition_owner == owner:
+      return
+    self._acquisition_owner = None
     for key, value in db.execute("SELECT acquisition_id, record FROM acquisitions"):
       acquisition = CameraAcquisition.from_dict(json.loads(value))
       if acquisition.acquisition_id != key:
@@ -103,6 +116,7 @@ class RunJournal:
         thermal_version,
       ):
         raise ABI7500RunError("Journal belongs to a different instrument or firmware")
+    self._acquisition_owner = owner
 
   def check_optical_control(self, camera_description: str, thermal_version: str) -> None:
     """Hold process ownership and refuse optics changes during an unresolved thermal run."""
@@ -117,6 +131,20 @@ class RunJournal:
     db = self._open()
     with db:
       self._check_owner(run.camera_description, run.thermal_version)
+      if run.cover_temperature is not None or (
+        run.collection_plan is not None and run.collection_plan.exposure_search_masks
+      ):
+        # Older software must not ignore the cover intent or dynamic probe identities.
+        db.execute("UPDATE format SET version = MAX(version, 3)")
+      if run.start_command == 0x7E:
+        db.execute("UPDATE format SET version = MAX(version, 4)")
+      if run.calibration_startup or (
+        run.collection_plan is not None and run.collection_plan.park_after_exposure_search
+      ):
+        db.execute("UPDATE format SET version = MAX(version, 5)")
+      if run.standby_startup:
+        # Older controllers must not ignore the journaled normal-start lamp transition.
+        db.execute("UPDATE format SET version = MAX(version, 6)")
       db.execute("INSERT INTO runs VALUES (?, ?)", (run.run_id, json.dumps(run.to_dict())))
 
   def save(self, run: ThermalRun) -> ThermalRun:
@@ -125,7 +153,7 @@ class RunJournal:
     with db:
       if run.plate_release_state != "not_requested":
         # Commit the version with the intent so older controllers cannot ignore release state.
-        db.execute("UPDATE format SET version = 2")
+        db.execute("UPDATE format SET version = MAX(version, 2)")
       cursor = db.execute(
         "UPDATE runs SET record = ? WHERE run_id = ?", (json.dumps(run.to_dict()), run.run_id)
       )
@@ -170,7 +198,7 @@ class RunJournal:
     expected = tuple(
       f"{record.collection_id}-f{f.position}-e{index}"
       for f in run.collection_plan.filters
-      for index in range(3)
+      for index in range(len(f.exposures))
     )
     if (
       record.point not in points
@@ -201,6 +229,45 @@ class RunJournal:
         raise ABI7500RunError("Cannot update an unreserved collection")
     return record
 
+  def calibration_search(
+    self, record: CollectionRecord, setting: CollectionFilter
+  ) -> CalibrationExposureSearch:
+    """Replay complete saved probes; a missing prefix, partial image or wrong mask fails closed."""
+    run = self.get(record.run_id)
+    if run is None or run.collection_plan is None or setting not in run.collection_plan.filters:
+      raise ABI7500RunError("Search is not associated with a saved collection plan")
+    masks = {m.filter: m for m in run.collection_plan.exposure_search_masks}
+    if setting.mode != "automatic" or setting.position not in masks:
+      raise ABI7500RunError("No automatic exposure search for this filter")
+    search = CalibrationExposureSearch()
+    missing = False
+    for index in range(11):
+      acquisition = self.get_acquisition(f"{record.collection_id}-f{setting.position}-p{index}")
+      if acquisition is None:
+        missing = True
+        continue
+      if (
+        missing
+        or acquisition.state != "complete"
+        or acquisition.frame is None
+        or acquisition.camera_description != run.camera_description
+        or acquisition.thermal_version != run.thermal_version
+        or acquisition.optics_before.filter_position != setting.position
+        or acquisition.optics_before != acquisition.optics_after
+        or not record.point.matches(acquisition.thermal_before)
+        or acquisition.thermal_after is None
+        or not record.point.matches(acquisition.thermal_after)
+        or acquisition.thermal_before.run_start_record != run.start_record
+        or acquisition.thermal_after.run_start_record != run.start_record
+      ):
+        raise ABI7500RunError("Cannot replay an incomplete or inconsistent exposure probe")
+      search = search.add(
+        CalibrationExposureProbe.from_frame(
+          FluorescenceFrame(acquisition.frame, acquisition.exposure, masks[setting.position])
+        )
+      )
+    return search
+
   def reserve_acquisition(
     self, acquisition: CameraAcquisition, *, collection_id: Optional[str] = None
   ) -> None:
@@ -215,7 +282,6 @@ class RunJournal:
           record is None
           or record.state != "uncertain"
           or record.error is not None
-          or acquisition.acquisition_id not in record.acquisition_ids
           or run is None
           or run.state != "running"
           or run.collection_plan is None
@@ -224,10 +290,38 @@ class RunJournal:
           or not record.point.matches(acquisition.thermal_before)
         ):
           raise ABI7500RunError("Exposure is not part of an owned active collection")
-        index = record.acquisition_ids.index(acquisition.acquisition_id)
-        setting = run.collection_plan.filters[index // 3]
+        settings = {
+          f"{collection_id}-f{setting.position}-e{index}": (setting, exposure)
+          for setting in run.collection_plan.filters
+          for index, exposure in enumerate(setting.exposures)
+        }
+        probes = {
+          f"{collection_id}-f{setting.position}-p{index}": setting
+          for setting in run.collection_plan.filters
+          if setting.mode == "automatic"
+          for index in range(11)
+        }
+        key = acquisition.acquisition_id
+        if key in probes:
+          setting = probes[key]
+          search = self.calibration_search(record, setting)
+          if (
+            key != f"{collection_id}-f{setting.position}-p{len(search.probes)}"
+            or search.next_milliseconds is None
+          ):
+            raise ABI7500RunError("Probe is not the next reserved search step")
+          exposure = search.next_milliseconds / 1000
+        elif key in settings and key in record.acquisition_ids:
+          setting, exposure = settings[key]
+          if setting.mode == "automatic":
+            selected = self.calibration_search(record, setting).selected_milliseconds
+            if selected is None:
+              raise ABI7500RunError("Final images require a complete exposure search")
+            exposure = selected / 1000
+        else:
+          raise ABI7500RunError("Exposure is not part of the reserved collection")
         if (
-          acquisition.exposure.duration != setting.exposures[index % 3]
+          acquisition.exposure.duration != exposure
           or acquisition.optics_before.filter_position != setting.position
         ):
           raise ABI7500RunError("Exposure or filter disagrees with the durable collection plan")
@@ -241,6 +335,11 @@ class RunJournal:
   def save_acquisition(self, acquisition: CameraAcquisition) -> CameraAcquisition:
     """Commit original data and metadata to the existing acquisition intent."""
     db = self._open()
+    if self._acquisition_owner is not None and self._acquisition_owner[:2] != (
+      acquisition.camera_description,
+      acquisition.thermal_version,
+    ):
+      self._acquisition_owner = None
     with db:
       cursor = db.execute(
         "UPDATE acquisitions SET record = ? WHERE acquisition_id = ?",

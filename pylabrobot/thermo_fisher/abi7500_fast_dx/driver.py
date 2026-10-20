@@ -12,11 +12,18 @@ from pylabrobot.io.usb import USB
 
 from ._export import write_run_archive
 from ._run_journal import RunJournal
-from .acquisition import CameraAcquisition, CameraExposure, OpticalState, _validate_acquisition_id
+from .acquisition import (
+  CameraAcquisition,
+  CameraExposure,
+  OpticalState,
+  StoredExposureTimes,
+  _validate_acquisition_id,
+)
 from .calibration import UniformityCalibration
+from .calibration_exposure import CalibrationExposureProbe, CalibrationExposureSearch
 from .camera import CameraGeometry
 from .collection import CollectionPlan, CollectionPoint, CollectionRecord, FluorescenceCollection
-from .fluorescence import BackgroundCalibration
+from .fluorescence import BackgroundCalibration, FluorescenceFrame
 from .image_processing import PlatePixelMask
 from .protocol import (
   ABI7500ProtocolError,
@@ -33,11 +40,21 @@ from .run import (
   _validate_run_id,
   _validate_run_program,
 )
-from .status import ABI7500Identity, ABI7500PlateStatus, ABI7500Status
+from .status import ABI7500CoverState, ABI7500Identity, ABI7500PlateStatus, ABI7500Status
 from .thermal_program import ThermalProgram
 
 logger = logging.getLogger(__name__)
 _T = TypeVar("_T")
+
+
+def _check_optical_identity(identity: ABI7500Identity) -> None:
+  """Require a captured camera model/firmware pair and the reference thermal firmware."""
+  if (
+    tuple(identity.camera_description.split(",")[:3])
+    not in (("Hamamatsu", "C9254-03", "2.20"), ("Hamamatsu", "C9254-02", "2.19"))
+    or identity.thermal_version != "G2.10"
+  ):
+    raise ABI7500RunError("Optical control requires C9254-03/2.20 or C9254-02/2.19 with G2.10")
 
 
 class ABI7500DeviceError(RuntimeError):
@@ -333,6 +350,36 @@ class ABI7500FastDx:
     """Read the last thermal history header; this need not describe the active sequence."""
     return ABI7500History(await self._exchange(0x19, 94))
 
+  async def get_cover_state(self) -> ABI7500CoverState:
+    """Read native cover configuration, checked on C9254-02/G2.10 at the 105-degree setting."""
+    return ABI7500CoverState(await self._exchange(0x36, 6))
+
+  async def _verify_calibration_cover(self) -> None:
+    """Verify the calibration setpoint without retrying its write or changing Start mode."""
+    state = await self.get_cover_state()
+    if (state.setpoint, state.mode) != (90, 1):
+      raise ABI7500RunError("Heated-cover readback does not match the calibration setting")
+
+  async def _configure_calibration_cover(self) -> None:
+    """Apply the captured 90-degree/mode-1 request once and verify readback without retries."""
+    state = await self.get_cover_state()
+    if (state.setpoint, state.mode) != (90, 1):
+      await self._exchange(0x35, 0, b"\x00\x5a\x00\x01")
+      state = await self.get_cover_state()
+    if (state.setpoint, state.mode) != (90, 1):
+      raise ABI7500RunError("Heated-cover readback does not match the calibration setting")
+
+  @staticmethod
+  def _check_collection_cover(run: ThermalRun, status: ABI7500Status) -> None:
+    """Refuse acquisition outside the requested cover's two-degree measured tolerance."""
+    if run.cover_temperature is not None and not run.cover_configured:
+      raise ABI7500RunError("Calibration cover configuration was not verified")
+    if (
+      run.cover_temperature is not None
+      and abs(status.cover_temperature - run.cover_temperature) > 2
+    ):
+      raise ABI7500RunError("Measured cover temperature is outside the calibration window")
+
   async def get_plate_status(self) -> ABI7500PlateStatus:
     """Query the internal plate mechanism without moving it or requiring a run journal.
 
@@ -340,6 +387,15 @@ class ABI7500FastDx:
     Unloaded does not mean the external drawer is open or the heated cover is cool.
     """
     return ABI7500PlateStatus(await self._exchange(0x73, 2))
+
+  async def get_stored_exposure_times(self) -> StoredExposureTimes:
+    """Read the controller's exposure table without changing optics or requiring a journal.
+
+    This is the vendor's command 0x80 readback. PLR collection plans still require explicit
+    exposure choices. The query is checked against captured vendor traffic and direct Ubuntu
+    readback on G2.10. No persistent exposure-table writer is exposed.
+    """
+    return StoredExposureTimes(await self._exchange(0x80, 254))
 
   def _require_journal(self) -> RunJournal:
     """Require durable identity tracking before exposing any run mutation."""
@@ -382,11 +438,7 @@ class ABI7500FastDx:
     except BaseException as exc:
       self._fault = exc
       raise
-    if (
-      identity.camera_description.split(",")[:3] != ["Hamamatsu", "C9254-03", "2.20"]
-      or identity.thermal_version != "G2.10"
-    ):
-      raise ABI7500RunError("Optical control requires the reference C9254-03/2.20 and G2.10")
+    _check_optical_identity(identity)
     journal.check_optical_control(identity.camera_description, identity.thermal_version)
     if (
       before.phase != "inactive"
@@ -471,6 +523,30 @@ class ABI7500FastDx:
         self._fault = exc
         raise
 
+  async def _set_lamp_state(
+    self, enabled: bool, power: Optional[int], before: ABI7500Status, optics: OpticalState
+  ) -> OpticalState:
+    """Set and verify an idle lamp under both locks, without replaying satisfied writes."""
+    changed_enable = optics.lamp_enabled != enabled
+    changed_power = enabled and (changed_enable or optics.lamp_power != power)
+    if changed_enable:
+      await self._thermal_query(0x64, 0, int(enabled).to_bytes(2, "big"))
+      if enabled:
+        await asyncio.sleep(0.25)
+    if changed_power:
+      assert power is not None
+      await self._thermal_query(0x65, 0, power.to_bytes(2, "big"))
+    if changed_enable or changed_power:
+      await asyncio.sleep(0.25)
+    result = await self._finish_optical_control(before)
+    if (
+      result.lamp_enabled != enabled
+      or (enabled and result.lamp_power != power)
+      or result.filter_position != optics.filter_position
+    ):
+      raise ABI7500ProtocolError("Lamp or filter readback does not match the requested state")
+    return result
+
   async def set_lamp(self, enabled: bool, *, power: Optional[int] = None) -> OpticalState:
     """Set lamp enable and its native power code, checking readback and skipping satisfied writes.
 
@@ -496,25 +572,7 @@ class ABI7500FastDx:
       if not optics.is_stationary:
         raise ABI7500RunError("Lamp control requires a stationary filter")
       try:
-        changed_enable = optics.lamp_enabled != enabled
-        changed_power = enabled and (changed_enable or optics.lamp_power != power)
-        if changed_enable:
-          await self._thermal_query(0x64, 0, int(enabled).to_bytes(2, "big"))
-          if enabled:
-            await asyncio.sleep(0.25)
-        if changed_power:
-          assert power is not None
-          await self._thermal_query(0x65, 0, power.to_bytes(2, "big"))
-        if changed_enable or changed_power:
-          await asyncio.sleep(0.25)
-        result = await self._finish_optical_control(before)
-        if (
-          result.lamp_enabled != enabled
-          or (enabled and result.lamp_power != power)
-          or result.filter_position != optics.filter_position
-        ):
-          raise ABI7500ProtocolError("Lamp or filter readback does not match the requested state")
-        return result
+        return await self._set_lamp_state(enabled, power, before, optics)
       except BaseException as exc:
         self._fault = exc
         raise
@@ -545,6 +603,10 @@ class ABI7500FastDx:
       result.exposure.validate_reply(reply)
       if collection is not None:
         status = ABI7500Status(await self._thermal_query(0x29, 50))
+        run = journal.get(collection.run_id)
+        if run is None:
+          raise ABI7500RunError("Missing acquisition owner")
+        self._check_collection_cover(run, status)
         if (
           not collection.point.matches(status)
           or status.run_start_record != collection.before.run_start_record
@@ -585,6 +647,9 @@ class ABI7500FastDx:
       result = replace(result, optics_after=await self._query_optics())
       status = ABI7500Status(await self._thermal_query(0x29, 50))
       result = replace(result, thermal_after=status)
+      if collection is not None:
+        assert run is not None
+        self._check_collection_cover(run, status)
       same_phase = status is not None and (
         (status.phase == "inactive" and status.state_code in (1, 2))
         if collection is None
@@ -624,8 +689,8 @@ class ABI7500FastDx:
     """Acquire one experimental raw idle snapshot, preserving the existing lamp/filter state.
 
     This changes camera exposure and sends CC once. It does not move the plate/filter, switch the
-    lamp, heat, or change an existing thermal setpoint. Supports only C9254-03/2.20, G2.10 and
-    321×245 wire geometry. Exposure is in seconds, limited to 0.005–1.048. The thermal controller
+    lamp, heat, or change an existing thermal setpoint. Supports C9254-03/2.20 and C9254-02/2.19,
+    with G2.10 and 321×245 wire geometry. Exposure is in seconds, limited to 0.005–2. The controller
     must be inactive and every journaled thermal run resolved. Requires local hardware approval.
 
     The same ID/exposure returns its journal record without I/O, including after an ambiguous
@@ -656,12 +721,9 @@ class ABI7500FastDx:
         except BaseException as exc:
           self._fault = exc
           raise
-        if (
-          identity.camera_description.split(",")[:3] != ["Hamamatsu", "C9254-03", "2.20"]
-          or identity.thermal_version != "G2.10"
-          or geometry != CameraGeometry(321, 245)
-        ):
-          raise ABI7500RunError("Snapshot requires the reference C9254-03/2.20, G2.10 and geometry")
+        _check_optical_identity(identity)
+        if geometry != CameraGeometry(321, 245):
+          raise ABI7500RunError("Snapshot requires the reference 321×245 wire geometry")
         if (
           status.phase != "inactive"
           or after.phase != "inactive"
@@ -900,6 +962,36 @@ class ABI7500FastDx:
         raise ABI7500RunError(f"Unexpected plate-loading state ({state})")
       self._remaining(deadline)
 
+  async def _park_collection_filter(self, *, home: bool = False) -> OpticalState:
+    """Park or home under the collection locks, retaining lamp power 1 and verifying position 0.
+
+    Homing is only called for a reserved collection whose durable intent requires it. No native
+    retry loop is copied: an uncertain home cannot safely be repeated. Neither mode recalibrates.
+    The caller must persist failure and verify the thermal hold after this bounded operation.
+    """
+    optics = await self._query_optics()
+    if (
+      not optics.is_stationary
+      or optics.filter_position not in range(6)
+      or not optics.lamp_enabled
+      or optics.lamp_power != 1
+    ):
+      raise ABI7500RunError("Unexpected optical state before collection parking")
+    if home:
+      await self._thermal_query(0x67, 0)
+      await self._wait_filter(asyncio.get_running_loop().time() + 15)
+    elif optics.filter_position != 0:
+      await self._thermal_query(0x69, 0, b"\x00\x00")
+      await self._wait_filter(asyncio.get_running_loop().time() + 15)
+    parked = await self._query_optics()
+    if (
+      not parked.is_stationary
+      or parked.filter_position != 0
+      or parked.lamp_response != optics.lamp_response
+    ):
+      raise ABI7500RunError("Collection parking readback disagrees with position 0 and lamp state")
+    return parked
+
   async def start_run(
     self,
     run_id: str,
@@ -907,18 +999,37 @@ class ABI7500FastDx:
     *,
     plate_timeout: float = 30.0,
     collection_plan: Optional[CollectionPlan] = None,
+    cover_temperature: Optional[int] = None,
+    calibration_startup: bool = False,
+    standby_startup: bool = False,
   ) -> ThermalRun:
     """Prepare and submit one experimental run, never automatically repeating Start.
 
     The supported configuration is the captured Standard mode, 20 µL, block 2, tube type 0 with
     finite cycle/hold records and firmware G2.10. The plate must be sealed and physically ready for
     the internal loading motion. This sends prepare/upload/load/start commands, which can cause
-    movement and heating. It uses the instrument's cover behavior; custom cover settings are not
-    provided. Requires approval appropriate to the local setup.
+    movement and heating. Optional cover_temperature=90 applies the vendor calibration setting
+    before preparation, verifies it before/after the cover-preserving Start (0x7E), and requires
+    measured cover temperature within 2 degrees throughout collection. This sequence remains
+    experimental in PLR. None retains the standard Start (0x13) and instrument
+    behavior. The setting is not automatically restored on stop. Requires local run approval.
 
     An optional collection_plan records host-scheduled optical reads. Before starting, enable the
     lamp at power 1, allow it to settle, and set filter 0. Immediately await collect_fluorescence()
     after this call: start_run() alone does not acquire images or create a background collector.
+
+    ``calibration_startup=True`` requires a collection plan, cover_temperature=90, and lamp
+    standby (enabled, power 0) behind stationary filter 0. It uploads first, switches to power 1,
+    reads the exposure table, loads the plate, and homes the wheel once before Start, matching
+    the captured calibration order. It additionally permits the vendor's 30 µL thermal setting;
+    this is an explicit controller setting, not a measurement of the liquid in the plate.
+    Startup motion belongs to this run identity and is never retried after an interruption.
+
+    ``standby_startup=True`` uses that upload/power/load/home order with normal Start (0x13)
+    and no cover override, matching the captured normal experiment. It requires a collection
+    plan and initial lamp standby behind filter 0, permits the captured 30 µL controller setting,
+    and cannot be combined with calibration_startup or cover_temperature. Normal Start retains
+    the instrument's cover behavior (approximately 105 °C in the reference experiment).
 
     A successful acknowledgement returns ``starting``. Poll get_run() to observe actual progress.
     Repeating the same ID/program/plan returns its checkpoint without device writes, even after a
@@ -926,7 +1037,25 @@ class ABI7500FastDx:
     switch journal paths to retry. Different IDs represent separate, intentional experiments.
     """
     _validate_run_id(run_id)
-    _validate_run_program(program)
+    if type(calibration_startup) is not bool:
+      raise ValueError("calibration_startup must be a boolean")
+    if calibration_startup and (cover_temperature != 90 or collection_plan is None):
+      raise ValueError("Calibration startup requires a collection plan and 90-degree cover")
+    if type(standby_startup) is not bool:
+      raise ValueError("standby_startup must be a boolean")
+    if standby_startup and (
+      calibration_startup or cover_temperature is not None or collection_plan is None
+    ):
+      raise ValueError("Standby startup requires a collection plan and no cover override")
+    _validate_run_program(
+      program, calibration_startup=calibration_startup, standby_startup=standby_startup
+    )
+    starts_from_standby = calibration_startup or standby_startup
+    start_command = 0x13 if cover_temperature is None else 0x7E
+    if cover_temperature is not None and (
+      type(cover_temperature) is not int or cover_temperature != 90
+    ):
+      raise ValueError("Only the captured 90-degree calibration cover setting is supported")
     if collection_plan is not None:
       collection_plan.points(program)
     if not math.isfinite(plate_timeout) or plate_timeout <= 0:
@@ -935,9 +1064,16 @@ class ABI7500FastDx:
       journal = self._require_journal()
       prior = journal.get(run_id)
       if prior is not None:
-        if prior.program != program or prior.collection_plan != collection_plan:
+        if (
+          prior.program != program
+          or prior.collection_plan != collection_plan
+          or prior.cover_temperature != cover_temperature
+          or prior.start_command != start_command
+          or prior.calibration_startup != calibration_startup
+          or prior.standby_startup != standby_startup
+        ):
           raise ABI7500RunError(
-            "A run ID cannot be reused with a different program or collection plan"
+            "A run ID cannot be reused with a different program or collection plan or cover setting/Start command"
           )
         return prior
       identity = await self.get_identity()
@@ -964,10 +1100,11 @@ class ABI7500FastDx:
             or not optics.is_stationary
             or optics.filter_position != 0
             or not optics.lamp_enabled
-            or optics.lamp_power != 1
+            or optics.lamp_power != (0 if starts_from_standby else 1)
           ):
             raise ABI7500RunError(
-              "Optical run requires reference geometry, filter 0 and lamp on at power 1"
+              "Optical run requires reference geometry, filter 0 and lamp on at "
+              + ("standby power 0" if starts_from_standby else "power 1")
             )
       run = ThermalRun(
         run_id,
@@ -978,6 +1115,10 @@ class ABI7500FastDx:
         last_status=status_after,
         history=history,
         collection_plan=collection_plan,
+        cover_temperature=cover_temperature,
+        start_command=start_command,
+        calibration_startup=calibration_startup,
+        standby_startup=standby_startup,
       )
       journal.reserve(run)
       attempted_start = False
@@ -985,11 +1126,40 @@ class ABI7500FastDx:
         logger.warning(
           "Starting experimental run %s (optical plan: %s)", run_id, collection_plan is not None
         )
+        if cover_temperature is not None:
+          await self._configure_calibration_cover()
         await self._exchange(0x1B, 0)
         await asyncio.sleep(1.0)
         await self._exchange(0x12, 0, run.wire_program.encode())
         await asyncio.sleep(0.5)
+        if starts_from_standby:
+          async with self._lock:
+            before = ABI7500Status(await self._thermal_query(0x29, 50))
+            optics = await self._query_optics()
+            if (
+              before.phase != "inactive"
+              or before.state_code not in (1, 2)
+              or before.run_start_record != run.baseline_start_record
+              or not optics.is_stationary
+              or optics.filter_position != 0
+              or not optics.lamp_enabled
+              or optics.lamp_power != 0
+            ):
+              raise ABI7500RunError("Instrument changed before optical lamp startup")
+            try:
+              await self._set_lamp_state(True, 1, before, optics)
+            except BaseException as exc:
+              self._fault = exc
+              raise
+          await self.get_stored_exposure_times()
         await self._load_run_plate(plate_timeout)
+        if starts_from_standby:
+          async with self._lock:
+            try:
+              await self._park_collection_filter(home=True)
+            except BaseException as exc:
+              self._fault = exc
+              raise
         status = await self.get_status()
         if (
           status.phase != "inactive"
@@ -997,10 +1167,15 @@ class ABI7500FastDx:
           or status.run_start_record != run.baseline_start_record
         ):
           raise ABI7500RunError("Instrument state changed before Start; refusing to start")
+        if cover_temperature is not None:
+          await self._verify_calibration_cover()
         run = journal.save(replace(run, state="starting", last_status=status))
         attempted_start = True
-        await self._exchange(0x13, 0)
+        await self._exchange(run.start_command, 0)
         run = journal.save(replace(run, start_acknowledged=True))
+        if cover_temperature is not None:
+          await self._verify_calibration_cover()
+          run = journal.save(replace(run, cover_configured=True))
         logger.info(
           "Thermal run %s start acknowledged; progress requires status reconciliation", run_id
         )
@@ -1022,7 +1197,9 @@ class ABI7500FastDx:
       if record is None:
         continue
       expected_ids = tuple(
-        f"{record.collection_id}-f{f.position}-e{index}" for f in plan.filters for index in range(3)
+        f"{record.collection_id}-f{f.position}-e{index}"
+        for f in plan.filters
+        for index in range(len(f.exposures))
       )
       if (
         record.ordinal != ordinal
@@ -1065,7 +1242,24 @@ class ABI7500FastDx:
         acquisition = journal.get_acquisition(acquisition_id)
         if acquisition is not None:
           frames.append(acquisition)
-      results.append(FluorescenceCollection(record, tuple(frames)))
+      assert run.collection_plan is not None
+      probes = tuple(
+        acquisition
+        for key in run.collection_plan.probe_ids(record.collection_id)
+        if (acquisition := journal.get_acquisition(key)) is not None
+      )
+      if record.state == "complete":
+        for setting in run.collection_plan.filters:
+          if setting.mode == "automatic":
+            selected = journal.calibration_search(record, setting).selected_milliseconds
+            final = [a for a in frames if a.optics_before.filter_position == setting.position]
+            if (
+              selected is None
+              or len(final) != len(setting.exposures)
+              or any(a.state != "complete" or a.exposure.milliseconds != selected for a in final)
+            ):
+              raise ABI7500RunError("Final images disagree with their exposure search")
+      results.append(FluorescenceCollection(record, tuple(frames), probes))
     return tuple(results)
 
   async def get_collections(self, run_id: str) -> tuple[FluorescenceCollection, ...]:
@@ -1123,36 +1317,6 @@ class ABI7500FastDx:
       logger.info("Exported optical run %s (%d collections) to %s", run_id, len(collections), path)
       return result
 
-  async def _park_collection_filter(self, *, home: bool = False) -> OpticalState:
-    """Park or home under the collection locks, retaining lamp power 1 and verifying position 0.
-
-    Homing is only called for a reserved collection whose durable intent requires it. No native
-    retry loop is copied: an uncertain home cannot safely be repeated. Neither mode recalibrates.
-    The caller must persist failure and verify the thermal hold after this bounded operation.
-    """
-    optics = await self._query_optics()
-    if (
-      not optics.is_stationary
-      or optics.filter_position not in range(6)
-      or not optics.lamp_enabled
-      or optics.lamp_power != 1
-    ):
-      raise ABI7500RunError("Unexpected optical state before collection parking")
-    if home:
-      await self._thermal_query(0x67, 0)
-      await self._wait_filter(asyncio.get_running_loop().time() + 15)
-    elif optics.filter_position != 0:
-      await self._thermal_query(0x69, 0, b"\x00\x00")
-      await self._wait_filter(asyncio.get_running_loop().time() + 15)
-    parked = await self._query_optics()
-    if (
-      not parked.is_stationary
-      or parked.filter_position != 0
-      or parked.lamp_response != optics.lamp_response
-    ):
-      raise ABI7500RunError("Collection parking readback disagrees with position 0 and lamp state")
-    return parked
-
   async def _collect_point(self, run_id: str, point: CollectionPoint) -> None:
     """Reserve and execute one bounded read under run and USB transaction ownership."""
     async with self._run_lock:
@@ -1192,7 +1356,7 @@ class ABI7500FastDx:
         tuple(
           f"{point.collection_id(run_id)}-f{f.position}-e{index}"
           for f in plan.filters
-          for index in range(3)
+          for index in range(len(f.exposures))
         ),
         homing_requested=points.index(point) + 1 in plan.home_after_collections,
       )
@@ -1200,6 +1364,7 @@ class ABI7500FastDx:
       async with self._lock:
         self._check_connected()
         try:
+          self._check_collection_cover(run, status)
           optics = await self._query_optics()
           if (
             not optics.is_stationary
@@ -1211,49 +1376,81 @@ class ABI7500FastDx:
             raise ABI7500RunError(
               "Collection requires a ready camera and stationary illuminated optics"
             )
-          for setting in plan.filters:
-            status = ABI7500Status(await self._thermal_query(0x29, 50))
-            if (
-              not point.matches(status)
-              or status.run_start_record != run.start_record
-              or status.remaining_hold_time is None
-              or status.remaining_hold_time < 4
-            ):
-              raise ABI7500RunError("Collection crossed a thermal boundary before filter selection")
-            if optics.filter_position != setting.position:
-              await self._thermal_query(0x69, 0, setting.position.to_bytes(2, "big"))
-              await self._wait_filter(
-                asyncio.get_running_loop().time() + min(15, status.remaining_hold_time - 2)
+          for probing in (True, False) if plan.exposure_search_masks else (False,):
+            if not probing and plan.park_after_exposure_search:
+              optics = await self._park_collection_filter()
+            for setting in plan.filters:
+              if probing and setting.mode != "automatic":
+                continue
+              search = (
+                journal.calibration_search(record, setting)
+                if setting.mode == "automatic"
+                else CalibrationExposureSearch()
               )
-            optics = await self._query_optics()
-            if (
-              not optics.is_stationary
-              or optics.filter_position != setting.position
-              or not optics.lamp_enabled
-              or optics.lamp_power != 1
-            ):
-              raise ABI7500RunError("Optical readback disagrees with the collection plan")
-            for index, exposure in enumerate(setting.exposures):
-              acquisition = CameraAcquisition(
-                f"{record.collection_id}-f{setting.position}-e{index}",
-                CameraExposure(exposure),
-                run.camera_description,
-                run.thermal_version,
-                CameraGeometry(321, 245),
-                datetime.now(timezone.utc).isoformat(),
-                status,
-                optics,
+              status = ABI7500Status(await self._thermal_query(0x29, 50))
+              if (
+                not point.matches(status)
+                or status.run_start_record != run.start_record
+                or status.remaining_hold_time is None
+                or status.remaining_hold_time < 4
+              ):
+                raise ABI7500RunError(
+                  "Collection crossed a thermal boundary before filter selection"
+                )
+              if optics.filter_position != setting.position:
+                await self._thermal_query(0x69, 0, setting.position.to_bytes(2, "big"))
+                await self._wait_filter(
+                  asyncio.get_running_loop().time() + min(15, status.remaining_hold_time - 2)
+                )
+              optics = await self._query_optics()
+              if (
+                not optics.is_stationary
+                or optics.filter_position != setting.position
+                or not optics.lamp_enabled
+                or optics.lamp_power != 1
+              ):
+                raise ABI7500RunError("Optical readback disagrees with the collection plan")
+              for index in range(11 if probing else len(setting.exposures)):
+                if probing:
+                  if search.next_milliseconds is None:
+                    break
+                  exposure = search.next_milliseconds / 1000
+                elif setting.mode == "automatic":
+                  selected = search.selected_milliseconds
+                  if selected is None:
+                    raise ABI7500RunError("Calibration exposure search did not finish")
+                  exposure = selected / 1000
+                else:
+                  exposure = setting.exposures[index]
+                suffix = "p" if probing else "e"
+                acquisition = CameraAcquisition(
+                  f"{record.collection_id}-f{setting.position}-{suffix}{index}",
+                  CameraExposure(exposure),
+                  run.camera_description,
+                  run.thermal_version,
+                  CameraGeometry(321, 245),
+                  datetime.now(timezone.utc).isoformat(),
+                  status,
+                  optics,
+                )
+                journal.reserve_acquisition(acquisition, collection_id=record.collection_id)
+                acquisition = await self._capture_reserved(acquisition, record)
+                assert acquisition.thermal_after is not None
+                status = acquisition.thermal_after
+                if probing:
+                  assert acquisition.frame is not None
+                  mask = next(m for m in plan.exposure_search_masks if m.filter == setting.position)
+                  search = search.add(
+                    CalibrationExposureProbe.from_frame(
+                      FluorescenceFrame(acquisition.frame, acquisition.exposure, mask)
+                    )
+                  )
+              logger.info(
+                "Run %s collection %d captured physical filter %d",
+                run_id,
+                record.ordinal,
+                setting.position,
               )
-              journal.reserve_acquisition(acquisition, collection_id=record.collection_id)
-              acquisition = await self._capture_reserved(acquisition, record)
-              assert acquisition.thermal_after is not None
-              status = acquisition.thermal_after
-            logger.info(
-              "Run %s collection %d captured physical filter %d",
-              run_id,
-              record.ordinal,
-              setting.position,
-            )
           if plan.park_between_collections:
             logger.info(
               "Run %s collection %d closing optics via %s",
@@ -1267,6 +1464,7 @@ class ABI7500FastDx:
             )
             journal.save_collection(record)
           after = ABI7500Status(await self._thermal_query(0x29, 50))
+          self._check_collection_cover(run, after)
           if not point.matches(after) or after.run_start_record != run.start_record:
             raise ABI7500RunError("Collection crossed a thermal boundary")
           journal.save_collection(replace(record, state="complete", after=after))

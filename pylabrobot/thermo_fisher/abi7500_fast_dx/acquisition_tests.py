@@ -51,13 +51,20 @@ class _CameraUSB(_ScriptedUSB):
     self.thermal(0x6B, position)
     self.thermal(0x66, b"\x00\x01\x00\x00")
 
-  def preflight(self, status: bytes = _IDLE, motor: bytes = b"\x00\x00") -> None:
+  def preflight(
+    self,
+    status: bytes = _IDLE,
+    motor: bytes = b"\x00\x00",
+    camera: bytes = _CAMERA,
+    version: bytes = _VERSION,
+    geometry: bytes = bytes.fromhex(_CAPTURE["ci_reply_hex"]),
+  ) -> None:
     """Require fresh identity, dimensions, bracketed status and camera readiness."""
     self.expect_write(b"CF  64")
-    self.expect_read(_CAMERA)
-    self.thermal(0x0A, _VERSION)
+    self.expect_read(camera)
+    self.thermal(0x0A, version)
     self.expect_write(b"CI   4")
-    self.expect_read(bytes.fromhex(_CAPTURE["ci_reply_hex"]))
+    self.expect_read(geometry)
     self.thermal(0x29, status)
     self.optics(motor)
     self.thermal(0x29, status)
@@ -114,9 +121,16 @@ class ExposureTests(unittest.TestCase):
 
   def test_rounding_and_limits(self) -> None:
     """Respect the native 0.49 ms bias instead of rounding ties to even."""
-    for duration, milliseconds in ((0.005, 5), (0.2565, 256), (0.25652, 257), (1.048, 1048)):
+    for duration, milliseconds in (
+      (0.005, 5),
+      (0.2565, 256),
+      (0.25652, 257),
+      (1.048, 1048),
+      (1.8, 1800),
+      (2.0, 2000),
+    ):
       self.assertEqual(CameraExposure(duration).milliseconds, milliseconds)
-    for duration in (True, 0, 0.0049, 1.0481, float("inf"), float("nan")):
+    for duration in (True, 0, 0.0049, 2.0001, float("inf"), float("nan")):
       with self.assertRaises(ValueError):
         CameraExposure(duration)
     with self.assertRaises(ABI7500ProtocolError):
@@ -266,6 +280,66 @@ class AcquisitionTests(unittest.IsolatedAsyncioTestCase):
     self.assertEqual(result.wire_data, _IMAGE)
     self.assertEqual(result.state, "uncertain")
     self.assertIsNotNone(result.frame)
+
+  async def test_missing_filter_reply_retains_full_frame_without_retry(self) -> None:
+    """A post-download readback timeout preserves pixels without certifying or repeating them."""
+    evidence = json.loads((_DATA / "ubuntu_postflight_timeout_vector.json").read_text())
+    query = evidence["failed_query"]
+    self.driver._sequence = self.usb.sequence = query["sequence"] - 8
+    self.usb.preflight()
+    self.usb.capture()
+    self.usb.image()
+    self.usb.thermal(0x6C, b"\x00\x00")
+    request = bytes.fromhex(query["request_usb_hex"])
+    self.usb.expect_write(request)
+    self.usb.expect_write(bytes.fromhex(query["read_command_hex"]))
+    self.usb.expect_read(bytes.fromhex(query["first_empty_reply_hex"]))
+    read = self.usb.read
+    remaining = self.driver._remaining
+    expired = False
+
+    async def read_then_expire(size: int, timeout: int) -> bytes:
+      """Expire the deadline after the scripted empty read without waiting on wall time."""
+      nonlocal expired
+      data = await read(size, timeout)
+      expired = not self.usb.script
+      return data
+
+    def bounded_remaining(deadline: float, *, context: str = "command") -> float:
+      """Keep normal deadlines until the postflight query's simulated expiry."""
+      if expired:
+        raise TimeoutError(f"ABI 7500 {context} timed out")
+      return remaining(deadline, context=context)
+
+    with (
+      patch.object(self.usb, "read", side_effect=read_then_expire),
+      patch.object(self.driver, "_remaining", side_effect=bounded_remaining),
+      self.assertRaisesRegex(TimeoutError, "command timed out"),
+    ):
+      await self.driver.capture_frame("missing-filter-reply", exposure=0.540)
+    result = await self.driver.get_acquisition("missing-filter-reply")
+    self.assertEqual(result.state, "uncertain")
+    self.assertEqual(result.wire_data, _IMAGE)
+    self.assertIsNotNone(result.frame)
+    self.assertIsNone(result.optics_after)
+    self.assertIsNone(result.thermal_after)
+    self.assertIsNone(result.finished_at)
+    self.assertFalse(self.driver.is_connected)
+    self.assertFalse(self.usb.script)
+    before = tuple(self.usb.writes)
+    self.assertEqual(
+      await self.driver.capture_frame("missing-filter-reply", exposure=0.540), result
+    )
+    await self.driver.stop()
+    reopened = ABI7500FastDx(run_journal=self.path)
+    reopened.io = cast(USB, self.usb)
+    try:
+      self.assertEqual(await reopened.capture_frame("missing-filter-reply", exposure=0.540), result)
+    finally:
+      await reopened.stop()
+    self.assertEqual(tuple(self.usb.writes), before)
+    self.assertEqual(self.usb.writes.count(b"CC"), 1)
+    self.assertEqual(self.usb.writes.count(request), 1)
 
   async def test_cancel_during_poll_preserves_identity_and_never_resends_cc(self) -> None:
     """Task cancellation records uncertainty without sending a guessed abort sequence."""

@@ -16,6 +16,8 @@ freshly verified finished run, lamp off and stationary filter 0. Its durable int
 replay after an uncertain response. Release after a completed mild hold and repeated calls across
 a clean reconnect were checked on G2.10; ambiguous-failure recovery remains hardware unverified.
 See the plate-release section in the thermal-run guide.
+A reusable method, progress/cleanup workflow and original-image export are provided in
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/pcr-run`.
 Direct Ubuntu sessions verified illuminated snapshots at filter positions 1 and 5 and lamp
 shutdown. Offline camera processing reproduces all 960 vendor well integers and corrected values
 from one recorded acquisition. Thirty images were collected within two scheduled holds and the
@@ -30,6 +32,10 @@ camera payloads; ``get_collections(run_id)`` retrieves the original complete or 
 optical run as a ZIP containing original images, calibration files, per-well CSV tables and
 content hashes, without instrument I/O. See the export example in the collection guide below.
 Snapshot behavior is documented in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/raw-snapshots`.
+``get_stored_exposure_times()`` reads the instrument's three exposure durations per physical
+filter, preserving their order and original reply bytes. It does not change the exposure table
+or a collection plan. Two direct Ubuntu readbacks on G2.10 matched the recorded vendor table;
+captured-transport tests cover the original vendor and Ubuntu transactions.
 See :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/optics-and-measurements` for optical control,
 calibration provenance and measurement limits. The experimental collection scheduler is documented
 in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
@@ -54,7 +60,11 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     CameraAcquisition
     CameraExposure
     OpticalState
+    StoredExposureTimes
     CollectionFilter
+    CalibrationExposureProbe
+    CalibrationExposureSearch
+    ABI7500CoverState
     CollectionPlan
     CollectionPoint
     CollectionRecord
@@ -105,6 +115,33 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     apply_uniformity
     read_eds_uniformity
 
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.pure_dye_calibration
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    PureDyeCalibrationAnalysis
+    PureDyeCalibrationFilter
+    PureDyeCalibrationResult
+    calculate_pure_dye_calibration
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.optical_calibration
+
+Offline generation of optical coefficients from final camera collections, matching ROI masks
+and native background calibration. See
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/optical-calibration` for the calculation,
+acceptance checks, captured validation and acquisition limits.
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    OpticalCalibrationAnalysis
+    OpticalCalibrationFilter
+    OpticalCalibrationResult
+    calculate_optical_calibration
+
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.image_processing
 
 .. autosummary::
@@ -135,6 +172,17 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
   :nosignatures:
 
     ExposureSelection
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.raw_measurements
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    DiagnosticPlateRegions
+    RawWellMeasurement
+    RawCameraWellData
+    write_raw_run_archive
 
 ALPS Heat Sealers
 -----------------

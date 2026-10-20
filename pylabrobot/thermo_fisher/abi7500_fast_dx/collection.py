@@ -13,19 +13,35 @@ from .thermal_program import ThermalProgram, _integer
 
 @dataclass(frozen=True)
 class CollectionFilter:
-  """A physical filter position and three commanded exposures in seconds, in acquisition order."""
+  """A physical filter and exposures in seconds, in acquisition order.
+
+  ``bracket`` requires three distinct exposures for ordinary fluorescence processing.
+  ``fixed`` requires one or sixteen identical exposures for calibration-image averaging.
+  ``automatic`` uses one or sixteen 2.0-second ceiling placeholders; the final duration is
+  selected by a separate, journaled exposure search using the plan's saved ROI masks.
+  The count is caller-specified; automatic frame-count selection is not inferred.
+  The explicit mode prevents repeated exposures from silently becoming a PCR bracket.
+  """
 
   position: int
-  exposures: tuple[float, float, float]
+  exposures: tuple[float, ...]
+  mode: Literal["bracket", "fixed", "automatic"] = "bracket"
 
   def __post_init__(self) -> None:
-    """Require a real filter and three distinct supported camera settings."""
+    """Require a supported bracket or a complete fixed-exposure calibration collection."""
     _integer("position", self.position, 1, 5)
-    if type(self.exposures) is not tuple or len(self.exposures) != 3:
-      raise ValueError("Three immutable exposure times are required")
+    if self.mode not in ("bracket", "fixed", "automatic"):
+      raise ValueError("Unknown collection mode")
+    counts = (3,) if self.mode == "bracket" else (1, 16)
+    if type(self.exposures) is not tuple or len(self.exposures) not in counts:
+      raise ValueError(f"Collection mode {self.mode} requires an exposure count in {counts}")
     times = tuple(CameraExposure(value).milliseconds for value in self.exposures)
-    if len(set(times)) != 3:
+    if self.mode == "bracket" and len(set(times)) != 3:
       raise ValueError("Collection exposures must encode distinct millisecond values")
+    if self.mode == "fixed" and len(set(self.exposures)) != 1:
+      raise ValueError("Fixed collection exposures must be identical")
+    if self.mode == "automatic" and any(value != 2.0 for value in self.exposures):
+      raise ValueError("Automatic calibration requires the captured 2-second search ceiling")
 
 
 @dataclass(frozen=True, order=True)
@@ -79,6 +95,12 @@ class CollectionPlan:
   homing instead of an absolute parking move. It requires parking enabled; other collections
   still park normally. Homing intent belongs to the durable collection identity and is never
   replayed after failure. This is not recalibration or a lamp-counter reset.
+  ``exposure_search_masks`` pins original ROI bytes for every automatic filter. All searches
+  finish before final images begin. Up to eleven probes per filter are saved separately from
+  final acquisitions. The minimum budget includes 22 exposure seconds per automatic filter,
+  but USB transfers, processing and filter movement require additional caller-provided margin.
+  ``park_after_exposure_search`` closes the light path at absolute filter 0 after all probes,
+  before moving to the first final-image filter, as in the captured pure-dye routine.
   """
 
   steps: tuple[tuple[int, int], ...]
@@ -86,6 +108,8 @@ class CollectionPlan:
   read_window: int = 45
   park_between_collections: bool = False
   home_after_collections: tuple[int, ...] = ()
+  exposure_search_masks: tuple[PlatePixelMask, ...] = ()
+  park_after_exposure_search: bool = False
 
   def __post_init__(self) -> None:
     """Reject empty, duplicate and unordered settings before any instrument I/O."""
@@ -115,8 +139,30 @@ class CollectionPlan:
     positions = tuple(value.position for value in self.filters)
     if positions != tuple(sorted(set(positions))):
       raise ValueError("Physical filters must be unique and in ascending order")
-    if sum(sum(value.exposures) for value in self.filters) >= self.read_window - 2:
+    automatic = tuple(f.position for f in self.filters if f.mode == "automatic")
+    if type(self.park_after_exposure_search) is not bool:
+      raise ValueError("park_after_exposure_search must be a boolean")
+    if self.park_after_exposure_search and not automatic:
+      raise ValueError("Parking after exposure search requires automatic filters")
+    if (
+      type(self.exposure_search_masks) is not tuple
+      or tuple(mask.filter for mask in self.exposure_search_masks) != automatic
+    ):
+      raise ValueError("Automatic filters require matching masks in physical-filter order")
+    if (
+      sum(sum(value.exposures) for value in self.filters) + 22 * len(automatic)
+      >= self.read_window - 2
+    ):
       raise ValueError("Read window cannot fit even the requested exposures")
+
+  def probe_ids(self, collection_id: str) -> tuple[str, ...]:
+    """Bounded probe slots, separate from the reserved final-image identities."""
+    return tuple(
+      f"{collection_id}-f{f.position}-p{index}"
+      for f in self.filters
+      if f.mode == "automatic"
+      for index in range(11)
+    )
 
   def points(self, program: ThermalProgram) -> tuple[CollectionPoint, ...]:
     """Expand selected steps, requiring the full collection window in every effective hold."""
@@ -139,10 +185,25 @@ class CollectionPlan:
     """Serialize immutable settings for comparison after restart."""
     return {
       "steps": [list(pair) for pair in self.steps],
-      "filters": [{"position": f.position, "exposures": list(f.exposures)} for f in self.filters],
+      "filters": [
+        {"position": f.position, "exposures": list(f.exposures)}
+        | ({"mode": f.mode} if f.mode != "bracket" else {})
+        for f in self.filters
+      ],
       "read_window": self.read_window,
       "park_between_collections": self.park_between_collections,
       "home_after_collections": list(self.home_after_collections),
+      **({"park_after_exposure_search": True} if self.park_after_exposure_search else {}),
+      **(
+        {
+          "exposure_search_masks": [
+            {"filter": mask.filter, "source_hex": mask.source_bytes.hex()}
+            for mask in self.exposure_search_masks
+          ]
+        }
+        if self.exposure_search_masks
+        else {}
+      ),
     }
 
   @classmethod
@@ -150,10 +211,18 @@ class CollectionPlan:
     """Restore a plan; older records explicitly retain their no-parking behavior."""
     return cls(
       tuple((pair[0], pair[1]) for pair in value["steps"]),
-      tuple(CollectionFilter(f["position"], tuple(f["exposures"])) for f in value["filters"]),
+      tuple(
+        CollectionFilter(f["position"], tuple(f["exposures"]), f.get("mode", "bracket"))
+        for f in value["filters"]
+      ),
       value["read_window"],
       value.get("park_between_collections", False),
       tuple(value.get("home_after_collections", ())),
+      tuple(
+        PlatePixelMask(bytes.fromhex(m["source_hex"]), m["filter"])
+        for m in value.get("exposure_search_masks", ())
+      ),
+      value.get("park_after_exposure_search", False),
     )
 
 
@@ -242,10 +311,15 @@ class CollectionRecord:
 
 @dataclass(frozen=True)
 class FluorescenceCollection:
-  """A collection checkpoint and all persisted complete or partial original camera frames."""
+  """Final images and separately retained complete/partial automatic-exposure probes.
+
+  ``acquisitions`` contains only planned final images. ``exposure_probes`` is the ordered
+  search history, including uncertain frames; never include it in a calibration average.
+  """
 
   record: CollectionRecord
   acquisitions: tuple[CameraAcquisition, ...]
+  exposure_probes: tuple[CameraAcquisition, ...] = ()
 
   def filter_results(
     self,

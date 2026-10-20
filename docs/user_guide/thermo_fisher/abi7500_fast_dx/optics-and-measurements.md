@@ -12,8 +12,10 @@ See the [hardware report](hardware-validation.md).
 
 ## Lamp and filter control
 
-Use the same persistent journal as thermal runs and snapshots. Both setters check the reference
-C9254-03/2.20 and G2.10 identities, journal ownership, camera readiness and thermal inactivity.
+Use the same persistent journal as thermal runs and snapshots, with a separate journal for each
+instrument. Both setters require C9254-03/2.20 or C9254-02/2.19 with G2.10, and check journal
+ownership, camera readiness and thermal inactivity. Supporting a second camera model does not
+make another instrument's ROI, background or uniformity files valid for it.
 They serialize with runs, snapshots and keepalives. Setup and stop do not actuate the optics.
 
 ```python
@@ -72,7 +74,36 @@ readback disagreement or interrupted mutation faults the connection and does not
 repeat a command. After `stop()` / `setup()`, read the actual state before deciding what to do.
 Closing USB does **not** switch off the lamp, cancel a thermal run, or cool the heated cover.
 
+## Stored vendor exposure times
+
+Within an approved connection session, read the instrument's exposure table before choosing
+settings for a vendor/PLR comparison:
+
+```python
+stored = await instrument.get_stored_exposure_times()
+print(stored.for_filter(5))  # seconds, in the instrument's original order
+```
+
+The recorded G2.10 vendor session returned `(1.048, 0.090, 0.030)` for physical filter 5
+(saved channel 1, SYBR/FAM). Two {ref}`direct Ubuntu readbacks <abi7500-exptable-validation>`
+on 2026-10-12 matched the entire recorded table. Query again within the approved session when
+checking settings on an instrument; these observations do not guarantee a future table.
+The readback retains its original 254 bytes and does not change settings or populate a collection
+plan automatically. It reports stored values even if they fall outside PLR's supported snapshot
+range. Calibration validity is not encoded by this API. Tests replay complete vendor and Ubuntu
+USB transactions, including fragmented serial responses and counted-read padding.
+
+Use the actual commanded exposure, channel, calibration and collection indices when replaying
+vendor images. Exact processing agreement uses the **same original images** and saved EDS outputs.
+Separate physical acquisitions can differ through noise, illumination history and plate changes;
+they require a measurement comparison rather than a bit-for-bit equality assertion. Preserve
+saturation flags in both comparisons.
+
 ## Uniformity-corrected values from saved experiments
+
+To generate new factors from a uniform mixed-dye plate's recorded camera images, use the
+[optical-calibration calculation](optical-calibration.md). This computes factors from matching
+ROI/background data and reports any well substitutions; it does not automate calibration acquisition.
 
 The EDS well arrays are already vendor outputs, despite their `.tiff` names. They retain signed
 64-bit values and acquisition indices. Correct them with the calibration snapshot **inside the
@@ -121,7 +152,7 @@ unmixing. Passing a `CameraFrame` as a saved well array is not supported.
 
 `CameraFilterResult` implements the reference **OPB=0, 12-bit, sum-extraction, one-pixel-ring**
 configuration. Supply three original frames from the same physical filter and collection point,
-their commanded exposures, the matching pixel mask, native `Background.csv`, and the acquisition's
+their commanded exposures, the matching pixel mask, native `Calibration.sda`, and the acquisition's
 uniformity calibration. It does not open USB or trigger an exposure.
 
 ```python
@@ -143,7 +174,7 @@ def load_frame(name: str, exposure: float) -> FluorescenceFrame:
 result = CameraFilterResult(
   frames=(load_frame("camera-016.bin", 0.540), load_frame("camera-017.bin", 0.180),
           load_frame("camera-018.bin", 0.060)),
-  background=BackgroundCalibration.from_file(folder / "Background.csv"),
+  background=BackgroundCalibration.from_file(folder / "Calibration.sda"),
   uniformity=read_eds_uniformity(folder / "acquire-complete.eds"),
   stage=2, cycle=1, collection_point=1,
 )
@@ -155,10 +186,16 @@ for value in result.measurements:
 The caller associates frames, calibration and stage/cycle/collection-point metadata. Mixed masks,
 duplicate exposure times, unsupported geometry, pixels above 4095 and rings outside the image
 are rejected. Original frame, mask and calibration bytes remain available; no calibration file
-is changed. `BackgroundCalibration` accepts only the recovered version-5 native CSV layout.
-Its coefficients retain more decimal precision than the EDS `background.ini`; substituting the
-INI failed exact reconstruction for ten reference values. The CSV has no identity or expiry field,
-so select it from the matching backup explicitly.
+is changed. `BackgroundCalibration` reads the captured 96-well I809 `Calibration.sda` background
+section, preserving its binary32 offsets and slopes. It checks record lengths, child counts,
+profile settings, unique well indices and finite coefficients. Other top-level sections are
+skipped by their bounded lengths; this reader does not validate an SDA checksum or certify
+instrument association, calibration age or validity. Select the file from the matching backup.
+
+The version-5 `Background.csv` layout remains supported. Its six-decimal export can round a
+coefficient enough to change the final integer by one count. Native SDA coefficients are needed
+for exact reconstruction at those boundaries. EDS `background.ini` loses further precision and
+is not accepted as a replacement.
 
 Processing follows these recovered steps:
 
@@ -189,11 +226,23 @@ asymmetric orientation, precision-sensitive coefficients and saturated fallback 
 native oracle covers exposure choice, ties and disabled exposures. Full frames, calibration
 backups and vendor binaries remain outside Git.
 
+A settled ROX diagnostic on C9254-02/G2.10 supplied another **120 scheduled frames** and
+**3,840 saved values** across eight collections and five filters. Native SDA background coefficients
+reconstructed every saved integer exactly; the original vendor Java calculation also matched
+all 3,840 corrected binary32 values. The rounded CSV produced three one-count differences.
+Regression tests retain the bounded background section and those three original ROI/ring patches.
+See [hardware validation](hardware-validation.md#settled-windows-rox-reference-and-native-background-precision-2026-10-20)
+for the separate-acquisition comparison and its limits.
+
 The [collection scheduler](synchronized-acquisition.md) now associates optical reads with thermal
 holds. Two 15-frame collections and normal thermal completion were checked directly from Ubuntu.
-Broader programs and matched vendor comparisons of unsaturated acquisitions still require
-validation. This processing work does not require recalibration and does not renew the
-instrument's expired calibration.
+Broader programs and quantitative repeatability still require validation. A
+{ref}`fresh paired comparison <abi7500-fresh-vendor-comparison>` reproduced
+all 480 vendor EDS integers and all 480 original-Java corrected values from the vendor's own
+images. Separate Ubuntu/vendor acquisitions were unclipped in all 96 wells at 30 ms, but retained
+large differences at F4 and C6 and smaller group-wide shifts. Exact reconstruction does not
+establish agreement between acquisitions. This processing work does not require recalibration
+and does not renew the instrument's expired calibration.
 
 A subsequent shorter-exposure session produced 960 selections without saturation flags, using
 30/10/5 ms at filters 2–5. Filter 5 required the 5 ms exposure for eight well/cycle results.
@@ -251,3 +300,101 @@ vendor's surrounding-pixel correction, threshold/saturation handling, exposure s
 background calibration and uniformity correction. `apply_uniformity` rejects these results.
 Use `CameraFilterResult` for the reference processing path described above. Diagnostic sums and
 means retain their separate meaning and are not interchangeable with reconstructed filter signals.
+
+(abi7500-raw-regions)=
+## Raw measurements without vendor masks
+
+`DiagnosticPlateRegions` explicitly associates 96 provisional image regions with one recorded
+camera identity and physical filter. `RawCameraWellData` extracts raw counts from a complete
+acquisition using those regions. This path is useful for diagnostic plots when matching vendor
+masks are unavailable. It does not substitute another instrument's calibration or generate a
+vendor AOI file. Every region remains provisional, including regions whose physical labels have
+been independently checked.
+
+```python
+import json
+from pathlib import Path
+from pylabrobot.thermo_fisher.abi7500_fast_dx import (
+  CameraAcquisition, DiagnosticPlateRegions, RawCameraWellData,
+)
+
+folder = Path("/path/to/saved-acquisition")
+acquisition = CameraAcquisition.from_dict(json.loads((folder / "acquisition.json").read_text()))
+regions = DiagnosticPlateRegions.from_dict(
+  json.loads(Path("/path/to/diagnostic-regions-filter5.json").read_text())
+)
+data = RawCameraWellData(acquisition, regions)
+for well in data.measurements:
+  print(well.label, well.mean, well.pixel_sum, well.clipped_pixel_count, well.label_verified)
+```
+
+The region map stores exact integer `(row, column)` pixels for A1–H12 in the **OPB=0 crop rotated
+180°**, with 240 rows and 320 columns. Supply an independently established map for that camera,
+filter and orientation. `from_circles(centers, radius, camera_description=..., filter=...,
+provenance=...)` selects pixels at squared distance at most `radius**2` from each explicit center;
+centers and radius are in pixels. It performs no fitting, brightness-based relabeling or automatic
+alignment. Overlapping, duplicate, empty or out-of-image regions are rejected. Its JSON round trip
+retains exact membership and provenance; `sha256` identifies the canonical region JSON.
+
+The raw result retains the complete acquisition and region map. Camera identity, image geometry
+and stationary, unchanged filter observations must match. Zero pixels are included in count, sum,
+mean, minimum and maximum. `high_pixel_count` counts pixels above 4000; `clipped_pixel_count`
+counts pixels equal to 4095. Neither applies the vendor's region-size-dependent saturation rule.
+These flags cover the selected pixels, **not the whole physical well**. Clipping elsewhere in an
+image remains visible in the retained original frame. Images with values above 4095 are rejected.
+
+`verified_wells` contains caller-supplied one-based indices supported by `label_evidence`.
+`label_verified=True` records that association only; it does not certify region boundaries or
+other labels. In the second-unit check, all six known markers matched at 5, 10 and 30 ms using a
+grid frozen from earlier images. Those six positions establish orientation, not all 96 independent
+labels. Observed marker-center offsets reached 3.57 pixels, so the small circular regions remain
+diagnostic. No calibration is applied, and values are not dye concentrations, Rn, ΔRn or Ct.
+
+### Export every well and exposure
+
+`write_raw_run_archive(path, run, collections, regions)` processes saved `ThermalRun` and
+`FluorescenceCollection` objects without constructing a USB transport. Supply one region map
+per acquired physical filter. It requires a normally completed run, every planned collection in
+order, matching camera/thermal identities and exposures, and before/after observations in the
+same run and hold. Missing, duplicate, reordered or uncertain data raises an error before the
+destination is created. Existing destinations are never overwritten.
+
+```python
+from pylabrobot.thermo_fisher.abi7500_fast_dx import write_raw_run_archive
+
+# run and collections are restored saved checkpoints, not fresh instrument queries.
+archive = write_raw_run_archive(
+  Path("/path/to/new-raw-wells.zip"), run, collections, (regions,)
+)
+```
+
+The ZIP contains `raw-measurements.csv`, the thermal and optical checkpoints, every original USB
+image, exact region maps, a field guide and a SHA-256 manifest. There are 96 rows **per exposure**.
+Each row records run/collection/stage/cycle/step, physical and saved filter indices, exposure in
+seconds, host timestamps, observed temperatures, raw statistics, quality flags and input hashes.
+`regions_provisional=True` and `calibration_applied=False` are explicit in every row and manifest.
+The saved-filter index is `6 - physical_filter`; it is not a dye identification.
+
+Plot separate curves for each **stage, step, well, physical filter and fixed exposure**. The API
+does not select an exposure, normalize brightness, combine filters or fabricate a missing ROX
+channel. The [PCR notebook](pcr-run.ipynb) provides a guarded offline export and plotting example.
+
+Offline validation covered 138 saved second-unit images: three mapping frames, 15 shorter-hold
+frames and 120 frames from a forty-cycle dye run. All **13,248** per-well statistics matched
+independent NumPy calculations using the frozen grid; all **288** marker-scan values also matched
+the earlier independent analysis. The six known markers remained the six brightest regions in
+every marker exposure. At 30 ms that image had 151 clipped pixels, 42 inside the selected regions;
+the two other saved runs had no clipped pixels. All 737 retained input files were unchanged.
+Tests retain small patches of six markers and two empty wells across three exposures.
+
+The forty-cycle export contains **11,520 rows**: 40 cycles × 3 exposures × 96 regions. Its plate
+contained fluorescein and diluent, so its plots are dye traces, not amplification curves. Those
+frames contain physical filter 5 only. A separate
+{ref}`ROX/fluorescein control scan <abi7500-rox-layout-validation>` exported **576 rows** from
+six images across physical filters 2 and 5. The asymmetric ROX pattern supported 24 filter-2
+locations against a grid fixed before that scan. Its filter-2 diagnostic region object records
+that evidence and those 24 labels explicitly; the remaining labels and every region boundary
+remain provisional. Filter 5 retains its earlier six-label evidence. The public export preserved
+all six transfers, clipping flags and member hashes, matched independent pixel statistics and
+rejected an existing destination. It applies no calibration or reporter/reference normalization.
+Green-channel discrepancies, quantitative dye processing and assay validation remain separate work.

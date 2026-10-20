@@ -12,7 +12,7 @@ from unittest.mock import AsyncMock, patch
 
 from pylabrobot.io.usb import USB
 
-from .acquisition import CameraExposure, OpticalState
+from .acquisition import CameraAcquisition, CameraExposure, OpticalState
 from .acquisition_tests import _IMAGE
 from .camera import CameraGeometry
 from .collection import (
@@ -105,8 +105,9 @@ class _CollectionUSB(_RunUSB):
     parked_position: int = 0,
     parked_power: int = 1,
     crossed_park: bool = False,
+    exposures: tuple[float, ...] = _PLAN.filters[0].exposures,
   ) -> None:
-    """Script three exposures; an optional repetition change invalidates the final frame."""
+    """Script exposures; an optional repetition change invalidates the final frame."""
     before = _status(repetition)
     self.observe(before)
     self.optics(0 if move else 1)
@@ -118,7 +119,7 @@ class _CollectionUSB(_RunUSB):
       self.exchange(0x6C, b"\x00\x01")
       self.exchange(0x6C, b"\x00\x00")
     self.optics()
-    for index, duration in enumerate(_PLAN.filters[0].exposures):
+    for index, duration in enumerate(exposures):
       exposure = CameraExposure(duration)
       self.expect_write(exposure.encode())
       self.expect_read(exposure.milliseconds.to_bytes(2, "little"))
@@ -150,6 +151,21 @@ class _CollectionUSB(_RunUSB):
 
 class CollectionPlanTests(unittest.TestCase):
   """Validate native scheduling evidence and reject unsupported plans without hardware."""
+
+  def test_fixed_collections_are_explicit_complete_and_round_trip(self) -> None:
+    """Calibration repeats are durable without weakening ordinary bracket validation."""
+    plan = CollectionPlan(
+      ((1, 1),),
+      (CollectionFilter(1, (1.8,), "fixed"), CollectionFilter(2, (0.720,) * 16, "fixed")),
+    )
+    self.assertEqual(CollectionPlan.from_dict(plan.to_dict()), plan)
+    self.assertEqual(CollectionPlan.from_dict(_PLAN.to_dict()), _PLAN)
+    self.assertNotIn("mode", _PLAN.to_dict()["filters"][0])
+    for exposures in ((), (0.5,) * 2, (0.5,) * 15, (0.5,) * 17, (0.5,) * 15 + (0.6,)):
+      with self.subTest(exposures=exposures), self.assertRaises(ValueError):
+        CollectionFilter(1, exposures, "fixed")
+    with self.assertRaises(ValueError):
+      CollectionFilter(1, (0.5,) * 3)
 
   def test_captured_home_framing_and_asynchronous_motor_observations(self) -> None:
     """Original vendor bytes establish empty home acknowledgements and later busy/idle replies."""
@@ -342,6 +358,77 @@ class CollectionDriverTests(unittest.IsolatedAsyncioTestCase):
     self.sleep.stop()
     await self.driver.stop()
     self.temp.cleanup()
+
+  async def test_fixed_collection_retains_sixteen_frames_and_never_replays(self) -> None:
+    """Each repeated exposure has its own durable intent, including fragmented image reads."""
+    plan = CollectionPlan(((1, 1),), (CollectionFilter(1, (0.720,) * 16, "fixed"),))
+    self.journal.save(replace(_run(), collection_plan=plan))
+    self.usb.point(exposures=plan.filters[0].exposures)
+    point = CollectionPoint(1, 1, 1)
+    await self.driver._collect_point(_RUN_ID, point)
+    collections = await self.driver.get_collections(_RUN_ID)
+    self.assertEqual(len(collections[0].acquisitions), 16)
+    self.assertEqual(len(collections[0].record.acquisition_ids), 16)
+    self.assertTrue(all(a.wire_data == _IMAGE for a in collections[0].acquisitions))
+    writes = list(self.usb.writes)
+    await self.driver._collect_point(_RUN_ID, point)
+    self.assertEqual(self.usb.writes, writes)
+    self.assertEqual(self.usb.writes.count(b"CC"), 16)
+    self.assertFalse(self.usb.script)
+
+  async def test_journal_maps_mixed_fixed_counts_to_correct_filters(self) -> None:
+    """A one-frame first channel must not shift later sixteen-frame settings or identities."""
+    plan = CollectionPlan(
+      ((1, 1),),
+      (CollectionFilter(1, (0.010,), "fixed"), CollectionFilter(2, (0.020,) * 16, "fixed")),
+    )
+    run = replace(_run(), collection_plan=plan)
+    self.journal.save(run)
+    point = CollectionPoint(1, 1, 1)
+    ids = tuple(
+      f"{point.collection_id(_RUN_ID)}-f{f.position}-e{i}"
+      for f in plan.filters
+      for i in range(len(f.exposures))
+    )
+    record = CollectionRecord(_RUN_ID, point, 1, _status(), ids)
+    self.journal.reserve_collection(record)
+    for identity, (position, exposure) in zip(ids, ((1, 0.010),) + ((2, 0.020),) * 16):
+      optics = OpticalState(position.to_bytes(2, "big"), b"\0\0", b"\0\1\0\1")
+      acquisition = CameraAcquisition(
+        identity,
+        CameraExposure(exposure),
+        run.camera_description,
+        run.thermal_version,
+        CameraGeometry(321, 245),
+        "2026-10-19T12:00:00Z",
+        _status(),
+        optics,
+      )
+      with self.assertRaises(ABI7500RunError):
+        self.journal.reserve_acquisition(
+          replace(acquisition, exposure=CameraExposure(0.030)), collection_id=record.collection_id
+        )
+      self.journal.reserve_acquisition(acquisition, collection_id=record.collection_id)
+    self.assertEqual(len((await self.driver.get_collections(_RUN_ID))[0].acquisitions), 17)
+    self.assertFalse(self.usb.writes)
+
+  async def test_interrupted_fixed_collection_cannot_repeat(self) -> None:
+    """A lost sixth exposure acknowledgement retains all intents and forbids another CC."""
+    plan = CollectionPlan(((1, 1),), (CollectionFilter(1, (0.720,) * 16, "fixed"),))
+    self.journal.save(replace(_run(), collection_plan=plan))
+    self.usb.point(exposures=plan.filters[0].exposures)
+    self.usb.fail_exposure = 6
+    point = CollectionPoint(1, 1, 1)
+    with self.assertRaises(TimeoutError):
+      await self.driver._collect_point(_RUN_ID, point)
+    collections = await self.driver.get_collections(_RUN_ID)
+    self.assertEqual(collections[0].record.state, "uncertain")
+    self.assertEqual(len(collections[0].record.acquisition_ids), 16)
+    self.assertEqual(len(collections[0].acquisitions), 6)
+    writes = list(self.usb.writes)
+    with self.assertRaises(ABI7500RunError):
+      await self.driver._collect_point(_RUN_ID, point)
+    self.assertEqual(self.usb.writes, writes)
 
   async def test_scheduler_loads_images_only_after_thermal_completion(self) -> None:
     """Polling saved progress must not repeatedly decode the growing camera archive."""

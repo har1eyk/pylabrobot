@@ -1941,7 +1941,7 @@
     "doc_slug": "thermo_fisher/abi7500_fast_dx/hello-world",
     "api": "pylabrobot.thermo_fisher.ABI7500FastDx",
     "api_version": "v1",
-    "notes": "Experimental USB thermal/optical control. Mild-cycle imaging, six filter-5 physical labels and public plate release with clean reconnect checked. Broader programs and ambiguous-failure recovery remain unverified; current calibration validity unverified."
+    "notes": "Experimental USB thermal/optical control with a reusable PCR workflow. Forty 95/60 °C dye-plate cycles and 120 images checked on C9254-02/G2.10, including cooling and tray release. Amplification, broader programs and fault recovery remain unverified; unit-specific mapping and calibration are required. Offline raw per-well CSV export retains separate exposures and provisional region flags. Offline optical calibration generates new uniformity coefficients from final camera images; pure-dye processing reproduces the recorded ROX spectrum and retains clipping and correction provenance. A fresh 65-image Ubuntu ROX acquisition completed; unreplaced A10/B10 saturation blocked calibration export. A subsequent automatic scan with the cover-preserving Start completed 35 probes and 65 final images at approximately 90 °C cover temperature. No final wells were saturated; PLR generated a ROX interchange file with a recorded G1 correction. Cross-run vendor agreement, other dyes and assay performance remain unverified."
   },
   {
     "id": "thermo-fisher-alps",
