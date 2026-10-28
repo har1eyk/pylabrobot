@@ -47,8 +47,9 @@ reference instrument, combine the captured physical-to-saved mapping with the ve
 
 The backed-up `puredye.ini` independently supports the saved-channel assignments: SYBR and
 FAM peak in channel 1, VIC in 2, ROX in 4 and Cy5 in 5. These are spectral associations, not
-exclusive dye measurements; fluorescence can contribute to more than one channel. Spectral
-unmixing is not implemented. The current validity of that calibration is not established.
+exclusive dye measurements; fluorescence can contribute to more than one channel.
+[Offline spectral unmixing](spectral-measurements.md) separates those contributions using
+explicitly selected dye calibrations. The current validity of that calibration is not established.
 
 In the hardware reports, **physical filter 5 means vendor channel 1 (SYBR/FAM)**, and physical
 filter 4 means vendor channel 2. The reported declines at physical positions 4/5 must not be

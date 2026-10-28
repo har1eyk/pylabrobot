@@ -152,6 +152,33 @@ class _CollectionUSB(_RunUSB):
 class CollectionPlanTests(unittest.TestCase):
   """Validate native scheduling evidence and reject unsupported plans without hardware."""
 
+  def test_background_plan_retains_ordered_complete_exposure_groups(self) -> None:
+    """A captured 225-frame background sequence survives durable serialization."""
+    plan = CollectionPlan(
+      ((1, 1),),
+      tuple(
+        CollectionFilter(
+          position,
+          (2.0,) * (1 if position == 1 else 16) + (1.0,) * 16 + (0.5,) * 16,
+          "background",
+        )
+        for position in range(1, 6)
+      ),
+      read_window=540,
+    )
+    self.assertEqual(sum(len(f.exposures) for f in plan.filters), 225)
+    self.assertEqual(CollectionPlan.from_dict(plan.to_dict()), plan)
+    for invalid in (
+      (2.0,) + (1.0,) * 15 + (0.5,) * 17,
+      (0.5,) * 16 + (1.0,) * 16 + (2.0,),
+      (2.0,) + (1.0,) * 16 + (0.5,) * 15,
+      (2.0, 1.0, 0.6),
+    ):
+      with self.subTest(exposures=invalid), self.assertRaises(ValueError):
+        CollectionFilter(1, invalid, "background")
+    with self.assertRaises(ValueError):
+      replace(plan, read_window=45)
+
   def test_fixed_collections_are_explicit_complete_and_round_trip(self) -> None:
     """Calibration repeats are durable without weakening ordinary bracket validation."""
     plan = CollectionPlan(
@@ -374,6 +401,25 @@ class CollectionDriverTests(unittest.IsolatedAsyncioTestCase):
     await self.driver._collect_point(_RUN_ID, point)
     self.assertEqual(self.usb.writes, writes)
     self.assertEqual(self.usb.writes.count(b"CC"), 16)
+    self.assertFalse(self.usb.script)
+
+  async def test_background_groups_keep_exposures_and_cannot_replay(self) -> None:
+    """A change of background exposure retains distinct durable acquisition identities."""
+    plan = CollectionPlan(((1, 1),), (CollectionFilter(1, (2.0, 1.0) + (0.5,) * 16, "background"),))
+    self.journal.save(replace(_run(), collection_plan=plan))
+    self.usb.point(exposures=plan.filters[0].exposures)
+    point = CollectionPoint(1, 1, 1)
+    await self.driver._collect_point(_RUN_ID, point)
+    collection = (await self.driver.get_collections(_RUN_ID))[0]
+    self.assertEqual(collection.record.state, "complete")
+    self.assertEqual(
+      tuple(a.exposure.duration for a in collection.acquisitions), plan.filters[0].exposures
+    )
+    self.assertEqual(len(set(collection.record.acquisition_ids)), 18)
+    writes = list(self.usb.writes)
+    await self.driver._collect_point(_RUN_ID, point)
+    self.assertEqual(self.usb.writes, writes)
+    self.assertEqual(self.usb.writes.count(b"CC"), 18)
     self.assertFalse(self.usb.script)
 
   async def test_journal_maps_mixed_fixed_counts_to_correct_filters(self) -> None:

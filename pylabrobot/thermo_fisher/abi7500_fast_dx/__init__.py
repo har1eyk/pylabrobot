@@ -8,6 +8,12 @@ acquisition; current calibration validity is not established. Importing does not
 """
 
 from .acquisition import CameraAcquisition, CameraExposure, OpticalState, StoredExposureTimes
+from .background_calibration import (
+  BackgroundCalibrationFilter,
+  BackgroundCalibrationGroup,
+  BackgroundCalibrationResult,
+  calculate_background_calibration,
+)
 from .calibration import (
   UniformityCalibration,
   UniformityCorrectedData,
@@ -15,9 +21,10 @@ from .calibration import (
   apply_uniformity,
   read_eds_uniformity,
 )
-from .camera import CameraFrame, CameraFrameAssembler, CameraGeometry
 from .calibration_exposure import CalibrationExposureProbe, CalibrationExposureSearch
+from .camera import CameraFrame, CameraFrameAssembler, CameraGeometry
 from .collection import (
+  CollectionCadence,
   CollectionFilter,
   CollectionPlan,
   CollectionPoint,
@@ -39,17 +46,17 @@ from .image_processing import (
   PlatePixelMask,
   WellPixelMeasurement,
 )
-from .pure_dye_calibration import (
-  PureDyeCalibrationAnalysis,
-  PureDyeCalibrationFilter,
-  PureDyeCalibrationResult,
-  calculate_pure_dye_calibration,
-)
 from .optical_calibration import (
   OpticalCalibrationAnalysis,
   OpticalCalibrationFilter,
   OpticalCalibrationResult,
   calculate_optical_calibration,
+)
+from .pure_dye_calibration import (
+  PureDyeCalibrationAnalysis,
+  PureDyeCalibrationFilter,
+  PureDyeCalibrationResult,
+  calculate_pure_dye_calibration,
 )
 from .raw_measurements import (
   DiagnosticPlateRegions,
@@ -58,6 +65,16 @@ from .raw_measurements import (
   write_raw_run_archive,
 )
 from .results import SavedFilterData, read_eds_filter_data
+from .roi_calibration import ROICalibrationImage, ROIMaskResult, generate_roi_mask
 from .run import ABI7500History, ABI7500RunError, ThermalRun
+from .spectral import (
+  DyeCalibration,
+  DyeMeasurement,
+  FilterSignal,
+  WellFilterSignals,
+  read_eds_dye_calibration,
+  unmix_collection,
+  unmix_well,
+)
 from .status import ABI7500CoverState, ABI7500Identity, ABI7500PlateStatus, ABI7500Status
 from .thermal_program import ThermalCycle, ThermalProgram, ThermalStep

@@ -1,4 +1,4 @@
-"""Offline replay of the v2.3 pure-dye exposure search; no camera or table writes."""
+"""Offline replay of v2.3 optical-uniformity and pure-dye exposure search; no camera or table writes."""
 
 from dataclasses import dataclass
 from functools import lru_cache

@@ -3393,3 +3393,1745 @@ installed and no PCR assay, spectral unmixing, Rn or Ct calculation was validate
 Full transport, original frames, frozen sources, journal snapshots, processing inputs,
 per-well CSV files and comparison figures remain outside Git in
 `abi7500-research/captures/abi7500-plr-unit2-dye-rox-011/`.
+
+## Repeat of the normal-start ROX comparison (2026-10-20)
+
+The separately authorized `abi7500-plr-unit2-dye-rox-012` repeated the `011` method directly
+from Ubuntu on Fast Dx 275030206, C9254-02/G2.10, with the same sealed ROX plate.
+Production sources, thermal method, exposure schedule, ROI masks, full-precision background
+and uniformity inputs were identical. Actual volume remained 20 µL per well, with A1 at
+the back-left; the captured controller setting remained 30 µL.
+
+All **120 images** completed without acquisition or cleanup errors. The transport audit
+verified **7,064 thermal exchanges**, one Start, nine homes, one release and no cancellation.
+All original image transfers, crops, commanded exposures and returned durations were checked.
+Collections including homing took 34–35 reported seconds and left **19–21 seconds** in
+their holds. No frame saturated or clipped; the maximum pixel value was 3419.
+During acquisition, sample readings were 60.0 °C, block readings 59.9–60.0 °C and cover
+readings 104.4–105.5 °C. No calibration or exposure table was written.
+
+Independent arithmetic verified 11,520 well/ring extractions, 11,520 exposure/background
+corrections and 3,840 binary32 uniformity corrections. The repeat added 120 acquisition
+records and eight collection records; all 19 prior runs, 1,159 prior acquisitions and
+89 prior collections remained byte-for-byte unchanged. The first instrument's separate
+journal also remained unchanged, and cached retrieval generated no USB traffic.
+
+All 96 ROX wells were positive and unsaturated and were retained. The following differences
+use each well's mean across eight collections at physical filter 2, after native background
+subtraction and exposure normalization, before uniformity correction:
+
+| Exposure | Median repeat/previous PLR difference | Range across wells | Median repeat/Windows difference | Median last-two/first-two change | Median temporal CV |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 540 ms | +0.285% | −1.161% to +4.076% | −0.844% | −0.399% | 0.195% |
+| 180 ms | +0.331% | −1.198% to +4.109% | −0.811% | −0.423% | 0.225% |
+| 60 ms | +0.313% | −1.483% to +3.796% | −0.807% | −0.372% | 0.318% |
+
+At 540 ms, **77/96 wells were within ±1% and 95/96 within ±2%** of the previous PLR run.
+G1 changed by **+4.076%** and remains in every summary; no well-specific adjustment or
+exclusion was applied. Its difference from Windows changed from −2.023% to +1.970%.
+The repeat/Windows range across all wells was −3.490% to +2.378%.
+These are descriptive comparisons, without a prespecified numerical acceptance threshold.
+
+The two maps of PLR differences from Windows were correlated at 540 ms (`r = 0.880`).
+Both ratios share the same Windows acquisition, so this correlation cannot distinguish
+a stable PLR pattern from variation specific to that reference. It does not identify
+the cause of G1's change or justify a spatial correction.
+
+Initial lamp state differed: `011` entered with the lamp enabled at standby, whereas
+`012` entered with the lamp off. Both used the planned 270-second standby interval.
+Lamp power 1 preceded the first camera start by 943.89 seconds in the repeat versus
+945.47 seconds previously. The repeat's first camera start was 908.96 seconds after
+the first observed settling hold. First ROX images in the two runs were 62.31 minutes
+apart, and the plate's thermal and illumination history carried forward.
+Two runs on one plate therefore do not establish general precision, calibration equivalence
+or assay performance.
+
+Cleanup confirmed inactivity, sample/block **30.0/29.8 °C**, stationary filter 0, lamp off,
+plate released and USB closed. The last cover reading was **105.5 °C**.
+All 52 frozen files matched the execution guard; twelve offline runner scenarios and
+approval/source/duplicate-session guards passed. Production code was unchanged from the
+preceding 281-test validation. Full transport, original frames, journal snapshots,
+processing inputs, per-well differences and comparison figures remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-rox-012/`.
+
+## Interrupted pure-fluorescein reference (2026-10-20)
+
+The authorized `abi7500-plr-unit2-dye-fluorescein-001` used Fast Dx 275030206,
+C9254-02/G2.10 directly from Ubuntu. The operator loaded 20 µL per well after receiving
+an 80 nM fluorescein-only recipe, with A1 at the back-left. The method used 270 seconds
+of lamp standby, a 90 °C cover and calibration Start `0x7e`, followed by 900 seconds of
+thermal settling before automatic exposure searches during a 60 °C hold.
+
+All 15 exposure probes completed. Independent reconstruction selected 1800 ms for
+physical filters 1–4 and 495 ms for physical filter 5. Final acquisition then stopped
+after one image at filter 1 and thirteen camera transfers at filter 2. Twelve of the
+filter-2 acquisitions completed; the last remains **uncertain** because its subsequent
+thermal status query (`0x29`, sequence 4556) received no valid response bytes in 450 polls
+within the five-second command budget. Its full image and matching post-image optical
+state were preserved. No final images were collected at filters 3–5.
+
+The offline audit verified **4,612 completed thermal exchanges** and all **29 original
+image transfers and crops**: 15 complete probes, 13 complete final acquisitions and one
+uncertain final acquisition. It confirmed one Start, one cancellation and no plate release,
+exposure-table write or lamp-counter reset. Reconnection and ownership reconciliation
+allowed cancellation; cleanup confirmed inactivity, stationary filter 0, lamp off and
+USB closed. The last sample/block/cover readings were **57.6/51.8/90.2 °C**. The plate
+remained clamped. All 20 earlier runs, 1,279 acquisitions and 97 collections were unchanged,
+as was the first instrument's separate journal.
+
+This attempt did **not** complete the reference acquisition or generate a calibration.
+The cause of the absent status reply is unresolved. A separately prepared retry retains
+the acquisition method and uses the driver's default ten-second command budget; it
+requires fresh approval and is not evidence that the failure is fixed. Raw transport,
+partial images, journal snapshots, frozen sources and the interrupted-session audit remain
+outside Git in `abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-001/`.
+
+## Completed fluorescein retry and rejected reference (2026-10-20)
+
+The separately authorized `abi7500-plr-unit2-dye-fluorescein-002` repeated the prepared
+method on the same plate and instrument, with a ten-second command budget. All **65 final
+images and 15 exposure probes** completed. Independent reconstruction selected 1800 ms
+for physical filters 1–4 and 540 ms for physical filter 5. Collection including homing
+took 231 reported seconds, leaving 248 seconds in the acquisition hold. During final
+images, sample readings were 60.0 °C, block readings 59.9–60.0 °C and cover readings
+89.3–90.6 °C.
+
+The audit verified all 80 original transfers and crops and **6,304 matching thermal
+exchanges**, one Start, two homes, one release and no cancellation. No thermal exchange
+exceeded 0.722 seconds, so success does not demonstrate that the longer timeout resolved
+the missing reply in `001`. All 21 earlier runs, 1,308 acquisitions and 98 collections,
+and the first instrument's journal, remained unchanged. Cleanup confirmed inactivity,
+sample/block **30.0/29.9 °C**, stationary filter 0, lamp off, plate released and USB closed.
+The cover remained **90.4 °C**.
+
+Independent arithmetic checked **6,240 well/ring extractions** and **480 averaged native
+background/exposure corrections**. All 96 wells had positive green signal, and no final
+frame had a saturated well. Nevertheless, the pure-dye calculation **failed** its recovered
+native iterative screening because five wells were flagged, exceeding the four-well limit:
+
+| Wells | Screening result |
+| --- | --- |
+| C4, D6 | Green signal below twice the calibrated background; this does not establish that the wells are physically empty. |
+| B8, C6 | Spectral outliers in both the Java single-pass and native iterative calculations. |
+| B12 | Additional spectral outlier in native iterative screening. |
+
+No wells were replaced, and no accepted calibration INI was generated or installed.
+Across the 16 green frames, the median within-well CV was 0.175%; the median last-four
+versus first-four change was −0.338% (range −2.425% to −0.112%). These describe one short
+burst, not repeatability across runs. The same plate's earlier heating and illumination
+carry forward; the flags alone do not identify a plate, preparation, optical or background
+calibration cause. This validates acquisition and processing of the retry, not a usable
+fluorescein reference, mixed-dye normalization or an assay. Original frames, all-well
+measurements, quality flags, transport and provenance remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-002/`.
+
+### Offline investigation of the five flagged wells
+
+Re-extraction of the same 65 final images reproduced all 480 saved integer signals.
+After ring subtraction, offset correction and exposure normalization, but before water
+background subtraction, C4 and D6 had green signals of **283,225 and 277,646 FSU**;
+the unflagged median was 307,778 FSU. Their background terms removed **68.5% and 53.6%**,
+leaving 89,282 and 128,721 FSU below their respective twice-background thresholds.
+This explains the numerical low-signal flags without establishing that the wells are empty
+or that the background represents the current plate correctly.
+
+The full-precision background file matches water-plate scan `abi7500-unit2-background-029`
+byte for byte. That scan passed with warnings including C4 and D6. Initially quarantined,
+its background was deliberately adopted during `abi7500-unit2-optical-001` and retained
+in the later Windows reference. C4 and D6's fitted water backgrounds differed substantially
+between plates `028` and `029`; those observations confound plate, seal, positioning and
+session effects and do not establish an instrument fault.
+
+B8, C6 and B12 instead had saved-channel-2/green ratios of **0.372, 0.326 and 0.115**,
+against an unflagged median of **0.0144**. These spectral differences do not identify a
+contaminant. An independent plate-rotation comparison is needed to distinguish features
+that follow the plate from effects tied to instrument coordinates. Background and masks
+must remain in instrument coordinates; compare signals before background subtraction as
+well as final corrected values. No hardware was accessed, coefficients changed, flags
+removed or calibration exported during this analysis. Reproducible calculations, original
+camera crops and the comparison figure are outside Git in
+`abi7500-research/analyses/fluorescein-quality-001/`.
+
+## Fluorescein plate rotation comparison (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-003` with the same sealed
+plate rotated 180°, printed A1 front-right. Instrument **275030206**, camera **0000000747**,
+used the same thermal method, settling intervals, masks and background as reference `002`.
+All **55 exposure probes and 65 final images** completed. Physical-filter 1–5 exposures
+were **1422/756/900/666/180 ms**; independent probe replay reproduced every selection.
+Collection and homing took 263 reported seconds, leaving 217 seconds in the hold.
+Final-image sample readings were 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+No final well was saturated.
+
+The audit matched **6,365 thermal exchanges**, one Start, two homes and one release.
+All 22 preceding runs, 1,388 acquisitions, 99 collections and the first instrument's
+journal remained unchanged. Cleanup confirmed inactivity, sample/block **30.0/29.9 °C**,
+filter 0, lamp off, plate released and USB closed. The cover remained 89.4 °C.
+Independent image arithmetic checked **6,240 well/frame extractions** and all **480
+averaged integer signals**. Median green within-burst CV was 0.283%; median last-four
+versus first-four change was −0.243%.
+
+Calibration stayed in instrument coordinates. Plate-label comparisons reversed the
+96-element well array separately; masks and background coefficients were not rotated.
+
+| Feature | Rotation result |
+| --- | --- |
+| Instrument C4 and D6 | Still below the twice-background gate. Before-background green signals were 273,072 and 256,058 FSU; fixed background subtraction left 79,129 and 107,132. The original plate wells, now at F9 and E7, gave corrected signals of 231,100 and 232,017. This supports a position-bound calibration contribution, not proof of block fluorescence. |
+| Original B12 → G1 | G1 remained a native spectral outlier, consistent with a plate-associated contribution. |
+| Original B8 → G5 and C6 → F7 | Earlier strong spectral patterns did not reproduce cleanly at either the original instrument positions or the rotated destinations. |
+| New instrument A8 / printed H5 | A broad bright feature was visible in original camera pixels and constrained exposure selection. Before-background green signal was 2,234,569 FSU versus 341,680 for printed H5 previously. Its source remains unidentified. |
+
+The recovered numerical screening passed with Java flags **C4, D6, A8** and native flags
+**C4, D6, A8, G1**. No calibration interchange file was exported or installed. A numerical
+pass does not establish repeatability: the sessions began 15 hours apart, and rotation,
+reseating, illumination history and elapsed time changed together. The mixed result does
+not assign all anomalies to either the plate or fixed instrument optics.
+The operator reported that printed H5 looked normal on visual inspection; the
+new bright feature's source remains unresolved.
+Original images, both coordinate comparisons, exposure-search evidence and the audit remain
+outside Git in `abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-003/`.
+
+## Same-orientation fixed-exposure fluorescein repeat (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-004` with the same sealed
+plate, still printed A1 front-right. The thermal program, 270-second lamp standby,
+900-second settling interval, 90 °C cover, masks and background matched `003`.
+Physical filters 1–5 used fixed **1422/756/900/666/180 ms** exposures, with
+**1/16/16/16/16 images** and no exposure-search probes. All 65 transfers completed;
+collection and homing consumed 123 reported seconds, leaving 356 seconds in the hold.
+Image-time sample temperature was 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+
+The audit matched **6,678 thermal exchanges**, one Start, two homes and one release.
+All 23 earlier runs, 1,508 acquisitions, 100 collections and the first instrument's
+journal remained unchanged. Cleanup confirmed inactivity, sample/block 30.0/29.9 °C,
+filter 0, lamp off, plate released and USB closed; the cover remained at 90.4 °C.
+Independent extraction reproduced all 6,240 well/frame measurements and 480 averaged
+integer signals. The scoped ABI test suite passed all 297 tests before execution.
+
+Acquisition succeeded, but the reference did not repeat:
+
+| Instrument position | Printed plate well | Observation relative to `003` |
+| --- | --- | --- |
+| A8 | H5 | Became brighter and saturated in saved channels 1–3: 16, 16 and 7 frames respectively. Its recorded values and ratios are retained with clipping flags, not treated as quantitative repeatability measurements. |
+| G1 | B12 | Green signal before water-background subtraction fell 52.8%; channel-2/green ratio changed from 0.0831 to 0.0371. |
+| B12 | G1 | Unclipped green signal rose 67.1%; channel-2/green ratio changed from 0.0574 to 0.1090. |
+| H4 | A9 | Became a native spectral outlier; saved-channel-5/green ratio before background subtraction changed from 0.00703 to 0.13854. |
+| C4 and D6 | F9 and E7 | Remained below the twice-background gate with unchanged background coefficients. |
+
+The 95 unsaturated wells had a median within-burst green CV of **0.305%**, but their
+median between-session change before background subtraction was **−5.00%**, ranging
+from −52.8% to +67.1%. Short-burst precision does not establish between-run repeatability.
+Native screening flagged **C4, D6, A8, B12 and H4**, exceeding the four-well limit;
+no calibration interchange file was exported or installed.
+
+Final exposures and camera configuration command values matched `003`. Omitting its
+55 search probes also omitted their illumination and filter traversal, and final images
+began about 133–136 seconds earlier within the acquisition hold. This comparison rules
+out another rotation or an exposure-setting change as the sole explanation, but does
+not identify the cause of the changing features. Original camera crops, all-well
+comparisons, saturation flags and full transport evidence remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-004/`.
+
+## Fresh fluorescein plate comparison (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-005` with a newly prepared
+plate containing **20 µL of 80 nM fluorescein in all 96 wells**. Printed A1 was reported
+as top-left, interpreted as back-left using the operator's previously confirmed convention.
+Instrument **275030206** used the same masks, background, thermal method, 270-second
+lamp standby and 900-second thermal settling interval. Automatic exposure selected
+physical-filter 1–5 settings of **1800/1107/1287/882/189 ms**. All **45 probes and 65
+final images** completed; collection and homing consumed 262 reported seconds, leaving
+217 seconds in the hold. No final well was saturated. Image-time sample temperature
+was 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+
+The transport audit verified **6,335 thermal exchanges**, one Start, two homes and one
+release. All 24 preceding runs, 1,573 acquisition records, 101 collection records and
+the first instrument's journal remained unchanged. Cleanup confirmed inactivity,
+sample/block **30.0/29.9 °C**, filter 0, lamp off, plate released and USB closed; the
+cover remained at 90.5 °C. Independent calculations reproduced **6,240 well/frame
+extractions and 480 averaged integer signals**. Median green within-burst CV was
+**0.284%**, with a median last-four/first-four change of **−0.607%**.
+
+Comparisons retain instrument coordinates because this is a different physical plate:
+
+| Position | Fresh-plate result |
+| --- | --- |
+| A8 | Remained a broad bright feature in original camera pixels, at 2,037,490 FSU before water-background subtraction, **4.38× the plate median**. Its channel-2/green ratio was 0.1963, and it remained a spectral outlier. The previous rotated plate placed printed H5 here; the fresh plate places printed A8 here. Persistence supports a contribution tied to the instrument position rather than an abnormality confined to the old plate's H5. It does not identify the optical component or exclude systematic plate/instrument interactions. |
+| B12 and H4 | Neither remained a native spectral outlier. B12's channel-2/green ratio changed from 0.1090 in `004` to 0.0370. H4's channel-5/green ratio changed from 0.1385 to 0.00540. |
+| G1 | Green signal was 1.09× the plate median; the earlier rotated-plate spectral anomaly did not recur. |
+| C4 and D6 | Remained below the twice-background gate. Before-background green signals were 430,963 and 408,330 FSU; the unchanged background terms left 237,020 and 259,404 integer FSU. These flags retain a position-bound calibration contribution and do not independently demonstrate block fluorescence. |
+
+The recovered numerical screening passed with **C4, D6 and A8** flagged; this is not
+evidence that every well or the instrument's calibration is valid. No calibration file
+was exported or installed. The fresh plate was generally brighter: the median green
+change versus `004`, excluding its clipped A8, was **+68.3%**. Plate preparation, age,
+orientation, illumination history and selected exposures differ, so the data do not
+assign every changing feature to one cause. The clipped `004` A8 measurements remain
+flagged and are not used for quantitative changes.
+
+All 1,150 files in reference captures `002`–`004` were verified unchanged. Camera
+configuration command values matched those references. Original images, exposure replay,
+same-position camera crops and all-well comparisons remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-005/`.
+
+## Interrupted fresh-plate rotation scan (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-006` after rotating the same
+80 nM fluorescein plate 180°, placing printed A1 front-right. Thermal settings, settling
+intervals, automatic exposure, masks and background matched `005`.
+
+The scan **did not complete**. During exposure selection, after the full camera image
+for `f5-p7` transferred, filter-position query **0x6b**, sequence 4597, returned no valid
+serial bytes over 905 polls within the 10-second command budget. The image remains
+marked uncertain because its post-acquisition optical and thermal checks did not finish.
+There are **51 complete probes, one uncertain probe and zero final acquisition frames**.
+This failure does not establish why the status response was absent, and increasing the
+timeout or replaying the acquisition has not been validated by this capture.
+
+One reconnect reconciled the owned run, issued one cancellation and acknowledged the
+25 °C idle target. Cleanup verified inactivity, filter 0, lamp off and USB closure.
+The last observed sample/block/cover temperatures were **55.2/48.7/90.3 °C**; these are
+not a claim that cooldown finished. **No plate release or second Start occurred.**
+The audit verified 4,662 completed thermal exchanges around the unanswered query,
+all 52 full camera transfer hashes, and unchanged records for 25 preceding runs,
+1,683 acquisitions and 102 collections. The first instrument's journal and all 431
+files of reference `005` remained unchanged.
+
+The complete probes still provide limited positional evidence. Independent extraction
+checked all **4,896 probe/well measurements**. The highest-exposure complete green probe
+without saturated wells was `f5-p6`, at **103 ms**. Compared with the first final green
+frame of `005` at 189 ms:
+
+| Instrument position | Before rotation: green / plate median | After rotation: green / plate median | Printed well after rotation |
+| --- | --- | --- | --- |
+| A8 | 4.39 | 10.17 | H5 |
+| H5 | 1.48 | 1.30 | A8 |
+
+The bright feature remained at instrument A8 rather than following printed A8 to H5.
+It is visible in original camera pixels, supporting a contribution associated with the
+instrument position rather than one particular plate well. This does not identify a
+specific optical component or exclude plate/instrument interactions. The comparison
+uses one exposure-search probe against one final frame, with different exposure settings,
+collection times and illumination history; it cannot replace a completed averaged
+five-channel scan. The uncertain probe was excluded from numerical comparisons.
+No pure-dye quality screen, calibration calculation, export or installation was performed.
+Partial figures, all original bytes and the failure audit remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-006/`.
+
+## Repeated filter-query timeout (2026-10-21)
+
+The operator authorized one unchanged-method retry, `abi7500-plr-unit2-dye-fluorescein-007`,
+with the same rotated plate. Initial identity, inactivity and temperature checks passed.
+The scan again stopped on a post-image **filter-position query 0x6b**: sequence 4540
+returned zero valid serial bytes in 898 completed polls over approximately 10.05 seconds.
+This occurred at physical-filter-4 probe `f4-p10`, whereas `006` failed at `f5-p7`.
+There are **43 complete probes, one uncertain probe and zero final frames**. All 44
+camera transfers were complete and their hashes matched the exported original bytes.
+No physical-filter-5 green-channel probe was collected in this retry, so it adds no
+completed green comparison or calibration-quality result.
+
+The timeout preceded a USB disconnect and re-enumeration during cleanup. Linux recorded
+device 038 disappearing and the same USB serial `0000000747` returning as device 039
+at 15:12:03–04 UTC. The cleanup reconnect failed, and the new USB node lacked the prior
+user write permission. The initial session did not establish cancellation, lamp-off,
+filter parking, cooling or plate release, and its journal snapshot retained the run as
+running with a collection error.
+
+After the operator restored USB access, a separate cleanup continuation reconciled the
+same run at 15:59:51–16:00:00 UTC. Fresh controller evidence showed that the thermal
+program had already completed and the instrument was inactive, with sample and block
+at **25.0 °C**. No Stop command was needed. The continuation parked filter 0, disabled
+the lamp, verified stationary dark optics and closed USB. The final cover temperature
+was **90.4 °C**. It performed no Start, camera acquisition or plate release. The thermal
+completion does not change the failed collection into a successful fluorescence scan;
+the collection error and uncertain acquisition remain recorded.
+
+The initial audit verified 4,539 completed thermal exchanges, one Start, no Stop or
+release, and unchanged records for all 26 preceding runs, 1,735 acquisitions and 103
+collections. The first instrument's journal and all 684 files in captures `005` and
+`006` remained unchanged. Successful filter queries in those two earlier captures took
+at most 0.180 and 0.169 seconds respectively. The missing response recurred, but neither
+its cause nor a corrective transport change is established. The later USB re-enumeration
+must not be presented as proof of what caused the preceding query timeout.
+
+Raw traffic, images, kernel USB events and the failure audit are retained outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-007/`. No calibration file
+was calculated, exported or installed, and no additional scan was started.
+## Completed rotated-plate acquisition with unresolved release (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-008` with the same sealed
+80 nM fluorescein plate, still rotated 180° with printed A1 front-right. The unchanged
+method completed **54 exposure probes and 65 final images**. Physical-filter 1–5
+exposures were **1170/639/774/576/117 ms**. Collection and homing consumed 253 reported
+seconds, leaving 226 seconds in the hold. No final well was saturated. Image-time
+sample temperature was 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+
+Independent calculations reproduced **6,240 well/frame extractions and 480 averaged
+integer signals**. Median green within-burst CV was **0.320%**, with a median
+last-four/first-four change of **−0.244%**. Compared with original orientation `005`,
+green signal before water-background subtraction, normalized to each plate's median,
+changed as follows:
+
+| Instrument position | Original orientation | Rotated orientation | Printed well after rotation |
+| --- | --- | --- | --- |
+| A8 | 4.38× | 11.25× | H5 |
+| H5 | 1.48× | 1.33× | A8 |
+
+The prominent feature remains at instrument A8 rather than following printed A8 to
+H5. Original camera pixels support a position-associated contribution; they do not
+identify a specific optical component or exclude plate/instrument interactions.
+Masks and background remain in instrument coordinates, with printed labels mapped
+separately. Thermal and illumination history and selected exposures differ, limiting
+causal interpretation of absolute between-session changes. C4 and D6 remain below
+the twice-background gate. Native numerical screening flags **C4, D6, A8, G5 and
+B12**, exceeding the four-well allowance. **No calibration was exported or installed.**
+
+**The overall hardware validation failed during plate release.** Thermal execution
+completed normally. One `0x72` release command was acknowledged; subsequent `0x73`
+queries reported moving before sequence 6444 returned firmware error **`0x006f`**,
+with payload `0003`. The durable journal records release as **uncertain**. The cached
+`final_run` object in the original result predates release and is not its final state.
+An observation-only reconnect failed on its first query, `0x2f`, with the same error;
+it sent no further motion, Start or acquisition command. No mechanical cause has
+been established, and release remains unconfirmed. Last observed temperatures before
+the error were sample/block **30.0/30.0 °C**, cover **90.3 °C**, with thermal state
+inactive, filter 0 and lamp off. Both connections closed USB. Those readings do not
+establish the mechanism's subsequent physical state.
+
+The transport audit verified 6,444 original thermal exchanges, including the error
+reply, and the single failed observation query. It confirmed one Start, two filter
+homes, one release, all 119 original camera transfer hashes and unchanged records
+for 27 preceding runs, 1,779 acquisitions and 104 collections. The first instrument's
+journal and all 913 files in references `005`–`007` remained unchanged. The earlier
+filter-query timeout did not recur; this unchanged-method run does not establish a
+fix for it. Original bytes, journal snapshots, comparisons and the release-failure
+audit remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-008/`.
+## Water comparison and observed release recovery (2026-10-21)
+
+After the operator restarted instrument **275030206**, fresh observations showed
+matching G2.10/C9254-02 identity, the completed `plr-u2dfl-008` history and an unloaded
+mechanism. The public release method reconciled its uncertain release **without
+another motion command**. Only that run's release state and latest status changed;
+the other 27 runs, 1,898 acquisitions and 105 collections remained unchanged. Original
+`008` capture files retain the failure and have not been rewritten as a passing run.
+
+The operator then authorized `abi7500-plr-unit2-water-comparison-002`, with **20 µL
+water in all 96 wells**. Printed A1 orientation and the optical seal were not separately
+reconfirmed; comparisons therefore use instrument coordinates. The scan retained
+270 seconds of lamp standby, a 90 °C cover and 900 seconds of thermal settling before
+60 °C acquisition. Fixed physical-filter 1–5 exposures of **1170/639/774/576/117 ms**
+matched the final images of fluorescein `008`, with no automatic-exposure probes.
+
+All **65 final images** completed without saturated wells. Acquisition and filter
+homing consumed 119 reported seconds, leaving 361 seconds in the hold. Independent
+checks reproduced **6,240 well/frame extractions and 480 averaged integer signals**.
+Image-time sample temperature was 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+Median green within-burst CV before stored background subtraction was **1.80%**;
+the median last-four/first-four change was **−1.00%**.
+
+The water median green signal before stored background subtraction was **42,084 FSU**:
+
+| Instrument position | Water green / water median | Water green as % of fluorescein `008` |
+| --- | --- | --- |
+| A8 | 38.82× | 42.92% |
+| A4 | 8.48× | 82.55% |
+| B7 | 4.36× | 47.36% |
+| D6 | 3.03× | 43.81% |
+| H5 | 2.50× | 23.34% |
+| B12 | 1.66× | 30.81% |
+| C4 | 0.85× | 10.72% |
+| G5 | 1.03× | 8.51% |
+
+A8 remained the brightest position in all five saved channels. Its green signal was
+**1,633,662 FSU**, lower in absolute terms than fluorescein `008`; the greater relative
+contrast reflects the darker water plate. The feature is also visible in original
+camera pixels without ring or background subtraction. H5 was moderately elevated.
+A9 stood out in saved channel 5 (physical filter 1), at **63.91×** that channel's
+median; this channel has one final frame rather than sixteen.
+
+Together with the earlier rotation, persistence at A8 supports a position-associated
+contribution. It does not identify a specific optical component or exclude plate,
+seal, contamination or plate/instrument interactions. The water scan used a different
+specimen and omitted exposure-search illumination. Before-background values still
+include ring subtraction, integer averaging, offset correction and exposure
+normalization. D6's stored-background-corrected green value clipped to zero despite
+its elevated before-background signal. **No background-calibration pass/fail or
+pure-dye quality decision was made, and no calibration was exported or installed.**
+
+The audit verified **6,707 thermal exchanges**, one Start, two filter homes, one
+release and all 65 original camera-transfer hashes. All 28 preceding runs, 1,898
+acquisitions, 105 collections and the first instrument's journal remained unchanged
+during this scan. Cleanup confirmed inactivity, sample/block **30.0/29.9 °C**, filter
+0, lamp off, plate released and USB closed; the cover remained at **90.6 °C**. Neither
+the earlier filter-query timeout nor the release error recurred, which does not
+establish a general fix. Original data and comparisons remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-water-comparison-002/`.
+
+## Bare-block startup motor transition (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-block-comparison-001` after removing the
+plate and holder. Its method and fixed exposures matched water comparison `002`.
+After 270 seconds of lamp standby, preparation uploaded the method and loaded the
+mechanism once. Command `0x73` reported loaded (`0002`), but the following optical
+motor query `0x6c` still reported moving (`0001`), with filter 0 and lamp power 1.
+The stationary-optics guard rejected this observation before homing or thermal Start.
+The durable run remains **not_started**, with **zero camera frames**. Consequently,
+this attempt provides no bare-block fluorescence comparison or calibration result.
+
+An automatic cleanup reconnect observed stationary motor state approximately
+1.17 seconds after the moving observation, without an intervening motor command.
+Cleanup verified thermal inactivity, sample/block **25.0/25.0 °C**, filter 0 and lamp
+off, and closed USB. The cover remained at **89.5 °C**. The mechanism's last observed
+state was loaded; no release command was requested or sent. The audit verified
+**87 successful thermal exchanges**, zero firmware or transport errors, one load,
+zero homes, zero Starts and zero camera commands. All 29 preceding runs, 1,963
+acquisitions, 106 collections and the first instrument's journal remained unchanged.
+
+PLR's calibration and standby startup paths now wait up to 15 seconds for the
+existing motor operation to report stationary before checking all optical states
+and issuing the single startup home. Timeout and unknown motor states still fail
+before home or Start; repeating the run identity does not replay preparation.
+This change requires a separate authorized hardware validation. Original failure
+evidence and a small captured motor-transition fixture preserve the distinction
+between loading completion and optical motor completion. Full evidence remains
+outside Git in `abi7500-research/captures/abi7500-plr-unit2-block-comparison-001/`.
+
+## Bare-block comparison retry (2026-10-21)
+
+The separately authorized `abi7500-plr-unit2-block-comparison-002` completed with
+the plate and holder removed. Its fixed physical-filter exposures
+**1170/639/774/576/117 ms**, 270-second lamp standby, 90 °C cover and 900-second
+thermal settling before 60 °C acquisition matched water comparison `002`.
+All **65 images** completed without saturated wells. Independent checks reproduced
+**6,240 well/frame extractions and 480 averaged native-corrected values**.
+The image-time block temperature was 59.9–60.0 °C and cover 89.3–90.6 °C.
+
+Green signal before stored-background subtraction changed as follows, using
+instrument coordinates:
+
+| Position | Water FSU | Bare-block FSU | Bare block as % of water |
+| --- | --- | --- | --- |
+| A8 | 1,633,662 | 73,886 | 4.52% |
+| H5 | 105,034 | 100,896 | 96.06% |
+| A4 | 356,916 | 64,038 | 17.94% |
+| B7 | 183,599 | 62,114 | 33.83% |
+| D6 | 127,625 | 41,103 | 32.21% |
+
+A8's dominant feature decreased **95.48%** in green and was strongly reduced in
+all five saved channels. The reduction is visible in original camera pixels before
+ring or background subtraction. Its contrast fell from 38.82× the water median to
+1.49× the bare-block median. H5 remained near its water value, at 2.03× the bare-block
+median. The median green signal increased from 42,084 to **49,722 FSU**, so the A8
+change was spatially selective. The brightest bare-block green positions were B1,
+G11, F11, A6, E12 and H5, approximately 2.03–2.22× the median. A9 retained only 0.57%
+of its water signal in saved channel 5 (physical filter 1), while its green value
+remained almost unchanged. Channel 5 has one image per session.
+
+This associates the dominant A8 feature with the installed plate/holder or their
+optical interaction with the instrument. Removing both together does not isolate
+plate, water, seal, holder, contamination or a specific optical component. The
+earlier plate-rotation evidence remains relevant; a defect in one printed well
+has not been established. Plate-derived ROI masks and background coefficients were
+retained for consistency, but their physical validity for bare-block geometry is
+unverified. Original camera data remain separate from corrected measurements.
+**No calibration was exported or installed, and no calibration pass/fail is inferred.**
+
+Median green within-burst CV was **1.60%**, with median last-four/first-four change
+**−0.76%**. Acquisition and home consumed 118 reported seconds, leaving 362 seconds
+in the hold. The audit verified **6,667 successful thermal exchanges**, one upload,
+one Start, two homes and one release. No load was needed because the mechanism
+was already loaded. The added startup motor wait and subsequent optical check both
+observed stationary state; the earlier moving-after-load condition did not recur.
+This validates the complete corrected startup path for an already-loaded mechanism,
+while the transient-moving case remains covered by offline regression tests.
+
+All 30 prior runs, 1,963 acquisitions, 106 collections and the first instrument's
+journal remained unchanged. Cleanup confirmed normal completion, sample/block
+**30.0/30.0 °C**, filter 0, lamp off, unloaded release state and USB closure. The cover
+remained at **90.4 °C**. Full data, figures and audits remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-block-comparison-002/`.
+
+## Holder-only comparison (2026-10-21)
+
+The operator installed the plate holder without a plate and authorized
+`abi7500-plr-unit2-holder-comparison-001`. The scan used the same fixed exposures,
+270-second lamp standby, 90 °C cover, 900-second thermal settling and 60 °C
+acquisition as bare-block `002` and water `002`. All **65 images** completed with
+no saturated wells. Independent reconstruction verified **6,240 well/frame
+extractions and 480 averaged native-corrected values**. Image-time block temperature
+was 59.9–60.0 °C and cover temperature 89.3–90.6 °C.
+
+Green signals before stored-background subtraction, in instrument coordinates:
+
+| Position | Water plate + holder FSU | Bare-block FSU | Holder-only FSU |
+| --- | --- | --- | --- |
+| A8 | 1,633,662 | 73,886 | 55,910 |
+| H5 | 105,034 | 100,896 | 67,934 |
+| A4 | 356,916 | 64,038 | 52,398 |
+| B7 | 183,599 | 62,114 | 63,093 |
+| D6 | 127,625 | 41,103 | 39,561 |
+
+The dominant A8 feature **did not return with the holder alone**. Its green signal
+was 96.58% below the water-plate value and 24.33% below the bare-block value. Its
+contrast was 1.41× the holder-only median, compared with 1.49× for the bare block
+and 38.82× for the water plate. The original 117 ms camera images, without ring or
+background subtraction, show the same reduction. A8 retained only
+3.42/2.01/1.86/1.31/0.67% of its water signal in saved channels 1–5. A9's separate
+channel-5 feature retained 0.60%; this channel has one image per session.
+
+H5 remained moderately elevated at 1.71× the holder-only median. The overall
+green median was 39,732 FSU, compared with 49,722 for the bare block and 42,084 for
+the water plate, so part of the absolute decrease was broad. Median green
+within-burst CV was 2.11%, with median last-four/first-four change −0.94%.
+
+These three conditions support a plate-dependent optical effect. They do not
+distinguish plate, liquid, seal, contamination, reflections or focusing by the
+installed plate. Previous rotation evidence still argues against identifying a
+single printed well as the source. The conditions are sequential diagnostics,
+not independent replicated treatments. Plate-derived ROI masks and background
+coefficients remain unverified for bare-block and holder-only geometry.
+**No calibration pass/fail was inferred, and no calibration was exported or installed.**
+
+The transport audit verified **6,683 successful thermal exchanges**, one upload,
+one load, one Start, two homes and one release. Acquisition and home consumed
+119 reported seconds, leaving 360 seconds in the hold. The startup motor wait
+and subsequent optical guard both observed stationary state; the earlier
+moving-after-load condition did not recur. All 31 prior runs, 2,028 acquisitions,
+107 collections and the first instrument's journal remained unchanged.
+Cleanup confirmed normal completion, sample/block **30.0/29.9 °C**, filter 0,
+lamp off, unloaded release state and USB closure. The cover remained at **90.5 °C**.
+Raw images, comparisons and audits remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-holder-comparison-001/`.
+
+## Water-plate repeat after top cleaning (2026-10-21)
+
+The operator reloaded the water plate after cleaning its top and authorized
+`abi7500-plr-unit2-water-comparison-003`. Physical-filter exposures
+**1170/639/774/576/117 ms**, standby, cover temperature and thermal settling were
+unchanged from water `002`, bare-block `002` and holder-only `001`. All **65 images**
+completed without saturated wells. Independent reconstruction checked **6,240
+well/frame extractions and 480 averaged native-corrected values**. Image-time block
+temperature was 59.9–60.0 °C and cover temperature 89.3–90.6 °C.
+
+Green signals before stored-background subtraction, in instrument coordinates:
+
+| Position | Earlier water FSU | After top cleaning FSU | Change |
+| --- | --- | --- | --- |
+| A8 | 1,633,662 | 72,200 | −95.58% |
+| A4 | 356,916 | 60,104 | −83.16% |
+| B7 | 183,599 | 178,984 | −2.51% |
+| D6 | 127,625 | 124,951 | −2.10% |
+| H5 | 105,034 | 106,524 | +1.42% |
+| E12 | 60,428 | 125,228 | +107.24% |
+| D12 | 43,695 | 93,398 | +113.75% |
+| D11 | 50,891 | 88,655 | +74.21% |
+
+A8's contrast fell from 38.82× to **1.59×** the session median, and A4 fell to
+1.32×. Original 117 ms camera images without ring or background subtraction show
+the same selective reductions. The median green signal increased from 42,084 to
+45,398 FSU. B7 became the brightest green position at 3.94× the median. Median
+within-burst CV was 1.73%, with median last-four/first-four change −0.81%.
+
+A8 retained 4.42/3.25/3.04/2.35/11.32% of its earlier signal in saved channels 1–5.
+A4 retained 16.84/19.40/20.15/16.11/34.67%. A9's separate saved-channel-5 feature
+increased from 119,096 to **164,886 FSU** (+38.45%), or 78.29× the channel median.
+A8 also remained elevated in channel 5 at 9.40× the median despite its large
+decrease. This channel uses physical filter 1 and has one final image per scan;
+channels 1–4 each have sixteen. Improvement in green does not establish that all
+channel-specific background features have resolved.
+
+The selective reduction after top cleaning is consistent with removable surface
+material or a changed optical condition involving the plate. Cleaning, reloading,
+elapsed time and additional illumination occurred together, so this single repeat
+does not isolate the cause. Cleaning agent, seal handling and printed A1 orientation
+were not supplied before analysis. Instrument-position labels remain distinct from
+printed plate wells. **No vendor calibration pass/fail was inferred, and no
+calibration was exported or installed.**
+
+The audit verified **6,717 successful thermal exchanges**, one upload, one load,
+one Start, two homes and one release. Acquisition and home consumed 117 reported
+seconds, leaving 362 seconds in the hold. All 32 prior runs, 2,093 acquisitions,
+108 collections and the first instrument's journal remained unchanged. Cleanup
+confirmed normal completion, sample/block **30.0/29.9 °C**, filter 0, lamp off,
+unloaded release state and USB closure; the cover remained at **89.5 °C**.
+Full evidence and comparisons remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-water-comparison-003/`.
+
+## Fluorescein repeat after reported film handling (2026-10-21)
+
+The operator authorized `abi7500-plr-unit2-dye-fluorescein-009` with the existing
+80 nM fluorescein plate loaded and ready, after stating an intention to wipe its
+optical film as for the preceding water plate. Prior preparation was 20 µL per well.
+Current printed orientation and cleaning details were not supplied, so labels below
+refer to instrument positions. The full automatic-exposure calibration sequence
+retained the existing ROI masks, background and quality thresholds.
+
+All **15 exposure probes and 65 final images** completed. Physical-filter exposures
+were **1800/1800/1800/1800/1305 ms**, compared with 1170/639/774/576/117 ms in
+fluorescein `008`. No final well was saturated. Independent reconstruction verified
+6,240 well/frame extractions and 480 averaged native-corrected values, and the
+exported-image calculation reproduced the preliminary journal-based calculation.
+Image-time sample temperature was 60.0 °C, block 59.9–60.0 °C and cover 89.3–90.6 °C.
+Median green within-burst CV was 0.116%; median last-four/first-four change was −0.261%.
+
+**Calibration acceptance failed.** Java-style processing classified C4 and D6 as
+below its signal-to-background threshold and B12 as a spectral outlier. Native
+iterative screening additionally flagged H4, F11 and H5, for six positions total,
+exceeding the four-well gate. No replacements or accepted calibration file were
+produced. The unchanged PLR export guard rejected the result. This is a recovered
+PLR quality decision, not a fresh Windows/vendor certification.
+
+Selected green values before stored-background subtraction:
+
+| Instrument position | Fluorescein 008 FSU | Fluorescein 009 FSU | Change |
+| --- | --- | --- | --- |
+| A8 | 3,806,000 | 369,915 | −90.28% |
+| H5 | 449,931 | 407,477 | −9.44% |
+| C4 | 332,444 | 240,399 | −27.69% |
+| D6 | 291,345 | 234,678 | −19.45% |
+| B12 | 227,094 | 204,890 | −9.78% |
+| G5 | 507,868 | 327,411 | −35.53% |
+
+A8 fell from 11.25× to **1.375×** the plate median and was no longer flagged;
+G5 was also no longer flagged. H5 remained at 1.515× the current median. The plate
+median fell from 338,236 to 269,000 FSU. These values retain ROI/ring subtraction,
+integer averaging, stored offset and exposure normalization. Handling, reseating,
+elapsed time and additional illumination are combined in this sequential comparison;
+the selective A8 reduction does not by itself identify the cause.
+
+C4's stored green background slope term was **193,943 FSU**, versus **35,751 FSU**
+in the latest cleaned-water diagnostic. D6's corresponding values were **148,925**
+and **124,951 FSU**. With the retained calibration, current C4/D6 corrected signals
+were 46,456/85,752 FSU, below their 387,885/297,851 FSU weak-signal thresholds.
+This identifies a reason to validate a current background calibration. The recent
+single-exposure water diagnostic cannot establish replacement offsets/slopes, and
+new background coefficients are not guaranteed to resolve the other spectral flags.
+No background coefficients were substituted to obtain a pass.
+
+The audit verified **6,232 successful thermal exchanges**, one method upload,
+one load, one Start, two homes and one release. Acquisition and home used 252
+reported seconds, leaving 228 seconds in the hold. Both startup motor readbacks
+were stationary. All 33 prior runs, 2,158 acquisitions, 109 collections and the
+first instrument's journal remained unchanged. Cleanup confirmed normal completion,
+sample/block **30.0/29.9 °C**, filter 0 stationary, lamp off, unloaded release state
+and USB closure; the cover remained at **90.6 °C**. Full images, quality reports,
+comparison figures and audits remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-009/`.
+
+### Background refresh after fluorescein screening (2026-10-21)
+
+One explicitly authorized vendor v2.3 background calibration used the water plate
+with 20 µL per well, holder installed and A1 at the back-left on Fast Dx
+**275030206**, camera USB serial **0000000747**. The thermal run completed, but
+the vendor background assessment **failed**:
+
+| Vendor filter | Threshold | Wells above threshold |
+| --- | ---: | --- |
+| A, physical filter 5 | 72,000 FSU | A9, B7, D1, D6, D11, D12, E12, F1, H5 |
+| B–D | 72,000 FSU | None |
+| E, physical filter 1 | 90,000 FSU | A9 |
+
+Native analysis also reported warning 200 and compensation at A9. There was no
+forced Save Results, threshold change or hardware retry. Independently calculated
+1000 ms background fits reproduced the vendor threshold lists exactly:
+
+| Instrument position | Retained fit, FSU | New fit, FSU |
+| --- | ---: | ---: |
+| C4 | 192,265 | 20,289 |
+| D6 | 147,614 | 106,746 |
+| A8 | 64,070 | 64,519 |
+| H5 | 60,484 | 109,626 |
+
+The filter-A median changed from 43,309 to 44,183 FSU. These comparisons do not
+isolate plate, seal, liquid, handling or instrument contributions. Offline
+reprocessing of the same fluorescein-009 frames reproduced the original report
+exactly. Substituting the failed background for sensitivity analysis removed the
+C4 weak-signal flag but still failed, flagging B7, D6, D11, D12 and E12. This was
+not an accepted replacement background or a new dye validation; no dye calibration
+was exported or installed.
+
+The capture reconstructed **226 complete camera transfers** and **489 thermal
+command/reply pairs**, with no transfer or thermal errors and complete vendor-log
+correlation. Thermal method payloads, exposure/filter order and ROI masks matched
+background-029. All 952 before/after backup files were hash-verified. The failed
+run overwrote `Background.csv`, `background.ini`, `background.sds` and
+`Calibration.sda` despite cancellation of the result wizard. After preserving the
+failed outputs and closing the application, those four files were restored from
+this session's pre-run backup. All 21 operational configuration files matched
+their original hashes, including the first instrument's files; the active
+`Calibration.sda` returned to SHA-256
+`937319473941992b32d722b80279b064213ee6d9a3979787694c0061a26f76e7`.
+
+Final captured state was inactive, plate unloaded and lamp off, with sample/block
+**60.0/59.8 °C** and cover **90.4 °C**; later cooling was not measured. The vendor
+application, USB capture and temporary transfer bridge were closed. Original
+captures, failed calibration outputs, comparison figures, restoration receipts and
+the offline sensitivity analysis remain outside Git in
+`abi7500-research/captures/abi7500-unit2-background-030/`.
+
+### Native background repeat on an ABI water plate (2026-10-23)
+
+One authorized Ubuntu/PLR session used the same sealed ABI plate containing 20 µL
+water per well that the operator reported had passed vendor background calibration
+earlier that day. The instrument was Fast Dx **275030206**, camera USB serial
+**0000000747**, with A1 at the back-left. The accepted vendor reference, masks,
+experiments and logs were backed up and hash-verified before closing Windows v2.3.
+All 480 reference well/filter fits were below their background limits.
+
+The `background` collection mode retained the captured exposure groups: physical
+filters 1–5, each at 2000, 1000 and 500 ms, with one image in the first group and
+16 in each remaining group (225 planned images). Startup used 270 seconds of
+standby lamp warm-up, a 90 °C cover and calibration Start `0x7e`. The 60 °C hold
+was extended from the captured vendor method's 547 seconds to 900 seconds for
+transport margin, preserving the 16-second delay before collection. A separate
+30 °C/30-second cooldown was planned.
+
+**The session was incomplete.** It retained 219 confirmed acquisitions and one
+full but uncertain camera transfer; five images were never started. After transfer
+220, thermal status request `0x29`, sequence 1449, received no serial bytes during
+its ten-second timeout. PLR did not repeat the camera exposure or Start. It
+reconnected for cleanup, verified ownership, cancelled the same run and commanded
+25 °C standby. The planned normal-completion cooldown was not reached.
+
+Offline reconstruction exactly reproduced all 960 full-precision background
+coefficients in each of vendor captures 029 and 030. Applying that recovered fit
+to the four complete filters in this scan gave:
+
+| Saved filter | Vendor maximum, FSU | PLR maximum, FSU | Threshold, FSU | PLR wells above threshold |
+| --- | ---: | ---: | ---: | --- |
+| B, physical 4 | 7,521 | 7,399 | 72,000 | None |
+| C, physical 3 | 4,946 | 4,911 | 72,000 | None |
+| D, physical 2 | 3,914 | 3,673 | 72,000 | None |
+| E, physical 1 | 7,603 | 6,469 | 90,000 | None |
+
+These complete groups contained no saturated wells. Green/saved filter A retained
+16 confirmed images at both 2000 and 1000 ms, but only ten at 500 ms. Its raw
+ring-subtracted 1000 ms average had a maximum of 31,630 and median of 17,587.5,
+without saturation. Those are diagnostic raw values, not a completed three-exposure
+fit or a calibration pass. The complete vendor validity/compensation workflow is
+not implemented by this offline fit; no calibration was installed or overwritten.
+
+The independent audit verified 1,515 successful thermal command/reply pairs,
+the one unanswered status request, all 220 original camera transfers and their
+exported crops, one Start, one cancellation and no release. All 34 prior runs,
+2,238 acquisitions, 110 collections and the first instrument's journal were
+unchanged. Final recorded state was inactive with filter 0 stationary, lamp off
+and USB closed. The plate remained loaded; last sample/block temperatures were
+54.3/47.6 °C and the cover was 89.4 °C. Later cooling was not measured.
+
+Full images, the retained vendor reference, partial comparison figure, failure
+audit and source snapshots remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-background-001/`.
+
+### Completed native background repeat (2026-10-23)
+
+A separately authorized repeat, `plr-u2bg-002`, completed on the same Fast Dx
+**275030206** with the same sealed ABI water plate and orientation. Driver sources,
+vendor reference and collection settings matched the preceding attempt; only the
+run identity changed. Initial sample/block temperatures were 25.0 °C, with filter
+0 stationary and the lamp off.
+
+All **225 acquisitions completed**. The recovered native three-exposure fit put
+all **480 well/filter measurements below their background limits**, without
+saturated wells. The exported-image calculation reproduced the preliminary
+live-journal maxima and medians:
+
+| Saved filter | Vendor maximum, FSU | PLR maximum, FSU | Threshold, FSU | PLR wells above threshold |
+| --- | ---: | ---: | ---: | --- |
+| A, physical 5 (green) | 32,963 | 30,992 | 72,000 | None |
+| B, physical 4 | 7,521 | 7,246 | 72,000 | None |
+| C, physical 3 | 4,946 | 5,599 | 72,000 | None |
+| D, physical 2 | 3,914 | 3,788 | 72,000 | None |
+| E, physical 1 | 7,603 | 6,626 | 90,000 | None |
+
+Green's maximum was H7 in both acquisitions. Its PLR median was 17,339.6 FSU,
+4.4% below the vendor reference. Median changes in B–E were +27.0%, +22.5%,
++3.3% and +15.8%, respectively. Against the earlier partial PLR scan, B/C medians
+rose 25.6%/22.9% and their well correlations were 0.624/0.640; D/E correlations
+were 0.989/0.955. The complete 16-image green 1000 ms groups differed by −1.64%
+in median raw ring-subtracted signal. The first attempt's incomplete green fit
+was excluded from the fitted comparison. These sequential measurements do not
+isolate the cause of the B/C difference or establish numerical interchangeability.
+
+The independent transport audit verified **3,573 successful thermal exchanges**,
+all 225 original 157,312-byte camera transfers and their exported crops, one
+method upload, one calibration Start, two homes and one release. No timeout,
+camera retry, second Start, exposure-table write or lamp-counter reset occurred.
+Acquisition and final homing consumed 498 reported seconds, leaving 386 seconds
+in the 60 °C hold. Cached collection retrieval generated no USB traffic.
+
+The run completed the 30 °C/30-second cooldown with matching completed history.
+Cleanup confirmed sample/block **30.0/29.8 °C**, filter 0 stationary, lamp off,
+plate unloaded and USB closed. The cover remained at **90.1 °C**. All 35 previous
+runs, 2,458 acquisitions, 111 collections and the first instrument's journal
+remained unchanged.
+
+This validates the native PLR background acquisition and threshold screen for
+this plate and instrument. The complete vendor validity/compensation workflow
+remains outside the recovered fit; no calibration was installed or overwritten.
+Full images, vendor reference, numerical comparisons, figure and audit remain
+outside Git in `abi7500-research/captures/abi7500-plr-unit2-background-002/`.
+
+### Fresh ROI mask generation: partial acquisition (2026-10-23)
+
+Authorized session `plr-u2roi-001` used the same sealed ROI plate as the successful saved
+vendor calibration on Fast Dx **275030206**, camera **0000000747 / C9254-02**, firmware
+**G2.10**. An initial read-only preflight found the instrument inactive with filter 5 selected
+and the lamp in standby. It sent no Start or exposure and left the journal unchanged. The
+same authorized session then parked filter 0 using the public optical API, waited 270 seconds
+in lamp standby, and started a 60 °C/240-second method with a 90 °C cover. Collection began
+after 16 seconds of the hold. The planned exposures were 1024, 512 and 256 ms per filter.
+
+Three filter-1 acquisitions completed. PLR generated **96 regions from each fresh image**,
+without prior masks as inputs and without saturated pixels. Global thresholds were 874, 502
+and 314. Selecting the highest-threshold passing unclipped image chose 1024 ms. Against the
+saved vendor mask, its median per-well pixel intersection-over-union was **99.6434%** and its
+maximum centroid shift was **0.2939 pixels**. A portable `.plrroi` mask and source-image hash
+were exported; no vendor calibration was installed or overwritten.
+
+The fourth camera transfer, filter 2 at 1024 ms, was complete. Its subsequent lamp-status
+request `0x66`, sequence 351, received no serial payload during the ten-second command window:
+905 bridge reads each reported zero valid bytes. USB transfers themselves reported no error;
+nonzero padding was retained without interpreting it as a reply. The acquisition remains
+uncertain because final optical and thermal observations are absent. Its diagnostic image
+yielded 96 regions but contained 361 clipped pixels; it was excluded from selected masks.
+Eleven planned exposures were never started. The cause of the missing reply is unresolved.
+
+Cleanup reconnected once, reconciled ownership of the same run, cancelled it once and set the
+25 °C idle target. It confirmed inactivity, stationary filter 0 and lamp off, then closed USB.
+No exposure or Start was repeated. The plate remained loaded; there was no release command.
+Last measured sample/block temperatures were **55.4/49.0 °C**, with cover **89.5 °C**; subsequent
+cooling was not measured. The planned normal-completion cooldown was not reached.
+
+The independent offline audit verified 407 successful thermal exchanges, the unanswered
+lamp-status query, all four original 157,312-byte camera transfers and their exported crops,
+one method upload, one Start and one cancellation. All 36 prior runs, 2,683 acquisitions,
+112 collections and the first instrument's journal remained unchanged. This establishes
+fresh filter-1 image-to-mask processing; the five-filter hardware milestone remains incomplete.
+Full evidence is retained outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-roi-001/`.
+
+### Completing the fresh ROI mask set (2026-10-23)
+
+Separately approved run `plr-u2roi-002` retained the same sealed ROI plate and collected the
+remaining physical filters 2–5 at 1024, 512 and 256 ms. It used 270 seconds of lamp standby,
+the 90 °C cover, a 60 °C/240-second hold with collection starting after 16 seconds, and a
+30 °C/30-second cooldown. The previous cancelled run and uncertain acquisition were preserved.
+
+All **12 acquisitions completed**, including their final optical/thermal observations. The
+independent audit verified **1,607 successful thermal exchanges**, every original camera transfer
+and crop, one upload, one Start, two homes and one release. Collection and homing consumed
+33 reported seconds, leaving 190 seconds in the hold. There was no timeout, cancellation,
+automatic exposure retry, exposure-table write or lamp-counter reset. Cached retrieval sent
+no USB traffic. All 37 previous runs, 2,687 acquisitions, 113 collections and the first
+instrument's journal remained unchanged.
+
+Every image produced 96 regions. The unclipped selected exposures were **512, 1024, 512 and
+512 ms** for physical filters 2–5. Median per-well pixel overlap with the saved vendor masks
+was **99.68%, 99.70%, 99.70% and 99.69%**, respectively; maximum centroid shifts were
+**0.236, 0.192, 0.179 and 0.220 pixels**. Combining these masks with the confirmed filter-1
+mask from `plr-u2roi-001` yields 480 regions from fresh Ubuntu acquisitions. All five masks
+were reloaded and exercised through the per-well extraction pipeline. Source image/run
+provenance is explicit; no uncertain acquisition or vendor mask was used as a generator input.
+
+Matching completed history and the public release API confirmed normal completion and an
+unloaded plate mechanism. Final sample/block temperatures were **30.0/29.9 °C**, cover
+**90.5 °C**, filter 0 stationary and lamp off; USB closed normally. The repeat did not reproduce
+the earlier missing lamp-status reply, whose cause remains unresolved.
+
+This validates the combined fresh five-filter mask set across two sessions, not automatic
+ROI exposure search or the complete vendor calibration-validity workflow. No calibration file
+was installed or overwritten. Full evidence and the combined masks remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-roi-002/`.
+
+
+### Public background calculation with PLR-generated masks (2026-10-24 UTC)
+
+This was an offline calculation; no instrument connection or acquisition occurred.
+`calculate_background_calibration()` replayed all original fixed-exposure camera images from
+vendor background captures 029 and 030 using their matching masks. It reproduced **all 960
+full-precision coefficients exactly in each capture**, including signed offsets, and matched
+the independently retained raw group averages. Expected coefficients came from each vendor
+`Calibration.sda`, not a rounded CSV. Both historical collections retain their threshold
+failures; replay does not turn them into passing calibrations.
+
+The same API then reprocessed all **225 confirmed images** from completed Ubuntu run
+`plr-u2bg-002` with the five new masks generated in `plr-u2roi-001` and `plr-u2roi-002`.
+These are the same background images as the preceding comparison, so differences below
+isolate mask selection rather than a new acquisition. All **480 well/filter values** remain
+below the recorded background limits, with no saturated wells:
+
+| Saved filter | Physical filter | Maximum, FSU | Maximum well | Threshold, FSU | Median change from old masks |
+| --- | ---: | ---: | --- | ---: | ---: |
+| A (green) | 5 | 31,082 | H7 | 72,000 | +0.019% |
+| B | 4 | 7,262 | F7 | 72,000 | −0.087% |
+| C | 3 | 5,575 | F7 | 72,000 | −0.001% |
+| D | 2 | 3,786 | H8 | 72,000 | +0.329% |
+| E | 1 | 6,645 | B2 | 90,000 | +0.344% |
+
+The generated `Background.csv` preserves all 960 binary32 coefficients exactly on reload.
+Its companion report identifies the original image and mask hashes, declared instrument
+**275030206**, camera **0000000747**, original acquisition timestamp, group counts and
+quality findings. The five `.plrroi` masks accompany it. Vendor files were not overwritten
+and no validity flags were changed. This validates the recovered fit and reference screen,
+not the complete vendor validity/compensation workflow or quantitative assay performance.
+
+Full replay reports, generated coefficients, mask provenance and the comparison figure remain
+outside Git in `abi7500-research/analyses/background-api-20261024/`. Bounded captured patches
+and expected vendor coefficients provide regression tests in the repository. See
+[background calibration](background-calibration.md) for the public API and input requirements.
+
+### Fresh optical-uniformity calibration from PLR images (2026-10-24)
+
+Authorized session `plr-u2opt-001` ran on Fast Dx **275030206**, camera **0000000747 /
+C9254-02**, firmware **G2.10**, using the user-confirmed sealed mixed-dye ROI plate with
+20 µL per well and A1 at the back-left. The instrument began inactive with sample/block
+25.0 °C, stationary filter 0 and lamp off. It used 270 seconds of lamp standby, native
+calibration Start `0x7e`, a 90 °C cover setting, a 60 °C/600-second hold and a
+30 °C/30-second cooldown. Acquisition began after 17 reported hold seconds.
+
+All **55 automatic-exposure probes** and **65 final images** completed. Physical filters
+1–5 selected **1782, 711, 1188, 603 and 567 ms**, with final counts **1, 16, 16, 16 and
+16**, respectively. The search used the PLR-generated masks, parked filter 0 between the
+search and final collections, and homed after the last image. The complete collection and
+homing took 287 reported seconds, leaving 296 seconds in the hold. These settings are
+observations for this plate, not universal calibration exposures.
+
+The public optical calculation used the matching full-precision PLR background and all five
+PLR-generated masks. It generated **480 uniformity coefficients**, without empty wells,
+spectral outliers, substitutions or saturated final wells. The saved-channel coefficient
+ranges, rounded here for readability, were A **0.731–2.537**, B **0.717–2.016**,
+C **0.679–1.934**, D **0.587–2.017** and E **0.619–1.825**. The generated INI was
+reloaded to verify serialization; its matching background, masks and provenance reports
+were bundled with it. Normalizing these fitting images checks internal consistency and
+does not measure independent repeatability. No matching vendor acquisition exists for this run.
+
+The independent audit verified **2,746 successful thermal exchanges**, all **120 original
+157,312-byte camera transfers** and exported crops, every exposure-search decision, one method
+upload, one calibration Start, two homes and one release. There was no timeout, camera retry,
+cancellation, second Start, exposure-table write or lamp-counter reset. Cached collection
+retrieval produced no USB traffic. All 38 previous runs, 2,699 acquisitions, 114 collections
+and the first instrument's journal remained unchanged.
+
+The instrument reported normal completion after 681 seconds with matching run history.
+Cleanup confirmed sample/block **30.0/29.9 °C**, cover **90.2 °C**, stationary filter 0,
+lamp off and plate unloaded; USB closed normally. Cover readings during every acquisition
+were within 88–92 °C; the full session, including startup, recorded a 104.7 °C maximum.
+
+This validates fresh Ubuntu acquisition and coefficient generation for this plate and camera
+path. It does not install vendor files, change validity flags, or validate quantitative assay
+performance. Full original images, USB traffic, source snapshots, independent audit, generated
+calibration bundle and figures remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-optical-001/`. See
+[optical calibration](optical-calibration.md) for the public calculation and acquisition settings.
+
+### Independent optical repeat with frozen coefficients (2026-10-24)
+
+Separately authorized run `plr-u2opt-002` reacquired the same sealed mixed-dye ROI plate on
+Fast Dx **275030206**, camera **0000000747 / C9254-02**, firmware **G2.10**. The previous
+uniformity file, five PLR-generated masks and matching background were fixed before acquisition.
+No coefficients were refitted and no wells were excluded or substituted. These are independent
+images of the same plate, not an independently prepared plate.
+
+The run retained the 270-second lamp standby, 90 °C cover, native calibration startup,
+60 °C/600-second hold and 30 °C/30-second cooldown. Initial sample/block temperatures were
+25.0 °C; the cover was already at 90.0 °C. Collection began after 16 reported hold seconds.
+All **45 exposure probes** and **65 final images** completed. Physical filters 1–5 selected
+**1800, 693, 1179, 639 and 558 ms**, with final counts **1, 16, 16, 16 and 16**. Filter 1
+converged after one probe, while each other filter required eleven. Collection and homing took
+257 reported seconds, leaving 327 seconds in the hold.
+
+Applying the unchanged saved coefficients substantially reduced across-well variation:
+
+| Saved channel | Physical filter | Raw CV, % | Corrected CV, % | Median signal change, % | 95th percentile spatial change, % |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| A | 5 | 20.23 | 0.87 | +1.22 | 1.51 |
+| B | 4 | 18.90 | 2.28 | −7.36 | 4.22 |
+| C | 3 | 17.61 | 1.28 | −1.60 | 2.95 |
+| D | 2 | 17.49 | 2.58 | +3.89 | 4.99 |
+| E | 1 | 18.46 | 1.46 | −1.12 | 3.03 |
+
+CV is sample standard deviation divided by the mean across all 96 wells. Signal changes use
+background-corrected, exposure-normalized values relative to `plr-u2opt-001`. Spatial change
+is the absolute per-well ratio difference after removing one median scale ratio per channel;
+this diagnostic does not change the applied per-well coefficients. The largest spatial change
+was **7.63% at H12, physical filter 2**. No empty wells, spectral outliers or saturated final
+wells were found. Median within-collection per-well CVs for the four 16-image channels were
+**0.068–0.142%**; physical filter 1 has only one final image, so its temporal variation cannot
+be estimated. These observations support the correction's transfer to another acquisition,
+while channel B's −7.36% overall change leaves absolute brightness reproducibility unresolved.
+No vendor repeatability tolerance or quantitative assay acceptance is asserted.
+
+The independent audit verified **2,839 successful thermal exchanges**, all **110 original
+157,312-byte transfers** and exported crops, every exposure-search decision, one upload, one
+calibration Start, two homes and one release. No timeout, retry, cancellation, exposure-table
+write or lamp-counter reset occurred. All 39 prior runs, 2,819 acquisitions, 115 collections
+and the first instrument's journal remained unchanged. Cached collection retrieval sent no USB
+traffic. Completed history reported 681 seconds. Cleanup confirmed sample/block **30.0/29.9 °C**,
+cover **89.3 °C**, stationary filter 0, lamp off and plate unloaded; USB closed normally.
+
+Original images, unchanged calibration inputs, all 480 comparison values, within-collection
+statistics, figures and the audit remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-optical-002/`. This is one repeat on one plate and
+does not establish long-term stability, independent-plate reproducibility or assay validity.
+
+### Fresh fluorescein calibration with PLR inputs (2026-10-24)
+
+Authorized run `plr-u2dfl-010` used the user-declared **160 nM fluorescein, 20 µL per
+well** plate on Fast Dx **275030206**, camera **0000000747 / C9254-02**, firmware
+**G2.10**. The uniform 96-well preparation follows the referenced laboratory protocol.
+Printed orientation was not reconfirmed for this loading; locations in the reports are
+instrument well coordinates. The declared concentration is specimen metadata, not a
+concentration measurement. Acquisition and calculation ran directly through Ubuntu PLR.
+
+The method used 270 seconds of lamp standby, native calibration Start `0x7e`, a 90 °C
+cover, a 60 °C/780-second image-free hold, and a 60 °C/600-second acquisition hold.
+Collection began after another 121 reported hold seconds, providing approximately
+15 minutes of settling with the light path closed. A 30 °C/30-second cooldown followed.
+The captured controller volume setting was 30 µL; actual declared well volume was 20 µL.
+
+All **15 exposure probes** and **65 final images** completed. Physical filters 1–5
+selected **1800, 1800, 1800, 1800 and 162 ms**, with final counts **1, 16, 16, 16 and
+16**. Collection and homing took 221 reported seconds, leaving 258 seconds in the hold.
+Every image had sample temperature 60.0 °C, block temperature 59.9–60.0 °C and cover
+temperature 89.3–90.6 °C at its recorded boundaries.
+
+The pure-dye calculation used the five PLR-generated ROI masks and their matching
+full-precision background from the optical calibration bundle. Optical-uniformity factors
+are not inputs to the recovered pure-dye calculation. Both native and Java checks passed
+without empty wells, spectral outliers or substitutions; no final well exceeded the
+saturation threshold. All 96 wells peaked in the green channel. Median responses relative
+to each well's strongest channel were:
+
+| Saved channel | Physical filter | Median relative response |
+| --- | ---: | ---: |
+| A (green) | 5 | 1.000000 |
+| B | 4 | 0.020792 |
+| C | 3 | 0.000010956 |
+| D | 2 | 0 |
+| E | 1 | 0 |
+
+Off-peak zeros are valid; none of these wells had an all-zero spectrum. The green
+16-image burst had median per-well CV **0.0666%**, 95th percentile CV **0.0922%**, and
+median last-four versus first-four change **−0.0881%**, with all 96 wells included.
+This measures variation within one burst, not independent dye-calibration repeatability.
+The generated `plr-fluorescein.ini` preserved all **480 coefficients** on reload.
+No FAM, SYBR or EvaGreen alias was created.
+
+The independent audit verified **6,396 successful thermal exchanges**, all **80 original
+157,312-byte camera transfers** and exported crops, and every automatic-exposure decision.
+There was one method upload, one calibration Start, two homes and one release; no timeout,
+retry, cancellation, exposure-table write or lamp-counter reset occurred. All 40 previous
+runs, 2,929 acquisitions, 116 collections and the first instrument's journal were unchanged.
+All 72 pinned source and input files remained unchanged. Cached collection retrieval sent
+no USB traffic.
+
+Run history confirmed normal completion after 1,462 seconds. Cleanup confirmed sample/block
+**30.0/29.9 °C**, cover **89.4 °C**, stationary filter 0, lamp off and plate unloaded;
+USB closed normally. The cover remains hot after plate release.
+
+Original images, probes, transport, source snapshots, matching calibration inputs, generated
+coefficients, reports and figures remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-010/`. The file was not installed
+in the vendor configuration. No matched vendor fluorescein acquisition or independent repeat
+was performed, so this establishes fresh PLR acquisition and coefficient generation for the
+declared dye, not cross-run agreement, dye equivalence or quantitative assay performance.
+
+### Independent fluorescein repeat with frozen coefficients (2026-10-24)
+
+Separately authorized run `plr-u2dfl-011` repeated the same sealed, user-declared **160 nM
+fluorescein, 20 µL per well** plate on Fast Dx **275030206**, camera **0000000747 /
+C9254-02**, firmware **G2.10**. The `010` dye file, its reference report, ROI masks and
+matching background were fixed before acquisition. All **75 pinned source and input files**
+remained unchanged. No dye coefficients were refitted, and no wells were replaced or excluded
+from the 480-value spectral comparison. Locations below are instrument well coordinates.
+
+The method retained 270 seconds of lamp standby, native calibration Start `0x7e`, a 90 °C
+cover, a 60 °C/780-second settling hold, and a 60 °C/600-second acquisition hold with a
+120-second wait before imaging. A 30 °C/30-second cooldown followed. The run began with
+sample/block temperatures **25.0/24.9 °C**, cover **89.3 °C**, stationary filter 0 and lamp off.
+All **15 exposure probes** and **65 final images** completed. The selected exposures matched
+`010`: **1800, 1800, 1800, 1800 and 162 ms** for physical filters 1–5, with final counts
+**1, 16, 16, 16 and 16**. Collection and homing took 223 reported seconds, leaving 257 seconds
+in the hold. Acquisition-boundary sample temperature was 60.0 °C, block 59.9–60.0 °C and
+cover 89.3–90.6 °C.
+
+Both native and Java numerical checks passed without empty wells, spectral outliers or
+saturated final wells. All 96 wells peaked in saved channel A / physical filter 5. Comparing
+the original repeat spectra against the frozen `010` coefficients gave an overall RMS
+difference of **0.00014147** and a maximum absolute difference of **0.00136617 at B12,
+saved channel B**. The latter is 0.136617 percentage points on the peak-normalized scale;
+B12's channel-B response changed from 0.0362522 to 0.0376183.
+
+| Saved channel | Physical filter | RMS coefficient difference | Maximum absolute difference |
+| --- | ---: | ---: | ---: |
+| A (green) | 5 | 0 | 0 |
+| B | 4 | 0.000308660 | 0.001366168 |
+| C | 3 | 0.000053574 | 0.000207829 |
+| D | 2 | 0.000019082 | 0.000106807 |
+| E | 1 | 0.000039523 | 0.000153810 |
+
+Channel A is 1 in both spectra by normalization because it remains strongest in every well.
+The differences above are absolute coefficient differences, not relative percentages of weak
+signals. Signal ratios with a zero baseline are explicitly marked unavailable in the full report;
+all 480 spectral values remain included.
+
+Background-corrected, exposure-normalized green brightness changed by a median **+1.4304%**.
+The 5th–95th percentile range was **−1.5360% to +4.2908%**; extremes were **−3.7109% at D4**
+and **+10.5978% at B12**. Removing one median scale ratio for a spatial diagnostic left a
+95th percentile absolute difference of **3.5740%** and a maximum **9.0381% at B12**; this
+diagnostic did not alter any coefficients or measurements. Within the repeat's green burst,
+median per-well CV was **0.0662%**, 95th percentile CV **0.0921%**, and median last-four versus
+first-four change **−0.0722%**. These small within-burst variations do not explain the larger
+between-run B12 change, whose cause remains unresolved.
+
+The independent audit verified **6,381 successful thermal exchanges**, all **80 original
+157,312-byte camera transfers** and exported crops, and every exposure-search decision.
+It confirmed one upload, one calibration Start, two homes and one release, with no timeout,
+retry, cancellation, exposure-table write or lamp-counter reset. All 41 previous runs,
+3,009 acquisitions, 117 collections and the first instrument's journal remained unchanged.
+Cached collection retrieval sent no USB traffic. Run history recorded normal completion after
+1,462 seconds. Cleanup confirmed sample/block **30.0/29.9 °C**, cover **89.4 °C**, stationary
+filter 0, lamp off and plate unloaded; USB closed normally.
+
+The original `plr-fluorescein.ini` remains unchanged. Full images, transport, comparison values,
+quality findings, figures and the frozen reference are retained outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-fluorescein-011/`. This supplies one independent
+same-plate spectral comparison, not independent-plate reproducibility, a vendor repeatability
+limit, matched vendor fluorescein agreement or quantitative assay validation.
+
+### SYBR-labelled fluorescein surrogate acquisition (2026-10-24)
+
+At the user's explicit request, `plr-u2dsy-001` repeated the same **160 nM fluorescein,
+20 µL per well** plate on Fast Dx **275030206 / camera 0000000747 / C9254-02 / G2.10**,
+using the software label **`SYBR`** specified in their calibration notebook. The report,
+INI comments and retained notebook excerpt identify the actual reference as fluorescein.
+No automatic aliases, SYBR/EvaGreen equivalence or PCR assay validation are asserted.
+
+An initial connection preflight completed identity, thermal status, filter-position and
+motor-status queries, then timed out on lamp-status query `0x66`. Its 900 empty serial
+polls contained no valid reply bytes; trailing USB padding was not interpreted as a reply.
+No actuation, thermal upload, Start or exposure occurred, and the journal was unchanged.
+One read-only reconnect confirmed the expected identity, idle temperatures of 25 °C,
+stationary filter 0 and lamp off. The single authorized scan then proceeded. The failed
+preflight and reconnect traces remain separate from the completed scan; the cause of the
+missing reply is unresolved.
+
+The method retained 270 seconds of lamp standby, calibration Start `0x7e`, a 90 °C cover,
+the 60 °C/780-second settling hold, the 60 °C/600-second acquisition hold with a 120-second
+delay, and a 30 °C/30-second cooldown. All **15 search probes and 65 final images** completed.
+Physical filters 1–5 selected **1800, 1800, 1800, 1800 and 162 ms**, with final counts
+**1, 16, 16, 16 and 16**. Collection and homing consumed 223 reported seconds, leaving
+257 seconds in the hold. Acquisition-boundary temperatures were sample **60.0 °C**, block
+**59.9–60.0 °C** and cover **89.3–90.6 °C**.
+
+Both recovered native and Java numerical checks passed without empty wells, spectral
+outliers, substitutions or saturated final wells. All 96 wells peaked in saved channel A
+/ physical filter 5. The generated `plr-sybr-surrogate.ini` preserved all **480 coefficients**
+on reload. Offline replay separately verified exact label selection and rejection of
+unrequested `fluorescein`, `FAM`, `EvaGreen` and lowercase `sybr` aliases. The original
+`010` fluorescein calibration and all **77 pinned source and input files** were unchanged.
+
+| Reference scan | RMS difference across 480 original relative spectra | Median green brightness change |
+| --- | ---: | ---: |
+| Fluorescein `010` | 0.00027002 | +2.1929% |
+| Fluorescein `011` | 0.00015075 | +0.8106% |
+
+The maximum absolute spectral difference versus `011` was **0.00088808 at A6, saved B**.
+Green brightness changes versus `011` ranged from **−1.7924% at B7 to +6.7836% at A6**.
+Versus `010`, B12 remained the largest green brightness increase at **+12.7228%**; its
+cause remains unresolved. Spectral differences are absolute differences on the scale where
+each well's strongest channel is 1. No wells were removed from these comparisons. Within
+the green burst, median per-well CV was **0.0697%**, 95th percentile CV **0.1055%**, and
+median last-four versus first-four change **−0.1266%**.
+
+The completed-scan audit verified **6,373 thermal exchanges**, all **80 original
+157,312-byte camera transfers**, their exported crops and every exposure decision.
+There was one upload, one calibration Start, two homes and one release, with no subsequent
+timeout, Start/exposure retry, cancellation, exposure-table write or lamp-counter reset.
+All 42 previous runs, 3,089 acquisitions, 118 collections and the first instrument's journal
+remained unchanged. History recorded normal completion after 1,462 seconds. Cleanup confirmed
+sample/block **30.0/29.9 °C**, cover **90.4 °C**, stationary filter 0, lamp off, plate unloaded
+and USB closed. The cover remains hot after release.
+
+Images, transport, calibration inputs, numerical results and provenance remain outside Git
+in `abi7500-research/captures/abi7500-plr-unit2-dye-sybr-001/`. No vendor calibration files
+or validity flags were overwritten. This is a user-requested surrogate calibration and
+same-material repeat, not matched vendor agreement or validation of actual SYBR chemistry.
+
+### Interrupted ROX acquisition with PLR-generated inputs (2026-10-24)
+
+Authorized run `plr-u2drx-013` used the user-declared ROX plate on Fast Dx **275030206 /
+camera 0000000747 / C9254-02 / G2.10**. Concentration, volume and printed orientation
+were not reconfirmed for this loading; the notebook's nominal 75 nM and 20 µL remain
+separate from the specimen record. Locations use instrument well coordinates.
+
+The method matched the successful fluorescein/SYBR sequence: 270 seconds of lamp standby,
+native calibration Start `0x7e`, a 90 °C cover, 900 seconds of settling at 60 °C before
+imaging, and a 480-second collection window. All **24 exposure probes** completed.
+Physical filters 1–5 selected **1800, 414, 1233, 1800 and 1800 ms**. Final completed
+counts were **1, 16, 16, 16 and 13**. Filter-5 image `e13` downloaded completely but
+remains uncertain because its post-exposure filter-position query `0x6b` received no
+valid serial bytes in **905 polls over 9.998 seconds**, exhausting its 10-second deadline.
+The preceding motor-status query responded. Images `e14` and `e15` were never started.
+There were no USB transfer errors, and the cause of the missing controller reply remains
+unknown. This was a command timeout, not exhaustion of the collection window.
+
+One cleanup reconnect verified identity and run ownership, cancelled the run and parked
+filter 0 with the lamp off. History reported the matching run as aborted; PLR recorded
+it as cancelled. USB closed normally. No release was attempted. Last recorded sample,
+block and cover temperatures were **53.0, 46.5 and 90.0 °C** respectively; these are
+disconnect-time readings, not a later temperature check.
+
+The offline audit verified **4,973 successful thermal exchanges plus one unanswered
+query**, all **87 original 157,312-byte image transfers**, exported crops and automatic
+exposure choices. It confirmed one Start, one cancellation, one startup home, no repeated
+exposure, no release, no exposure-table write and no lamp-counter reset. All 43 previous
+runs, 3,169 acquisitions, 119 collections, the first instrument's journal and all **76 pinned
+source/input files** remained unchanged.
+
+The completed ROX-channel burst contains 16 images at **414 ms**. All 96 wells had
+positive mean background/exposure-corrected signal; none met the saturation criterion.
+Independent pixel/ring and background calculations matched **1,536 per-frame well values**.
+Median per-well CV was **0.0632%**, 95th percentile CV **0.0999%**, and median last-four
+versus first-four change **−0.0331%**. These are diagnostics from one completed burst;
+no spectral-outlier or full-calibration pass is assigned to the incomplete filter set.
+The uncertain frame is excluded from these calculations. The existing collection-count
+guard rejects the 13 completed filter-5 frames when 16 are required.
+
+No dye calibration was generated or installed. Raw evidence, partial measurements and the
+diagnostic figure remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-rox-013/`. A further hardware run requires
+fresh per-run authorization; no automatic retry occurred.
+
+### Completed ROX repeat with PLR-generated inputs (2026-10-24)
+
+The user separately authorized `plr-u2drx-014` using the same ROX plate retained after
+interrupted scan `013`. Instrument identity, thermal program, startup, collection plan,
+PLR-generated ROI masks and matching background were unchanged. Concentration, volume
+and printed orientation remain unconfirmed; the notebook's nominal preparation is recorded
+separately. All locations below are instrument well coordinates.
+
+The scan completed **25 search probes and 65 final images**. Physical filters 1–5 selected
+**1800, 405, 1224, 1800 and 1800 ms**, with final counts **1, 16, 16, 16 and 16**. Collection,
+including the final home, consumed 246 reported seconds and finished with 233 seconds
+remaining in the hold. Sample temperature was 60.0 °C throughout imaging, block 59.9–60.0 °C,
+and cover 89.3–90.6 °C. The missing filter-position reply from `013` did not recur, but
+this successful repeat does not identify its cause or establish communication reliability.
+
+All 96 wells peaked in saved channel D / physical filter 2. The recovered Java calculation
+and native diagnostic reported no empty wells, spectral outliers, substitutions or saturated
+final wells. The accepted `plr-rox.ini` preserved all **480 coefficients** on reload with
+instrument ID `275030206`, scanner ID `0000000747` and dye label `ROX`. Previous fluorescein
+and SYBR artifacts were unchanged. No optical uniformity factors were applied during
+pure-dye extraction, and no vendor calibration or validity flag was installed.
+
+An independent extraction from original camera bytes checked crop, orientation, selected
+pixels, surrounding-ring subtraction, saturation, integration timing and background correction.
+It matched **6,240 individual frame/well measurements** and all **480 averaged filter/well
+values** used for the calibration.
+
+The ROX burst had median per-well CV **0.08195%**, 95th percentile CV **0.12779%**, and
+median last-four versus first-four signal change **−0.15333%**. Relative to the completed
+ROX burst of `013`, median signal increased **5.60545%**, ranging from **−1.76395% at F10
+to +14.23357% at G6**. All 96 wells were retained. These are background/exposure-corrected
+signals from the same masks and background, without optical uniformity factors. The cause
+of the between-run change remains unresolved; the incomplete earlier scan cannot establish
+full five-filter spectral repeatability or matched vendor agreement.
+
+The transport audit verified **6,325 controller exchanges** and all **90 original
+157,312-byte camera transfers**, their exported crops and automatic exposure decisions.
+There was one upload, one calibration Start, two homes and one release, with no timeout,
+cancellation, repeated Start/exposure, exposure-table write or lamp-counter reset. All
+44 prior runs, 3,256 acquisitions, 120 collections and the first instrument's journal
+remained unchanged. Controller history recorded normal completion after **1,462 seconds**.
+Cleanup confirmed sample/block **30.0/29.9 °C**, cover **89.7 °C**, stationary filter 0,
+lamp off, plate unloaded and USB closed. The heated cover remains hot after release.
+
+Raw frames, transport, processing inputs, coefficients and comparison figures remain outside
+Git in `abi7500-research/captures/abi7500-plr-unit2-dye-rox-014/`. The original interrupted
+scan and archive are preserved separately. This completes one fresh ROX acquisition using
+PLR-generated inputs; it does not establish assay performance.
+
+### HEX acquisition and channel review (2026-10-26)
+
+The user authorized `plr-u2dhx-001` after loading a HEX plate on Fast Dx **275030206 /
+camera 0000000747 / C9254-02 / G2.10**. The nominal 50 nM, 20 µL in all 96 wells,
+optical seal and A1-back-left preparation were inferred from the immediately preceding
+instructions and the user's ready-to-scan response; they were not independently measured
+or inspected. All reported locations use instrument coordinates.
+
+The unchanged method used 270 seconds of lamp standby, native calibration Start `0x7e`,
+a 90 °C cover, 900 seconds of settling at 60 °C before imaging, and a 480-second collection
+window. All **25 probes and 65 final images** completed. Physical filters 1–5 selected
+**1800, 1800, 522, 414 and 1800 ms**, with final counts **1, 16, 16, 16 and 16**.
+Collection and homing took 230 reported seconds, leaving 250 seconds in the hold.
+Acquisition-boundary temperatures were sample **60.0 °C**, block **59.9–60.0 °C** and
+cover **89.3–90.6 °C**.
+
+The recovered native and Java numerical checks passed with no empty wells, spectral
+outliers, native flags, substitutions or saturated final wells. Channel B / physical filter
+4 dominated in 85 wells. Channel C / physical filter 3 dominated in **A1, A11, A12, B1,
+B12, F12, G1, G12, H1, H11 and H12**. These are all perimeter wells; C exceeded B by
+approximately **0.2–9.2%** there. The 16-image B burst had median per-well CV **0.08175%**,
+95th percentile CV **0.16793%**, and median last-four/first-four change **−0.04812%**.
+
+The session analyzer's additional B-dominance gate withheld INI export. That expectation
+is not a recovered vendor failure criterion, so these 11 observations must not be reported
+as vendor-failed wells. The five-channel spectra and calculated coefficients remain in
+the report without replacements. No optical uniformity factors were applied during
+pure-dye extraction, and no automatic `VIC` alias was created. This one acquisition cannot
+assign the edge pattern to dye, plate, optics, masks or background; matched vendor agreement
+and independent repeatability remain untested.
+
+Independent extraction from the original camera bytes matched all **6,240 frame/well
+measurements** and **480 averaged filter/well values**, checking crop, orientation, selected
+pixels, surrounding-ring subtraction, saturation, exposure timing and background correction.
+This verifies agreement between two calculation paths; it does not independently validate
+the shared masks or background against a vendor HEX measurement.
+
+The audit verified **6,390 controller exchanges**, all **90 original 157,312-byte camera
+transfers**, their exported crops and the automatic exposure choices. There was one upload,
+one calibration Start, two homes and one release, with no timeout, repeated Start/exposure,
+cancellation, exposure-table write or lamp-counter reset. All 45 earlier runs, 3,346
+acquisitions, 121 collections and the first instrument's journal remained unchanged.
+History recorded normal completion after **1,463 seconds**. Cleanup confirmed sample/block
+**30.0/29.9 °C**, cover **89.6 °C**, stationary filter 0, lamp off, plate unloaded and USB
+closed. The heated cover remains hot after release.
+
+Raw evidence, calculated spectra and the channel comparison remain outside Git in
+`abi7500-research/captures/abi7500-plr-unit2-dye-hex-001/`. Existing fluorescein, SYBR and
+ROX artifacts were preserved; no vendor calibration or validity flags were overwritten.
+
+### Vendor HEX comparison and exact replay (2026-10-26)
+
+Session `abi7500-unit2-dye-hex-vendor-001` continued the user's authorized vendor comparison
+on Fast Dx **275030206 / camera 0000000747 / C9254-02 / G2.10**, using the same nominal
+50 nM 6-HEX plate as `plr-u2dhx-001`. Preparation remains based on the preceding recipe and
+loading statements. The restored Ubuntu Remmina connection was verified by a fresh Windows
+screenshot and keyboard interaction before control. Configuration and masks were backed up
+before USBPcap started and before v2.3 launched.
+
+The custom dye was created as **6-HEX / Reporter**, with the optional wavelength unspecified.
+No VIC substitution was made. One Start Run click produced one captured program upload and
+one calibration Start `0x7e`. The uploaded program was a single **60 °C / 312-second** hold
+at 100% ramp, with the cover set to 90 °C. All **91 camera transfers** were reconstructed:
+one startup image, 25 exposure probes and 65 final images. Physical filters 1–5 used final
+exposures **1800, 1800, 594, 468 and 1800 ms**, with **1, 16, 16, 16 and 16** images.
+The final-image span was **107.706 seconds**; the first final image followed Start by
+**137.598 seconds** and the first observed hold by **111.045 seconds**.
+
+The v2.3 Analysis page reported **Passed**, saved the results automatically, and listed
+custom 6-HEX as **Current** after Finish. PLR replayed the captured images using the backed-up
+vendor masks/background and matched **all 480 saved binary32 coefficients exactly**.
+No empty wells, spectral outliers, native flags or substituted wells were reported by the
+recovered calculation. An independent check found no original sensor pixels equal to 4095
+in the final images. The vendor's custom-dye result and the earlier PLR numerical pass are
+separate from the extra all-B gate that had withheld the earlier PLR export.
+
+The vendor images peaked in saved channel B at **75 wells** and C at **21 wells**, including
+all **11** C-peaking wells from PLR. The additional vendor C-peaking locations were **A2,
+B11, C1, C11, C12, D12, E1, E12, F1 and G11**. Across the two acquisitions, normalized
+spectra differed by RMS **0.018223** and maximum absolute difference **0.087676** on a
+0–1 scale. This is a descriptive comparison, not a predefined agreement pass.
+
+Masks and background differed between acquisitions. Reprocessing both saved image sets
+with each complete mask/background pair reproduced each original calculation exactly and
+kept the C-peak counts at 11 for PLR frames and 21 for vendor frames. Changing calibration
+pairs shifted `100 * (C/B - 1)` by at most **0.874 percentage points**. With a pair held
+constant, changing acquisitions shifted the ratio by a median **3.48–3.49 points**. The
+main shift is therefore associated with acquisition rather than these calibration inputs;
+its physical cause remains unresolved. Exposure choices, the vendor's shorter settling,
+and illumination histories were not matched. No independent HEX repeat was performed.
+
+The capture contained **19,705 complete USB pairs** and **507 controller pairs**, with no
+unmatched submissions, completion errors, incomplete image transfers, firmware errors or
+missing logged controller requests/replies. Before/after backups verified unchanged ROI,
+background and optical coefficients; unit 275032266's configuration was also unchanged.
+The current unit's `puredye.ini` and `puredye.sds` changed as expected. The new EDS, native
+outputs, logs, calibration changes and full capture were preserved outside Git.
+
+The last captured status was inactive, sample/block **60.0/59.8 °C**, cover **89.4 °C**,
+and plate mechanism unloaded. The last lamp setting was vendor standby (enabled, power 0),
+not lamp off. v2.3, USBPcap and the temporary bridge were closed. These are captured end
+states, not a later temperature measurement. Startup RNase P/FAM warnings were recorded;
+this session did not run RNase P or establish assay-level validity.
+
+Evidence is in `abi7500-research/captures/abi7500-unit2-dye-hex-vendor-001/`, including
+`session-result.json`, `analysis/hex-comparison.json`, `analysis/crossed-calibration-summary.json`
+and `analysis/hex-vendor-plr-comparison.png`. The Windows archive SHA-256 is
+`8c472907586db67ee84b0f8594e2516274c63b9f5dc6002cefcca56b7a57c88a`.
+
+### Fixed-exposure HEX comparison (2026-10-26)
+
+Authorized run `plr-u2dhx-002` used Fast Dx **275030206 / camera 0000000747 / C9254-02 /
+G2.10** and the same sealed nominal 50 nM 6-HEX plate. The user explicitly confirmed A1
+back-left, the closed drawer and hands clear. Concentration and volume retain their
+earlier recipe provenance, rather than an independent measurement.
+
+PLR waited **221 seconds** in verified lamp standby, then used calibration Start `0x7e`
+with a 90 °C cover, **60 °C / 312-second** acquisition hold and **30 °C / 30-second**
+cleanup hold. The lamp was already in standby at connection, so its total prior warm
+time is unknown. No redundant power-0 write was sent. The fixed collection used physical
+filters 1–5 at **1800, 1800, 594, 468 and 1800 ms**, with **1, 16, 16, 16 and 16** frames,
+matching the vendor's final exposures exactly. No exposure-search probes were acquired.
+
+Exposure-start (`CC`) timestamps were compared with the first observed hold, rather than
+using the later image-read (`CD`) timestamps. The first exposure started at **110.023
+seconds**, versus **109.187 seconds** for the vendor: **0.835 seconds later**, inside the
+prepared ±3-second target. The first exposures at filters 2–5 were at **114.901, 163.088,
+191.812 and 218.636 seconds**; vendor values were **113.453, 150.440, 168.142 and 184.095
+seconds**. The complete exposure-start span was **151.930 seconds**, versus **107.709
+seconds**. Per-image state guards were retained. Only the exposures and initial settling
+target matched; the whole acquisition sequence did not.
+
+Using identical vendor ROI masks and background, the recovered native/Java calculation
+passed without empty wells, spectral outliers, native flags, substituted wells or
+saturated final wells. None of the original final sensor pixels equalled 4095. All 480
+calculated coefficients round-tripped through the locally exported `plr-6-hex.ini`.
+No vendor calibration was installed or modified, and no all-B gate was imposed.
+
+Saved channel B peaked at **77 wells** and C at **19**, versus vendor counts of 75 and 21.
+Only **A2 and F1** changed peak channel. Normalized spectra differed from the vendor by
+RMS **0.005551** and maximum absolute difference **0.022815** on a 0–1 scale. Reprocessing
+the earlier PLR scan with these same vendor inputs gives RMS **0.018179**: a **69.5%**
+reduction in disagreement. This comparison changes multiple acquisition conditions and
+does not identify their separate effects or define an agreement acceptance threshold.
+`100 * (C/B - 1)` remained lower in PLR at every well, by a median **1.149 percentage
+points** and a range of **0.247–2.621 points**.
+
+Within the 16-image B burst, median per-well CV was **0.1330%**, with a **+0.2883%**
+last-four/first-four change. C values were **0.2061%** and **+0.4948%**, respectively.
+These statistics use unrounded ring/background/exposure-corrected values and describe
+within-burst behavior, not independent scan repeatability. The weak A channel had one
+nonpositive well excluded only from relative stability statistics; every well remains
+in the calibration. Vendor search illumination, prior lamp/thermal history and later
+filter timing were not matched. No assay-level validity was established.
+
+The transport audit verified **1,649 controller pairs**, all **65 complete original
+camera transfers** and their exported crops, one upload, one calibration Start, two
+homes and one release. There was no timeout, retry, cancellation, exposure-table write
+or lamp-counter reset. Collection and homing completed with **43 reported seconds**
+left in the hold. All **46 prior runs, 3,436 acquisitions and 122 collections**, plus
+the first instrument's journal, remained unchanged. History recorded normal completion
+after **392 seconds**. Final status was inactive, sample/block **30.0/29.9 °C**, cover
+**89.4 °C**, lamp off, stationary filter 0, plate unloaded and USB closed.
+
+The unchanged collection implementation had **52 passing targeted tests**; the session
+runner passed **10 offline fault/success cases** before acquisition. Evidence is retained
+outside Git in `abi7500-research/captures/abi7500-plr-unit2-dye-hex-002/`, including
+`scan/audit.json`, `analysis/comparison.json`, `analysis/burst-stability.json` and
+`analysis/vendor-comparison.png`. The local INI SHA-256 is
+`d881bca9f39088ef2d93763e8c930f4eeedee04659301d89d6c13a3fda48351c`.
+
+### Interrupted HEX cadence validation (2026-10-26)
+
+Authorized attempt `plr-u2dhx-003` used the same sealed HEX plate and instrument as
+`002`, with unchanged exposures, masks, background and settling plan. The opt-in
+filter-burst mode scheduled the 65 original vendor exposure-start offsets with a
+0.5-second lateness limit. Its source hashes matched the implementation validated
+by 339 driver tests and 11 offline runner cases.
+
+Only the first physical-filter-1 image completed. The second exposure was configured
+but **never started**: its configuration reply arrived **4.766635 seconds** after the
+first CC, beyond the **4.765665-second** deadline. Its earliest possible start was at
+least **0.500970 seconds** late, approximately **0.970 ms** over tolerance. Exact
+rejection-clock time was not logged. The initial settling target did pass: first CC
+was **110.636 seconds** after the first observed hold, versus vendor **109.187 seconds**.
+
+The trace contains extra thermal, optical and motor checks at the first filter
+boundary. Filter-2 movement began at **+2.755 seconds**, versus vendor **+2.405 seconds**.
+Motor polling, local work and durable writes also contribute; this attempt does not
+identify their separate effects. The limit was not relaxed, and no automatic retry
+occurred. No USB/camera timeout or firmware error was observed. The earlier simulation
+did not establish hardware throughput.
+
+The audit verified **798 controller pairs**, one upload, calibration Start and
+cancellation, and one complete **157,312-byte** camera transfer in 39 reads. Original
+bytes and crop matched their saved exports; no sensor pixel clipped. The second intent
+remains uncertain with no image bytes. All **47 prior runs, 3,501 acquisitions and
+123 collections**, plus the first instrument's journal, remained unchanged.
+
+Cleanup reconnected once, cancelled the owned run, parked filter 0, disabled the lamp
+and closed USB. The plate was **not released**. Last observed sample/block temperatures
+were **55.3/48.4 °C**, with cover **89.8 °C**. There was no exposure-table write,
+lamp-counter reset or calibration installation. The incomplete collection supplies
+no five-filter fluorescence comparison or calibration export.
+
+Evidence is retained in `abi7500-research/captures/abi7500-plr-unit2-dye-hex-003/`,
+including `analysis/interruption-audit.json`, the original transport and
+`analysis/filter-transition.png`. Boundary-query optimization and regression replay
+of these measured delays precede another separately authorized hardware attempt.
+
+### HEX cadence after boundary-query reduction (2026-10-26)
+
+Authorized attempt `plr-u2dhx-004` used the same sealed nominal HEX plate on Fast Dx
+**275030206 / camera 0000000747**, with unchanged exposures, vendor masks/background,
+221-second standby, calibration Start, 60 °C hold and 0.5-second lateness limit.
+Its 79 frozen preparation inputs matched the checked implementation (348 driver tests
+and 11 offline runner cases). The first CC followed the first observed hold by
+**109.812 seconds**, versus vendor **109.187 seconds**, within the ±3-second target.
+
+The reduced boundary checks allowed the first filter transition to pass. The second
+CC occurred at **+4.592076 seconds**, **0.326411 seconds** behind the vendor target and
+0.173589 seconds inside tolerance. Subsequent same-filter intervals were
+**2.265431, 2.251763 and 2.213012 seconds**, versus vendor
+**2.206321, 2.196440 and 2.177063 seconds**. Delay accumulated to **0.476793 seconds**
+by image 5. The sixth exposure was configured but **never started**: its reply at
+**+13.569378 seconds** was at least **0.527944 seconds** behind target, **27.944 ms**
+beyond tolerance. No tolerance change or automatic retry occurred.
+
+There were no thermal/optical queries between those same-filter images. Exposure and
+readiness took **1.844–1.854 seconds**, downloads **0.339–0.349 seconds**, and the gaps
+from download completion to the next configuration **17–67 ms**. The gaps include
+persistence, processing, scheduling and instrumentation; this trace does not separately
+measure their costs. The observed accumulation identifies a throughput problem beyond
+the first filter boundary. It does not establish a camera fault or a single root cause.
+
+The offline audit verified **796 controller pairs**, one upload, calibration Start and
+cancellation, and **five 157,312-byte transfers**, each reconstructed from 39 reads.
+All saved original bytes and crops matched; no sensor pixels clipped. One filter-1
+frame is complete. Four downloaded filter-2 frames remain **uncertain** because that
+burst did not reach its final status boundary; a sixth intent has no image bytes.
+No five-filter fluorescence comparison or calibration export was produced.
+
+All **48 prior runs, 3,503 acquisitions and 124 collections**, plus the first unit's
+journal, remained unchanged. No USB/camera timeout or firmware error was observed.
+Cleanup reconnected once, cancelled the owned run, parked filter 0, disabled the lamp
+and closed USB. The tray was **not released**; last observed sample/block temperatures
+were **55.3/48.5 °C**, with cover **90.5 °C**. No exposure-table write, lamp-counter reset
+or calibration installation occurred.
+
+Evidence is outside Git in `abi7500-research/captures/abi7500-plr-unit2-dye-hex-004/`,
+including `analysis/interruption-audit.json` and `analysis/cadence-interruption.png`.
+The next software investigation is to measure and reduce per-image acquisition and
+persistence overhead without weakening intent durability, state checks or the timing
+limit. The complete 65-image cadence and matched fluorescence remain unvalidated.
+
+### Instrumented HEX checkpoint timing (2026-10-27)
+
+Authorized attempt `plr-u2dhx-005` used the same sealed HEX plate, A1 back-left, on
+Fast Dx **275030206 / camera 0000000747 / C9254-02 / G2.10**. Exposures, vendor masks
+and background, 221-second standby, 60 °C acquisition hold and 0.5-second lateness
+limit were unchanged. The combined image/next-intent checkpoint implementation
+matched its saved source, which had passed 358 driver tests. A session-local timing
+delegate passed 19 offline cases; the runner passed 11. Timing spans were retained
+in memory and written after USB closed, without extra disk writes between exposures.
+
+The first exposure followed the first observed hold by **110.299 seconds**, versus
+vendor **109.187 seconds**, within the ±3-second target. Six original frames were
+downloaded. The seventh exposure was configured but **never started**: its reply
+arrived at **+15.735212 seconds**, at least **0.506483 seconds** behind target and
+**6.483 ms** beyond tolerance. No deadline change or automatic retry occurred.
+
+Five measured combined checkpoints took **56.574–59.141 ms**, median **58.146 ms**.
+They accounted for **290.154 ms of 291.386 ms (99.58%)** between download completion
+and the next same-filter configuration. The remaining gaps were **0.234–0.271 ms**
+each. These are whole journal-call times, including validation, serialization, SQL
+and commit, not isolated disk-flush measurements. Nested timing spans were excluded
+from the sum. Exposure/readiness still took **1.846–1.850 seconds** within filter 2,
+and downloads **0.344–0.352 seconds**. The measured persistence delay identifies a
+software target; it does not by itself explain the storage latency or validate a fix.
+
+The audit verified **791 controller pairs**, six **157,312-byte** camera transfers,
+all exported crops and no clipped sensor pixels. One filter-1 frame is complete;
+five downloaded filter-2 frames and the unstarted seventh intent remain uncertain
+because that burst never reached its final status checks. All **49 prior runs,
+3,509 acquisitions and 125 collections**, plus the first unit's journal, remained
+unchanged. All 85 frozen preparation inputs and 60 runtime source hashes matched.
+
+Cleanup reconnected once, cancelled the owned run, parked filter 0, disabled the
+lamp and closed USB. The tray was **not released**. Last observed sample/block
+temperatures were **55.3/48.7 °C**, cover **89.4 °C**. No USB/camera timeout, firmware
+error, exposure-table write, lamp-counter reset or calibration installation occurred.
+This incomplete acquisition provides no five-filter fluorescence comparison or
+calibration export. The full vendor cadence remains unvalidated.
+
+Evidence is in `abi7500-research/captures/abi7500-plr-unit2-dye-hex-005/`, including
+`analysis/timing-audit.json`, `analysis/checkpoint-timing.png`, original transport,
+raw frames and the checkpoint timing spans. Further software work should reproduce
+the live checkpoint latency under realistic image spacing while preserving durable
+intents and original images before each subsequent exposure.
+
+### HEX acquisition with temporary host latency control (2026-10-27)
+
+Authorized attempt `plr-u2dhx-006` used the same sealed HEX plate, A1 back-left, on
+Fast Dx **275030206 / USB 0000000747 / C9254-02 / G2.10**. Exposures, calibration
+inputs, 221-second standby, 60 °C hold and 0.5-second lateness limit were unchanged.
+The only operating change was a temporary NVMe latency tolerance of 5000 µs;
+the original value of 100000 was restored after cleanup, without persistent OS changes.
+The journal and acquisition workspace remained on NVMe; the Seafile archive was on HDD.
+
+Fifteen combined image/next-intent checkpoints took **4.956–8.508 ms**, median
+**7.224 ms**, versus **58.146 ms** in 005. The original SQLite DELETE/FULL durability
+was retained. Seventeen complete original frames were preserved: one from filter 1
+and sixteen from filter 2. The eighteenth intent was configured but **never started**.
+Its configuration reply was at least **624.139 ms** behind target, **124.139 ms**
+beyond the unchanged limit. No automatic retry occurred.
+
+The first CC followed the first observed hold by **110.233 seconds**, versus vendor
+**109.187 seconds**. Delay accumulated to **335.681 ms** at CC17, with another
+**288.458 ms** through the next configuration reply. The filter-move request to
+observed-idle interval was **1.626 seconds**, versus vendor **1.641 seconds**;
+additional delay lay before and after that interval. These host observations include
+transport/polling and do not isolate physical motor motion. The final sixteen-frame
+completion checkpoint took **50.560 ms**. The exact cadence-guard timestamp was not
+recorded, so the blocked exposure's lateness is a lower bound.
+
+The audit verified **843 controller pairs**, all 17 original 157,312-byte transfers
+and crops, no clipped sensor pixels, and all frozen preparation/runtime hashes.
+All **50 prior runs, 3516 acquisitions and 126 collections** remained unchanged.
+The unstarted intent remains uncertain. Cleanup reconciled ownership, cancelled the
+run, parked filter 0, disabled the lamp and closed USB without a cleanup/export error.
+The tray was **not released**. Last observed sample/block temperatures were
+**54.2/48.0 °C**, cover **90.6 °C**. No calibration installation occurred.
+
+Evidence is in `abi7500-research/captures/abi7500-plr-unit2-dye-hex-006/`, including
+`analysis/timing-audit.json`, `analysis/remaining-delay.json`, raw frames and the
+host-setting restoration report. This incomplete acquisition does not establish
+five-filter fluorescence agreement. Subsequent software changes to image read sizes
+and completion-checkpoint scheduling are covered offline only; the complete matched
+cadence still requires a separately approved hardware comparison.
+
+### Ordinary HEX host qualification (2026-10-28)
+
+Authorized run `plr-u2hxp-001` completed **65/65 images** on the current Ubuntu
+host at normal power settings. Instrument **275030206 / USB 0000000747 /
+C9254-02 / G2.10** used the same sealed nominal HEX plate, A1 back-left.
+This session explicitly selected ordinary `cadence=None` acquisition with fresh
+observations around every image. It does **not** validate the strict vendor cadence.
+
+The method retained 221-second lamp standby, a 90 °C cover, calibration Start
+0x7e, 60 °C/312 seconds and 30 °C/30 seconds. Physical filters 1–5 used
+1800/1800/594/468/1800 ms with counts 1/16/16/16/16 and no probes. Collection
+began at 205 reported seconds remaining and finished its home/readback checks
+with **50 seconds remaining**, consuming 155 reported seconds. First CC to the
+last image download took **147.100 seconds** on the host clock.
+
+The independent audit verified all **2,184 controller pairs**, exactly 65 camera
+starts/downloads, all 157,312-byte original frames and independently reconstructed
+153,600-byte crops. Every frame matched the intended filter, exposure and owned
+thermal hold. No USB timeout, controller error, duplicate exposure or cancellation
+occurred. All **51 prior runs, 3,534 acquisitions and 127 collections** remained
+unchanged, as did the first instrument's journal and all 84 frozen source/plan inputs.
+
+The NVMe latency tolerance remained **100000**, without a setting write. SQLite
+DELETE/FULL persistence was unchanged. The 260 measured image-save calls took a
+median **54.576 ms**, maximum **70.634 ms**; all non-overlapping instrumented
+journal calls totaled **8.706 seconds**. This qualifies ordinary acquisition within
+this hold despite storage latency; it does not establish vendor timing agreement
+or exercise the separate timed-path read-size/boundary optimizations.
+
+Cleanup parked filter 0, disabled the lamp, closed USB and released the tray once
+following verified normal completion. Final sample/block temperatures were
+**30.0/29.9 °C**, cover **90.6 °C**. No calibration installation, exposure-table
+write or lamp-counter reset occurred. No calibration or fluorescence-agreement
+claim is made. Other physical computers and representative PCR workloads still
+require qualification; the matched-cadence milestone remains pending.
+
+Evidence is in
+`abi7500-research/captures/abi7500-plr-unit2-hex-portability-001/`, including
+`scan/audit.json`, `analysis/acquisition-timing.png`, raw frames and local journal
+snapshots. The new session runner passed 12 offline scenarios before this single
+launch; source hashes match the preceding portability study 008.

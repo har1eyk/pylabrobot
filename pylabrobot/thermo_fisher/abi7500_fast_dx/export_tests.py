@@ -22,7 +22,8 @@ from .collection import CollectionFilter, CollectionPlan, CollectionRecord, Fluo
 from .collection_tests import _status
 from .driver import ABI7500FastDx
 from .fluorescence_tests import _VECTORS, _background, _frames, _uniformity
-from .image_processing_tests import _acquisition
+from .image_processing import PlatePixelMask
+from .image_processing_tests import _acquisition, _mask
 from .run import ABI7500History, ABI7500RunError, ThermalRun
 from .run_tests import _history, _running
 
@@ -131,6 +132,7 @@ class ExportTests(unittest.TestCase):
       self.assertEqual(
         archive.read(manifest["calibration"]["masks"]["1"]), self.masks[0].source_bytes
       )
+      self.assertTrue(manifest["calibration"]["masks"]["1"].endswith(".aoi"))
       for collection in self.collections:
         record = collection.record
         self.assertEqual(
@@ -143,6 +145,25 @@ class ExportTests(unittest.TestCase):
           metadata = json.loads(archive.read(f"acquisitions/{acquisition.acquisition_id}.json"))
           metadata["wire_data"] = archive.read(metadata.pop("wire_data_member")).hex()
           self.assertEqual(CameraAcquisition.from_dict(metadata), acquisition)
+
+  def test_generated_mask_format_and_measurements_survive_export(self) -> None:
+    """Generated mask bytes retain their format and produce the same values as equal AOI pixels."""
+    reference = PlatePixelMask(_mask(), filter=1)
+    original = self.path.with_name("reference.zip")
+    write_run_archive(
+      original, self.checkpoint, self.collections, self.background, self.uniformity, (reference,)
+    )
+    self.masks = (
+      PlatePixelMask.from_regions(reference.wells, filter=1, source_image_sha256="0" * 64),
+    )
+    self.export()
+    with zipfile.ZipFile(self.path) as generated, zipfile.ZipFile(original) as vendor:
+      manifest = json.loads(generated.read("manifest.json"))
+      member = manifest["calibration"]["masks"]["1"]
+      self.assertEqual(member, "calibration/physical-filter-1.plrroi")
+      self.assertEqual(PlatePixelMask(generated.read(member), 1), self.masks[0])
+      for name in ("measurements.csv", "exposures.csv"):
+        self.assertEqual(generated.read(name), vendor.read(name))
 
   def test_csv_matches_native_oracles_and_preserves_saturated_fallback(self) -> None:
     """All filter mappings, exact float bits and selected/unselected flags survive CSV export."""

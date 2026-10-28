@@ -229,11 +229,11 @@ class RawMeasurementTests(unittest.TestCase):
           ),
         )
 
-  def test_diagnostic_regions_cannot_be_used_as_vendor_masks(self) -> None:
+  def test_diagnostic_regions_cannot_be_used_as_pixel_masks(self) -> None:
     """A matching pixel-interface shape must not bypass the calibrated pipeline's mask boundary."""
     frame = self.source.frame
     assert frame is not None
-    with self.assertRaisesRegex(TypeError, "saved vendor PlatePixelMask"):
+    with self.assertRaisesRegex(TypeError, "explicit PlatePixelMask"):
       FluorescenceFrame(frame, self.source.exposure, cast(Any, self.regions))
 
 

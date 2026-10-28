@@ -15,7 +15,9 @@ export. Automatic exposure selection reproduces all 35 archived vendor probes an
 chosen exposures offline. A fresh automatic scan using the cover-preserving Start completed
 35 probes and 65 final images with the cover at 89.3–90.5 °C during final imaging. No final
 well exceeded the saturation threshold, and PLR generated a ROX interchange file after correcting
-G1. Cross-run vendor agreement, other dyes and assay performance remain unverified.
+G1. A fresh 160 nM fluorescein scan also passed all spectral and export checks with no
+flagged or substituted wells, using PLR-generated masks and matching background.
+Cross-run vendor agreement, additional dyes and assay performance remain unverified.
 See the [hardware evidence](hardware-validation.md).
 ```
 
@@ -78,8 +80,76 @@ Path("plr-rox.ini").write_bytes(result.to_ini())
 `to_ini()` generates a single-dye interchange file with the supplied identities. It does not
 merge dyes, overwrite the control PC's files, or certify the instrument. Full source data and
 calibrations belong outside Git. This is not spectral unmixing, Rn, ΔRn, Ct or concentration.
+Use the separate [spectral measurement tools](spectral-measurements.md) to apply selected
+pure-dye spectra to corrected filter measurements and calculate a guarded reporter/reference ratio.
 
 ## Fixed-exposure acquisition
+
+### Matching a captured camera cadence
+
+`CollectionPlan(..., cadence=CollectionCadence(offsets, max_lateness=0.5))` opts fixed
+calibration images into scheduled filter bursts. `offsets` is an immutable tuple of tuples:
+one group per physical filter, one value per image, in seconds relative to the first
+exposure's host `CC` submission. The first value must be zero and all values must increase.
+Use offsets measured from a compatible vendor acquisition, together with its exact exposures;
+cadence is not inferred from a dye name. Ordinary PCR brackets and exposure searches cannot
+use this mode.
+
+Each target uses the same monotonic time origin, avoiding accumulated delays. If a start
+is more than `max_lateness` late, PLR records an optical failure before issuing that `CC`.
+It does not compress the remaining schedule, extend the thermal hold or retry an image.
+The tolerance is positive and at most one second. It bounds host submission lateness,
+not the camera's internal exposure trigger or the initial settling delay.
+
+The driver verifies the run token, intended hold, cover and stationary illuminated filter
+at burst boundaries. It also checks a conservative remaining-hold budget before every
+exposure. Each original image is durable before the next one starts, but all images in a
+filter remain uncertain until the final boundary observations pass. Partial images and
+failed bursts remain retrievable; they cannot be resumed. No controller queries are sent
+between images within a burst of at most sixteen frames.
+
+Between filters, cadence mode reuses the preceding burst's verified final thermal status
+to bound the next movement. Its query-start timestamp discounts time spent saving images;
+an expired hold budget prevents movement. After motion, the successful final motor poll
+supplies the stationary observation without immediately querying it again. Filter position,
+lamp and thermal state are read afresh before the next burst. A collection whose first
+filter is already selected still reads motor state afresh. These optimizations neither
+increase the lateness tolerance nor change ordinary per-frame acquisition.
+
+Within a filter burst, the downloaded image and the next exposure intent share one
+FULL synchronous SQLite transaction, committed before the next camera command. The last
+image is committed before final status queries; after those pass, all frames become
+complete in one atomic transaction. When another filter follows, this final transaction
+runs after its move acknowledgement and before motor polling, so persistence can overlap
+physical movement. Raw bytes are already durable before that move. The movement deadline
+includes the commit time; fresh motor, position, lamp and thermal checks still precede the
+next exposure. The last burst commits before collection cleanup. A failed move or commit
+retains the affected burst as uncertain and blocks further exposures and replay.
+This uses 18 durable acquisition commits for sixteen images, without changing the journal
+format or FULL synchronous mode. Ordinary per-frame acquisition retains its separate
+checkpoints.
+
+Timed calibration images use bounded 16 KiB host reads: a full 157,312-byte transfer takes
+ten reads when responses fill the requested buffers, rather than 39 at 4 KiB. `CD`, the
+requested image length and the original bytes are unchanged. Short and odd fragments are
+assembled without reading beyond the image, using one shared transfer deadline. Cancellation
+waits for an in-flight read and retains its returned bytes before propagating. Other image
+acquisition paths retain 4 KiB reads. The larger reads and overlapping completion commit
+have offline regression coverage; their hardware timing benefit remains unverified.
+
+This deliberately changes observation frequency. Every frame is labelled
+`observation_scope="filter_burst"` and shares the burst's before/after observations;
+transient state changes inside that interval are not observed. `exposure_start_offset`
+retains the actual host submission offset. Journal format 7 prevents older controllers
+from silently treating these records as ordinary per-frame checks. Without a cadence,
+the existing per-frame checks and legacy serialization remain unchanged.
+
+Cadence control has offline transport/timing and fault tests but **has not been validated
+on hardware**. A simulated replay or exported plan does not establish that a particular
+computer can meet its targets. Audit the fresh USB `CC` timestamps, first-exposure settling
+and all filter bursts in a separately approved comparison before claiming timing agreement.
+
+### Fixed image groups
 
 `CollectionFilter(..., mode="fixed")` supports one or sixteen identical exposures. Its durable
 plan records every exposure identity before collection, and interrupted collections cannot be
@@ -282,3 +352,185 @@ scan by a median 8.78%. This narrows the exposure-response question over 300–6
 but acquisition history and between-run agreement remain unresolved. It does not
 directly test the earlier 639–702 ms exposures or generate a complete calibration.
 See the [settled-response diagnostic](hardware-validation.md#settled-rox-exposure-response-diagnostic-2026-10-20).
+
+## Fluorescein with PLR-generated calibration inputs
+
+Authorized session `plr-u2dfl-010` acquired the user-declared **160 nM fluorescein,
+20 µL per well** plate on Fast Dx 275030206 / C9254-02. It used the five PLR-generated
+masks and their matching full-precision background, with 270 seconds of lamp standby,
+a 90 °C cover and 15 minutes of settling at 60 °C before exposure selection.
+Physical filters 1–5 selected **1800, 1800, 1800, 1800 and 162 ms**. All 15 search
+probes and 65 final images completed.
+
+All 96 wells had their strongest response in saved channel A / physical filter 5.
+The recovered native and Java checks found no empty wells, spectral outliers or
+substitutions, and no final well exceeded the saturation threshold. PLR generated a
+single-dye `plr-fluorescein.ini`; reloading it preserved all **480 coefficients**.
+Uniformity factors were not applied to pure-dye extraction. The median per-well CV
+within the 16-image green-channel burst was **0.067%**, with a median last-four versus
+first-four change of **−0.088%**. This describes one burst, not independent repeatability.
+
+The dye identity remains `fluorescein`. This acquisition does not establish equivalence
+to FAM, SYBR or EvaGreen, and creates no aliases. The interchange file and matching
+inputs remain outside Git; no vendor calibration or validity flags were overwritten.
+See the [acquisition and audit evidence](
+hardware-validation.md#fresh-fluorescein-calibration-with-plr-inputs-2026-10-24).
+
+The independently acquired repeat `plr-u2dfl-011` retained the same method and selected
+the same exposures. All 15 probes and 65 final images completed without empty wells,
+spectral outliers or saturated final wells. Its original relative spectra were compared
+with the unchanged `010` file: no coefficients were refitted and no wells were replaced.
+The RMS difference across 480 values was **0.0001415**, with a maximum absolute difference
+of **0.001366** at B12 in saved channel B. These are absolute differences on the scale
+where a well's strongest channel is 1, not percentages of weak-channel signal.
+
+Green brightness changed by a median **+1.43%**, ranging from **−3.71% at D4 to +10.60%
+at B12**. Thus a small overall spectral difference does not establish unchanged per-well
+brightness. The green burst's median per-well CV was **0.0662%** and its median last-four
+versus first-four change was **−0.0722%**. The between-run B12 change remains unexplained.
+This is one repeat of the same plate, without a vendor repeatability tolerance or matched
+vendor fluorescein acquisition. See the [independent repeat evidence](
+hardware-validation.md#independent-fluorescein-repeat-with-frozen-coefficients-2026-10-24).
+
+## Explicit SYBR-labelled fluorescein reference
+
+Session `plr-u2dsy-001` acquired fresh images of the same **160 nM fluorescein,
+20 µL per well** plate and calculated a separate `SYBR` entry at the user's explicit
+request, following their notebook's fluorescein-surrogate workflow. The physical reference
+remains fluorescein. The INI comments and companion provenance report retain that distinction;
+no automatic dye alias or measured SYBR/EvaGreen chemical or assay equivalence is implied.
+
+All 15 search probes and 65 final images completed, using the same selected exposures as
+the preceding fluorescein scans. The recovered numerical checks passed without empty wells,
+spectral outliers, substitutions or saturated final wells. All 96 wells peaked in saved
+channel A / physical filter 5. The separate `plr-sybr-surrogate.ini` preserved all 480
+coefficients on reload under the exact label `SYBR`; the `010` fluorescein file is unchanged.
+
+Relative to the immediately preceding `011` scan, the RMS difference across original
+normalized spectra was **0.00015075** and median green brightness increased **0.8106%**.
+These comparisons describe repeated measurements of fluorescein, not a comparison of
+fluorescein with actual SYBR. Within the green burst, median per-well CV was **0.0697%**.
+The generated entry remains an offline PLR artifact; it was not installed in the vendor
+configuration. See the [acquisition and provenance evidence](
+hardware-validation.md#sybr-labelled-fluorescein-surrogate-acquisition-2026-10-24).
+
+## ROX acquisition with the same PLR inputs
+
+Session `plr-u2drx-013` attempted a fresh ROX calibration using the same PLR-generated
+masks, matching background and settled acquisition method. It retained 24 search probes
+and 62 completed final images before a filter-position readback timed out after an image
+download. That additional image remains uncertain; two further final images were not started.
+The run was cancelled, the filter parked and lamp turned off, and USB closed. The plate
+was not released.
+
+No ROX calibration was exported from this incomplete acquisition. The completed 16-image
+ROX burst at physical filter 2 / saved channel D had no saturated wells and a median
+per-well CV of 0.0632%, but this does not establish a five-filter calibration pass.
+See the [interruption audit and retained measurements](
+hardware-validation.md#interrupted-rox-acquisition-with-plr-generated-inputs-2026-10-24).
+
+The separately authorized repeat, `plr-u2drx-014`, completed all 25 search probes and
+65 final images with the same plate and processing inputs. All 96 wells peaked in saved
+channel D / physical filter 2, without empty wells, spectral outliers, substitutions,
+native flags or saturated final wells. The resulting `plr-rox.ini` preserved all 480
+coefficients on reload. This is an offline PLR artifact, not an installed vendor calibration.
+
+Within its 16-image ROX burst, median per-well CV was **0.0819%**. Compared with the
+completed ROX burst of interrupted scan `013`, median background/exposure-corrected signal
+increased **5.6054%**, ranging from **−1.7639% at F10 to +14.2336% at G6**. This comparison
+does not establish full five-filter repeatability or explain the brightness change.
+See the [completed repeat evidence](
+hardware-validation.md#completed-rox-repeat-with-plr-generated-inputs-2026-10-24).
+
+## 6-HEX acquisition and channel review
+
+Authorized session `plr-u2dhx-001` completed **25 exposure probes and 65 final images**
+using the same PLR masks, background and settled acquisition method. The user reported
+the HEX plate loaded immediately after receiving the 50 nM, 20 µL per well preparation
+instructions; those recipe and orientation details are inferred from that exchange.
+
+The recovered native and Java checks passed without empty wells, spectral outliers,
+substitutions or saturated final wells. Saved channel B / physical filter 4 was strongest
+in 85 wells; saved channel C / physical filter 3 was strongest in 11 perimeter wells.
+In those wells, C exceeded B by **0.2–9.2%**. Median per-well CV within the 16-image
+B-channel burst was **0.08175%**, with median last-four/first-four drift **−0.04812%**.
+
+The session's additional expectation that every unrepaired HEX well peak in B blocked
+INI export. This is an extra review gate, **not a recovered vendor failure criterion**;
+it does not establish that those wells or the plate failed calibration. Original spectra
+and all 480 calculated coefficients are retained in the report, with no replacements.
+The spatial channel response remains unexplained. This PLR session installed no vendor
+calibration or `VIC` alias; the subsequent vendor comparison below used custom `6-HEX`.
+See the [acquisition and channel-review evidence](
+hardware-validation.md#hex-acquisition-and-channel-review-2026-10-26).
+
+### Vendor HEX comparison
+
+The same-plate vendor session `abi7500-unit2-dye-hex-vendor-001` completed as custom
+**6-HEX**, with v2.3 reporting **Passed / Current**. PLR recalculated all **480 saved
+binary32 coefficients exactly** from the 65 final captured camera frames and the vendor's
+associated masks/background. No well was substituted, and no final sensor pixel clipped.
+
+The vendor acquisition peaked in B at 75 wells and C at 21, including all 11 C-peaking
+wells from the earlier PLR acquisition. An all-B expectation therefore cannot serve as a
+vendor-equivalent pass criterion. Neither observation proves chemical identity or assay
+performance.
+
+The two acquisitions used different masks/backgrounds, exposures and settling histories.
+Offline reprocessing of each image set with both calibration pairs retained its original
+C-peak count (11 or 21). Changing the calibration pair shifted `100 * (C/B - 1)` by less
+than 0.88 percentage points at every well; changing acquisitions with either pair held
+constant shifted it by a median 3.48–3.49 points. This localizes most of that difference
+to the acquisitions but does not distinguish exposure effects from thermal/illumination
+history. The vendor's first final image followed the first observed hold by about 111
+seconds; PLR used 900 seconds of settling before imaging. Independent repeatability under
+matched conditions remains untested. See the [vendor comparison evidence](
+hardware-validation.md#vendor-hex-comparison-and-exact-replay-2026-10-26).
+
+### Fixed-exposure HEX comparison
+
+The authorized PLR scan `plr-u2dhx-002` used the same sealed HEX plate with A1 explicitly
+confirmed at the back-left. It acquired all 65 final images using the vendor's exact
+exposures, masks and background. The first exposure began **110.023 seconds** after the
+first observed 60 °C hold, versus **109.187 seconds** for the vendor: a **0.835-second**
+difference, within the prepared ±3-second target. Later filter timing remained slower;
+the first-to-last exposure-start span was **151.930 seconds**, versus **107.709 seconds**.
+
+The recovered dye checks passed without flagged, substituted or saturated final wells.
+PLR exported a local `plr-6-hex.ini`; it was not installed on the vendor PC. Saved channel
+B peaked at 77 wells and C at 19, versus 75 and 21 for the vendor. Only A2 and F1 changed
+their strongest channel. No all-B gate was applied.
+
+Across all 480 normalized coefficients, RMS difference from the vendor was **0.005551**,
+with maximum absolute difference **0.022815** on a 0–1 scale. With the same vendor
+calibration inputs used for both comparisons, RMS disagreement decreased **69.5%** from
+the earlier PLR acquisition. This is a descriptive improvement, not a predefined
+agreement pass or evidence isolating exposure from settling effects. Timing of later
+filters, exposure-search illumination and prior lamp history remain different.
+Independent repeatability under identical conditions is still untested. See the
+[fixed-exposure evidence](
+hardware-validation.md#fixed-exposure-hex-comparison-2026-10-26).
+
+The subsequent cadence attempt `plr-u2dhx-003` stopped after one image when the first
+filter transition exceeded the second exposure's timing deadline. The driver blocked
+that exposure, cancelled the run and preserved the incomplete collection. Thus the
+65-image schedule remains unverified on hardware, and this attempt supplies no new
+five-filter fluorescence comparison. See the [interruption evidence](
+hardware-validation.md#interrupted-hex-cadence-validation-2026-10-26).
+
+Attempt `plr-u2dhx-004`, using reduced boundary queries, passed the first filter
+transition and downloaded five images. Delay then accumulated within filter 2;
+the sixth start was blocked at least **27.944 ms** beyond the unchanged tolerance.
+Four downloaded frames remain uncertain because their burst did not finish its
+status checks. This isolates further work to acquisition and local per-image
+throughput; the full cadence and matched fluorescence comparison remain unvalidated.
+See the [follow-up timing audit](
+hardware-validation.md#hex-cadence-after-boundary-query-reduction-2026-10-26).
+
+Instrumented attempt `plr-u2dhx-005` downloaded six frames before blocking the seventh
+start. Combined image/next-intent checkpoints took a median **58.146 ms**, accounting
+for **99.58%** of the measured gaps before the next same-filter configuration. These
+are whole journal calls, not isolated disk-flush times. Cleanup completed without
+releasing the tray. The incomplete burst remains uncertain and produces no new
+calibration or vendor fluorescence agreement result. See the [checkpoint timing evidence](
+hardware-validation.md#instrumented-hex-checkpoint-timing-2026-10-27).

@@ -1,0 +1,60 @@
+{
+  "source_session": "abi7500-plr-unit2-dye-hex-004",
+  "source_sha256": {
+    "analysis/interruption-audit.json": "6bd67f15beed5db5dff5d68c2b31ce53726032c481cc7afc535ecb5b0f705b46",
+    "scan/usb-hex.jsonl": "80a0a01e6c7fd0a3dbe785d25ab0604bbfd9570bded11ca744d9bacb5bd2d918"
+  },
+  "scope": "Five recorded transfers and the sixth configuration rejection. Local gaps include unseparated persistence, scheduling and instrumentation; no per-commit timing was measured on hardware.",
+  "targets": [
+    0,
+    4.265665,
+    6.471986,
+    8.668426,
+    10.845489,
+    13.041434
+  ],
+  "max_lateness": 0.5,
+  "blocked_configuration_offset": 13.569377886000439,
+  "images": [
+    {
+      "number": 1,
+      "actual": 0.0,
+      "CC_to_CD_seconds": 1.849883681999927,
+      "download_seconds": 0.343079296999349,
+      "download_end_to_next_CJ_seconds": 2.3983589070012385,
+      "next_CJ_reply_offset": 4.591976643001544
+    },
+    {
+      "number": 2,
+      "actual": 4.592076477001683,
+      "CC_to_CD_seconds": 1.8487503199976345,
+      "download_seconds": 0.34872065799936536,
+      "download_end_to_next_CJ_seconds": 0.06723893500020495,
+      "next_CJ_reply_offset": 6.857425042999239
+    },
+    {
+      "number": 3,
+      "actual": 6.857507404001808,
+      "CC_to_CD_seconds": 1.849759187996824,
+      "download_seconds": 0.33895300299991504,
+      "download_end_to_next_CJ_seconds": 0.062356959002499934,
+      "next_CJ_reply_offset": 9.10918937599854
+    },
+    {
+      "number": 4,
+      "actual": 9.10926992700115,
+      "CC_to_CD_seconds": 1.8540303119989403,
+      "download_seconds": 0.34128350199898705,
+      "download_end_to_next_CJ_seconds": 0.017030613002134487,
+      "next_CJ_reply_offset": 11.322203773001092
+    },
+    {
+      "number": 5,
+      "actual": 11.32228175199998,
+      "CC_to_CD_seconds": 1.8436029270014842,
+      "download_seconds": 0.3394457659996988,
+      "download_end_to_next_CJ_seconds": 0.06337674799942761,
+      "next_CJ_reply_offset": 13.569377886000439
+    }
+  ]
+}

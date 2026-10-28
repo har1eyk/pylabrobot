@@ -1,5 +1,6 @@
 """Status-scheduled optical collection with durable identities and explicit processing inputs."""
 
+import math
 from dataclasses import dataclass
 from typing import Any, Literal, Mapping, Optional
 
@@ -19,20 +20,26 @@ class CollectionFilter:
   ``fixed`` requires one or sixteen identical exposures for calibration-image averaging.
   ``automatic`` uses one or sixteen 2.0-second ceiling placeholders; the final duration is
   selected by a separate, journaled exposure search using the plan's saved ROI masks.
+  ``background`` collects 2.0, 1.0 and 0.5 seconds in that order, with one or sixteen
+  consecutive images at each duration. It retains the full background-fit inputs.
   The count is caller-specified; automatic frame-count selection is not inferred.
   The explicit mode prevents repeated exposures from silently becoming a PCR bracket.
   """
 
   position: int
   exposures: tuple[float, ...]
-  mode: Literal["bracket", "fixed", "automatic"] = "bracket"
+  mode: Literal["bracket", "fixed", "automatic", "background"] = "bracket"
 
   def __post_init__(self) -> None:
     """Require a supported bracket or a complete fixed-exposure calibration collection."""
     _integer("position", self.position, 1, 5)
-    if self.mode not in ("bracket", "fixed", "automatic"):
+    if self.mode not in ("bracket", "fixed", "automatic", "background"):
       raise ValueError("Unknown collection mode")
-    counts = (3,) if self.mode == "bracket" else (1, 16)
+    counts = (
+      (3, 18, 33, 48)
+      if self.mode == "background"
+      else ((3,) if self.mode == "bracket" else (1, 16))
+    )
     if type(self.exposures) is not tuple or len(self.exposures) not in counts:
       raise ValueError(f"Collection mode {self.mode} requires an exposure count in {counts}")
     times = tuple(CameraExposure(value).milliseconds for value in self.exposures)
@@ -42,6 +49,13 @@ class CollectionFilter:
       raise ValueError("Fixed collection exposures must be identical")
     if self.mode == "automatic" and any(value != 2.0 for value in self.exposures):
       raise ValueError("Automatic calibration requires the captured 2-second search ceiling")
+    if self.mode == "background":
+      repeats = tuple(times.count(duration) for duration in (2000, 1000, 500))
+      expected = tuple(t for t, count in zip((2000, 1000, 500), repeats) for _ in range(count))
+      if any(count not in (1, 16) for count in repeats) or times != expected:
+        raise ValueError(
+          "Background collection requires ordered 2, 1, 0.5-second groups of 1 or 16"
+        )
 
 
 @dataclass(frozen=True, order=True)
@@ -78,6 +92,42 @@ class CollectionPoint:
 
 
 @dataclass(frozen=True)
+class CollectionCadence:
+  """Fixed-image start offsets in seconds, grouped in physical-filter order.
+
+  Offsets are relative to the first exposure's host CC submission. A monotonic clock avoids
+  accumulating delays between images. Missing a target by more than ``max_lateness`` fails
+  the collection before another CC; the driver never catches up by replaying exposures.
+  This explicitly selects observations around each filter burst, not each individual frame.
+  The instrument still owns the hold timing. Host scheduling is not a hardware trigger.
+  """
+
+  offsets: tuple[tuple[float, ...], ...]
+  max_lateness: float = 0.5
+
+  def __post_init__(self) -> None:
+    """Require finite, increasing offsets and a bounded lateness tolerance."""
+    if (
+      isinstance(self.max_lateness, bool)
+      or not math.isfinite(self.max_lateness)
+      or not 0 < self.max_lateness <= 1
+    ):
+      raise ValueError("Cadence max_lateness must be positive and at most one second")
+    if type(self.offsets) is not tuple or not 1 <= len(self.offsets) <= 5:
+      raise ValueError("Cadence requires one to five immutable filter groups")
+    flat = []
+    for group in self.offsets:
+      if type(group) is not tuple or len(group) not in (1, 16):
+        raise ValueError("Cadence requires one or sixteen offsets per filter")
+      for value in group:
+        if isinstance(value, bool) or not math.isfinite(value) or not 0 <= value < 5939:
+          raise ValueError("Cadence offsets must be finite nonnegative seconds")
+        flat.append(value)
+    if flat[0] != 0 or any(a >= b for a, b in zip(flat, flat[1:])):
+      raise ValueError("Cadence must start at zero and strictly increase across all filters")
+
+
+@dataclass(frozen=True)
 class CollectionPlan:
   """Explicit optical reads during selected holds, while thermal timing stays on the instrument.
 
@@ -101,6 +151,9 @@ class CollectionPlan:
   but USB transfers, processing and filter movement require additional caller-provided margin.
   ``park_after_exposure_search`` closes the light path at absolute filter 0 after all probes,
   before moving to the first final-image filter, as in the captured pure-dye routine.
+  ``cadence`` opts fixed calibration images into scheduled filter bursts. Fresh observations
+  bracket each burst; intermediate state changes cannot be observed. Each image remains
+  uncertain until the burst's final observations pass. Ordinary plans retain per-frame checks.
   """
 
   steps: tuple[tuple[int, int], ...]
@@ -110,6 +163,7 @@ class CollectionPlan:
   home_after_collections: tuple[int, ...] = ()
   exposure_search_masks: tuple[PlatePixelMask, ...] = ()
   park_after_exposure_search: bool = False
+  cadence: Optional[CollectionCadence] = None
 
   def __post_init__(self) -> None:
     """Reject empty, duplicate and unordered settings before any instrument I/O."""
@@ -154,6 +208,24 @@ class CollectionPlan:
       >= self.read_window - 2
     ):
       raise ValueError("Read window cannot fit even the requested exposures")
+    if self.cadence is not None:
+      if not isinstance(self.cadence, CollectionCadence):
+        raise TypeError("cadence must be a CollectionCadence")
+      if any(f.mode != "fixed" for f in self.filters) or len(self.cadence.offsets) != len(
+        self.filters
+      ):
+        raise ValueError("Cadence requires matching fixed-exposure filter groups")
+      starts: list[float] = []
+      durations: list[float] = []
+      for setting, offsets in zip(self.filters, self.cadence.offsets):
+        if len(setting.exposures) != len(offsets):
+          raise ValueError("Cadence must specify every fixed exposure exactly once")
+        starts.extend(offsets)
+        durations.extend(setting.exposures)
+      if any(a + duration > b for a, b, duration in zip(starts, starts[1:], durations)):
+        raise ValueError("Cadence cannot overlap exposures")
+      if starts[-1] + durations[-1] + self.cadence.max_lateness >= self.read_window - 2:
+        raise ValueError("Read window cannot fit the scheduled cadence")
 
   def probe_ids(self, collection_id: str) -> tuple[str, ...]:
     """Bounded probe slots, separate from the reserved final-image identities."""
@@ -193,6 +265,16 @@ class CollectionPlan:
       "read_window": self.read_window,
       "park_between_collections": self.park_between_collections,
       "home_after_collections": list(self.home_after_collections),
+      **(
+        {
+          "cadence": {
+            "offsets": [list(g) for g in self.cadence.offsets],
+            "max_lateness": self.cadence.max_lateness,
+          }
+        }
+        if self.cadence is not None
+        else {}
+      ),
       **({"park_after_exposure_search": True} if self.park_after_exposure_search else {}),
       **(
         {
@@ -223,6 +305,11 @@ class CollectionPlan:
         for m in value.get("exposure_search_masks", ())
       ),
       value.get("park_after_exposure_search", False),
+      None
+      if value.get("cadence") is None
+      else CollectionCadence(
+        tuple(tuple(g) for g in value["cadence"]["offsets"]), value["cadence"]["max_lateness"]
+      ),
     )
 
 

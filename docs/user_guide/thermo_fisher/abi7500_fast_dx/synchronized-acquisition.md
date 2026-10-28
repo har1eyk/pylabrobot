@@ -18,6 +18,49 @@ filter during designated holds. The vendor also schedules from status, rather th
 hardware camera trigger. This establishes a recorded association with a hold, not subsecond
 synchronization or simultaneous readings across filters.
 
+For background measurements, `CollectionFilter(..., mode="background")` retains three
+consecutive exposure groups: 2.0, 1.0 and 0.5 seconds, with one or sixteen frames per group.
+The frame counts are explicit; PLR does not infer them from the filter number. Each frame has
+its own durable acquisition identity. The collection window must accommodate all frames,
+transfers and filter moves. This mode collects the inputs for a background fit; it does not
+calculate or install calibration coefficients or certify a vendor calibration pass.
+
+## Timing on different computers
+
+Ordinary acquisition uses `cadence=None`, the default. It waits for each camera response,
+reconstructs short or fragmented transfers, and commits original bytes before proceeding.
+It does not require the 500 ms lateness limit used by an explicitly selected vendor
+calibration comparison. Those two acquisition contracts have different timing requirements;
+an ordinary collection cannot establish agreement with the vendor's exposure schedule.
+
+The instrument continues its thermal program while the computer handles USB and storage.
+The chosen `read_window` must fit the method's existing hold and accommodate all requested
+images, filter moves, status queries and durable writes on the actual computer. Time spent
+reading status and saving its checkpoint is deducted before an ordinary exposure starts.
+Filter movement uses one deadline that includes its acknowledgement and subsequent polling.
+The driver does not extend a hold, skip an image or replay an uncertain exposure to compensate
+for a slow computer. Do not lengthen an assay's hold merely to make a host pass a timing test.
+
+Keep the live journal on a local disk outside synchronized folders; archive to Seafile after
+acquisition. The library does not change NVMe power settings or require a particular disk
+model. `command_timeout` bounds a complete command or image transfer, not each fragment;
+increasing it cannot repair an insufficient thermal hold or a missed comparison deadline.
+
+Offline stress tests exercise 65-image collections and forty two-filter PCR collections
+with synthetic checkpoint delays up to 250 ms, image transfer costs up to 750 ms plus
+per-read overhead, and short 511-byte responses. Separate cases cover scheduling pauses,
+expired budgets, USB packet aggregation through executor threads, restart persistence and
+duplicate prevention. These are bounded simulations using disposable FULL SQLite journals,
+not performance measurements or a guarantee for an arbitrary computer.
+
+Qualify each host with the intended method, exposure sequence and normal background workload
+in separately approved hardware sessions. Require every planned frame, correct cycle/filter
+association, matching original-byte exports, no uncertain acquisitions, and successful cleanup.
+For a vendor comparison, also require the unchanged settling and cadence criteria. Preserve
+failures and raw data. A disk failure, USB disconnect, system suspend or an unbounded host stall
+can still interrupt acquisition; hardware recovery and cross-computer performance remain
+unverified. A software test pass does not establish those capabilities.
+
 ## Specify collection points offline
 
 ```python
@@ -243,13 +286,15 @@ collection window must include those moves and PLR's per-image status checks. Th
 window is not automatically a sufficient PLR budget. No thermal hold is extended to finish an
 overrun. Application startup images, prior illumination and operator delays are not reproduced
 by this API. Offline transport tests cover the startup ordering and ambiguous acknowledgements.
-Direct Ubuntu validation on C9254-02/G2.10 completed eight five-filter, three-exposure collections
-with normal Start, approximately 105 °C cover behavior and home after every collection.
-The 55-second window left 20 reported seconds after each complete burst and home. The ROX signal
-differed from the separate Windows reference by a median −1.21% at 540 ms; timing and illumination
-history still differed. See the
+Two direct Ubuntu validations on C9254-02/G2.10 each completed eight five-filter, three-exposure
+collections with normal Start, approximately 105 °C cover behavior and home after every collection.
+The 55-second window left 19–21 reported seconds after each complete burst and home. The ROX signal
+differed from the separate Windows reference by medians −1.21% and −0.84% at 540 ms.
+Between the PLR runs, the median change was +0.29%; 95/96 wells were within ±2%, with G1 at +4.08%.
+Timing and illumination history still differed. See the
 [hardware comparison](hardware-validation.md#normal-start-five-filter-rox-comparison-2026-10-20)
-for per-well variation and the limits of this single-session validation.
+and [repeat comparison](hardware-validation.md#repeat-of-the-normal-start-rox-comparison-2026-10-20)
+for per-well variation and the limits of these validations on one plate.
 
 ## Read saved collection progress
 

@@ -284,7 +284,8 @@ def write_run_archive(
       add(archive, "calibration/uniformity.ini", uniformity.source_bytes)
       mask_members = {}
       for mask in masks:
-        name = f"calibration/physical-filter-{mask.filter}.aoi"
+        extension = "plrroi" if mask.generated else "aoi"
+        name = f"calibration/physical-filter-{mask.filter}.{extension}"
         mask_members[str(mask.filter)] = name
         add(archive, name, mask.source_bytes)
       for collection in collections:

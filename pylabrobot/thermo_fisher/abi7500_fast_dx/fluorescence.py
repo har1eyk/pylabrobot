@@ -36,11 +36,12 @@ def _background_number(text: str) -> float:
 
 @dataclass(frozen=True)
 class BackgroundCalibration:
-  """Native background coefficients, retaining the original calibration bytes and SHA-256.
+  """Background coefficients, retaining the original calibration bytes and SHA-256.
 
   The captured I809 ``Calibration.sda`` preserves full binary32 precision. Version-5
-  ``Background.csv`` remains supported, but its rounded decimal export can cause one-count
-  differences from native results. Select the file from the matching instrument backup;
+  ``Background.csv`` remains supported, but rounded vendor exports can cause one-count
+  differences from native results. PLR-generated CSV preserves full binary32 precision;
+  keep its accompanying calculation report and matching masks. Select the matching instrument data;
   reading it does not certify current calibration. The lower-precision EDS background.ini
   is not accepted as a replacement.
   """
@@ -140,7 +141,7 @@ class FluorescenceFrame:
   def __post_init__(self) -> None:
     """Limit extraction to the recovered complete 12-bit reference image and bounded rings."""
     if not isinstance(self.mask, PlatePixelMask):
-      raise TypeError("Native fluorescence extraction requires a saved vendor PlatePixelMask")
+      raise TypeError("Native fluorescence extraction requires an explicit PlatePixelMask")
     if self.source.geometry != CameraGeometry(321, 245):
       raise ValueError("Fluorescence extraction requires the reference camera geometry")
     if max(struct.unpack("<76800H", self.image_bytes)) > 4095:

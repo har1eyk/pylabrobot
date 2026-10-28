@@ -240,6 +240,10 @@ class USB(IOBase):
   ) -> bytes:
     """Read a response from the device.
 
+    One monotonic timeout bounds the aggregate read, including successive full packets.
+    Bytes already received are returned if that budget expires; an empty read raises
+    ``TimeoutError``. Callers requesting an exact length must assemble short responses.
+
     Args:
       timeout: The timeout for reading from the device in seconds. If `None`, use the default
         timeout (specified by the `read_timeout` attribute).
@@ -256,16 +260,21 @@ class USB(IOBase):
 
     def read_or_timeout() -> bytes:
       # Attempt to read packets until timeout, or when we identify the right id.
-      timeout_time = time.time() + timeout
+      timeout_time = time.monotonic() + timeout
 
-      while time.time() < timeout_time:
+      while time.monotonic() < timeout_time:
         # read response from endpoint, and keep reading until the packet is smaller than the max
         # packet size: if the packet is that size, it means that there may be more data to read.
         resp = bytearray()
         last_packet: Optional[bytearray] = None
         while True:  # read while we have data, and while the last packet is the max size.
+          remaining_time = timeout_time - time.monotonic()
+          if remaining_time <= 0:
+            break
           remaining = size - len(resp) if size is not None else None
-          last_packet = self._read_packet(size=remaining, endpoint=endpoint)
+          # libusb uses integer milliseconds; zero would disable its timeout.
+          packet_timeout = max(0.001, min(self.packet_read_timeout, remaining_time))
+          last_packet = self._read_packet(size=remaining, timeout=packet_timeout, endpoint=endpoint)
           if last_packet is not None:
             resp += last_packet
           if self.read_endpoint is None:

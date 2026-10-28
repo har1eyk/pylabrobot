@@ -22,7 +22,13 @@ from .acquisition import (
 from .calibration import UniformityCalibration
 from .calibration_exposure import CalibrationExposureProbe, CalibrationExposureSearch
 from .camera import CameraGeometry
-from .collection import CollectionPlan, CollectionPoint, CollectionRecord, FluorescenceCollection
+from .collection import (
+  CollectionFilter,
+  CollectionPlan,
+  CollectionPoint,
+  CollectionRecord,
+  FluorescenceCollection,
+)
 from .fluorescence import BackgroundCalibration, FluorescenceFrame
 from .image_processing import PlatePixelMask
 from .protocol import (
@@ -406,9 +412,14 @@ class ABI7500FastDx:
       )
     return self._journal
 
-  async def _query_optics(self) -> OpticalState:
-    """Read native optical observations while the caller owns the USB transaction lock."""
-    motor = await self._thermal_query(0x6C, 2)
+  async def _query_optics(self, *, motor: Optional[bytes] = None) -> OpticalState:
+    """Read optics under the USB lock, optionally using the just-completed motor poll.
+
+    A supplied motor response must come directly from _wait_filter under the same lock,
+    without intervening device commands. Position and lamp are always read afresh.
+    """
+    if motor is None:
+      motor = await self._thermal_query(0x6C, 2)
     position = await self._thermal_query(0x6B, 2)
     lamp = await self._thermal_query(0x66, 4)
     return OpticalState(position, motor, lamp)
@@ -458,14 +469,14 @@ class ABI7500FastDx:
     optics.lamp_enabled  # Validate the enable word before allowing any mutation.
     return after, optics
 
-  async def _wait_filter(self, deadline: float) -> None:
-    """Wait for the observed stationary state without reissuing a move."""
+  async def _wait_filter(self, deadline: float) -> bytes:
+    """Wait without reissuing a move and return the verified stationary motor response."""
     while True:
       self._remaining(deadline)
       state = await self._thermal_query(0x6C, 2)
       self._remaining(deadline)
       if state == b"\x00\x00":
-        return
+        return state
       if state != b"\x00\x01":
         raise ABI7500ProtocolError("Unknown filter motor state")
       await asyncio.sleep(min(0.1, self._remaining(deadline)))
@@ -590,6 +601,41 @@ class ABI7500FastDx:
         raise ABI7500RunError(f"Unknown acquisition {acquisition_id!r}")
       return result
 
+  async def _read_camera_fragment(self, size: int, deadline: float, data: bytearray) -> None:
+    """Retain a bounded read before cancellation can propagate to the exposure owner."""
+    chunk = await self.io.read(size=size, timeout=max(1, math.ceil(self._remaining(deadline))))
+    if not chunk or len(chunk) > size:
+      raise ABI7500ProtocolError("Empty or oversized camera image fragment")
+    data.extend(chunk)
+    self._remaining(deadline)
+
+  async def _read_camera_image(
+    self,
+    exposure: CameraExposure,
+    geometry: CameraGeometry,
+    data: bytearray,
+    readiness: list[bytes],
+    *,
+    chunk_size: int = 4096,
+  ) -> None:
+    """Read an already submitted exposure, retaining every received fragment in caller buffers."""
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + exposure.duration + self.command_timeout
+    while True:
+      await asyncio.sleep(min(0.01, self._remaining(deadline)))
+      await self._write(b"CH   5", deadline)
+      state = await self._read_exactly(5, deadline)
+      readiness.append(state)
+      if state == b"ready":
+        break
+      if state != b"not r":
+        raise ABI7500ProtocolError(f"Unexpected camera readiness reply: {state!r}")
+    deadline = self._deadline()
+    await self._write(geometry.encode_read(), deadline)
+    while len(data) < geometry.transfer_size:
+      size = min(chunk_size, geometry.transfer_size - len(data))
+      await _finish_io(self._read_camera_fragment(size, deadline, data))
+
   async def _capture_reserved(
     self, result: CameraAcquisition, collection: Optional[CollectionRecord] = None
   ) -> CameraAcquisition:
@@ -602,6 +648,7 @@ class ABI7500FastDx:
       result = journal.save_acquisition(replace(result, exposure_reply=reply))
       result.exposure.validate_reply(reply)
       if collection is not None:
+        observed_at = asyncio.get_running_loop().time()
         status = ABI7500Status(await self._thermal_query(0x29, 50))
         run = journal.get(collection.run_id)
         if run is None:
@@ -616,30 +663,12 @@ class ABI7500FastDx:
           raise ABI7500RunError(
             "Collection hold ended or insufficient time remains before exposure"
           )
+        hold_deadline = observed_at + status.remaining_hold_time - 2
         result = journal.save_acquisition(replace(result, thermal_before=status))
+        if asyncio.get_running_loop().time() + result.exposure.duration >= hold_deadline:
+          raise ABI7500RunError("Insufficient hold time remains after acquisition checkpoint")
       await self._write(b"CC", self._deadline())
-      loop = asyncio.get_running_loop()
-      deadline = loop.time() + result.exposure.duration + self.command_timeout
-      while True:
-        await asyncio.sleep(min(0.01, self._remaining(deadline)))
-        await self._write(b"CH   5", deadline)
-        state = await self._read_exactly(5, deadline)
-        readiness.append(state)
-        if state == b"ready":
-          break
-        if state != b"not r":
-          raise ABI7500ProtocolError(f"Unexpected camera readiness reply: {state!r}")
-      deadline = self._deadline()
-      await self._write(result.geometry.encode_read(), deadline)
-      while len(data) < result.geometry.transfer_size:
-        size = min(4096, result.geometry.transfer_size - len(data))
-        chunk = await _finish_io(
-          self.io.read(size=size, timeout=max(1, math.ceil(self._remaining(deadline))))
-        )
-        if not chunk or len(chunk) > size:
-          raise ABI7500ProtocolError("Empty or oversized camera image fragment")
-        data.extend(chunk)
-        self._remaining(deadline)
+      await self._read_camera_image(result.exposure, result.geometry, data, readiness)
       result = journal.save_acquisition(
         replace(result, wire_data=bytes(data), readiness_replies=tuple(readiness))
       )
@@ -1020,8 +1049,9 @@ class ABI7500FastDx:
 
     ``calibration_startup=True`` requires a collection plan, cover_temperature=90, and lamp
     standby (enabled, power 0) behind stationary filter 0. It uploads first, switches to power 1,
-    reads the exposure table, loads the plate, and homes the wheel once before Start, matching
-    the captured calibration order. It additionally permits the vendor's 30 µL thermal setting;
+    reads the exposure table, loads the plate, waits up to 15 seconds for the optical motor to
+    become stationary, and homes the wheel once before Start. It additionally permits the
+    vendor's 30 µL thermal setting;
     this is an explicit controller setting, not a measurement of the liquid in the plate.
     Startup motion belongs to this run identity and is never retried after an interruption.
 
@@ -1156,6 +1186,7 @@ class ABI7500FastDx:
         if starts_from_standby:
           async with self._lock:
             try:
+              await self._wait_filter(asyncio.get_running_loop().time() + 15)
               await self._park_collection_filter(home=True)
             except BaseException as exc:
               self._fault = exc
@@ -1243,6 +1274,9 @@ class ABI7500FastDx:
         if acquisition is not None:
           frames.append(acquisition)
       assert run.collection_plan is not None
+      scope = "frame" if run.collection_plan.cadence is None else "filter_burst"
+      if any(a.observation_scope != scope for a in frames):
+        raise ABI7500RunError("Acquisition observations disagree with the collection cadence")
       probes = tuple(
         acquisition
         for key in run.collection_plan.probe_ids(record.collection_id)
@@ -1317,6 +1351,129 @@ class ABI7500FastDx:
       logger.info("Exported optical run %s (%d collections) to %s", run_id, len(collections), path)
       return result
 
+  async def _capture_filter_burst(
+    self,
+    run: ThermalRun,
+    record: CollectionRecord,
+    setting: CollectionFilter,
+    optics: OpticalState,
+    offsets: tuple[float, ...],
+    anchor: Optional[float],
+  ) -> tuple[float, ABI7500Status, float, tuple[CameraAcquisition, ...]]:
+    """Schedule fixed images under both locks; accept them only after burst boundary checks.
+
+    Each intent precedes CJ/CC, and each original transfer is durable before the next image.
+    The conservative hold deadline is anchored before the fresh status query. Missing a
+    scheduled start or exhausting this budget prevents another CC, without stretching the hold.
+    Observations bracket at most sixteen images; transient changes inside that interval are
+    not observable. A failed final observation leaves every frame in this burst uncertain.
+    Return the cadence origin, final status, its query-start time and checked completion records.
+    Original bytes are already durable; the caller commits these final observations during the
+    next filter's motion (or immediately for the last burst), before another exposure can start.
+    """
+    assert run.collection_plan is not None and run.collection_plan.cadence is not None
+    cadence = run.collection_plan.cadence
+    journal = self._require_journal()
+    loop = asyncio.get_running_loop()
+    observed_at = loop.time()
+    before = ABI7500Status(await self._thermal_query(0x29, 50))
+    self._check_collection_cover(run, before)
+    if (
+      not record.point.matches(before)
+      or before.run_start_record != run.start_record
+      or before.remaining_hold_time is None
+    ):
+      raise ABI7500RunError("Collection crossed a thermal boundary before the filter burst")
+    hold_deadline = observed_at + before.remaining_hold_time - 2
+    acquired: list[CameraAcquisition] = []
+    current: Optional[CameraAcquisition] = None
+    data = bytearray()
+    readiness: list[bytes] = []
+    after: Optional[ABI7500Status] = None
+    optics_after: Optional[OpticalState] = None
+    try:
+      for index, (duration, offset) in enumerate(zip(setting.exposures, offsets)):
+        data, readiness = bytearray(), []
+        candidate = CameraAcquisition(
+          f"{record.collection_id}-f{setting.position}-e{index}",
+          CameraExposure(duration),
+          run.camera_description,
+          run.thermal_version,
+          CameraGeometry(321, 245),
+          datetime.now(timezone.utc).isoformat(),
+          before,
+          optics,
+          observation_scope="filter_burst",
+        )
+        if acquired:
+          journal.save_acquisition_and_reserve_next(
+            acquired[-1], candidate, collection_id=record.collection_id
+          )
+        else:
+          journal.reserve_acquisition(candidate, collection_id=record.collection_id)
+        current = candidate
+        reply = await self._camera_query(current.exposure.encode(), 2)
+        current = replace(current, exposure_reply=reply)
+        current.exposure.validate_reply(reply)
+        if anchor is None:
+          anchor = loop.time()
+        target = anchor + offset
+        if max(target, loop.time()) + current.exposure.duration >= hold_deadline:
+          raise ABI7500RunError("Insufficient hold time remains before scheduled exposure")
+        if target > loop.time():
+          await asyncio.sleep(target - loop.time())
+        now = loop.time()
+        if now - target > cadence.max_lateness:
+          raise ABI7500RunError("Camera cadence deadline missed; exposure will not be replayed")
+        if now + current.exposure.duration >= hold_deadline:
+          raise ABI7500RunError("Insufficient hold time remains before scheduled exposure")
+        current = replace(current, exposure_start_offset=now - anchor)
+        await self._write(b"CC", self._deadline())
+        await self._read_camera_image(
+          current.exposure, current.geometry, data, readiness, chunk_size=16384
+        )
+        acquired.append(replace(current, wire_data=bytes(data), readiness_replies=tuple(readiness)))
+        current = None
+      journal.save_acquisition(acquired[-1])
+      optics_after = await self._query_optics()
+      after_observed_at = loop.time()
+      after = ABI7500Status(await self._thermal_query(0x29, 50))
+      self._check_collection_cover(run, after)
+      if (
+        not record.point.matches(after)
+        or after.run_start_record != run.start_record
+        or optics_after != optics
+        or loop.time() >= hold_deadline
+      ):
+        raise ABI7500RunError("Instrument state changed or hold budget expired during filter burst")
+      completed = tuple(
+        replace(
+          result,
+          state="complete",
+          thermal_after=after,
+          optics_after=optics_after,
+          finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+        for result in acquired
+      )
+      assert anchor is not None
+      return anchor, after, after_observed_at, completed
+    except BaseException as exc:
+      self._fault = exc
+      if current is not None:
+        acquired.append(replace(current, wire_data=bytes(data), readiness_replies=tuple(readiness)))
+      for result in acquired:
+        journal.save_acquisition(
+          replace(
+            result,
+            state="uncertain",
+            thermal_after=after,
+            optics_after=optics_after,
+            error=f"{type(exc).__name__}: {exc}",
+          )
+        )
+      raise
+
   async def _collect_point(self, run_id: str, point: CollectionPoint) -> None:
     """Reserve and execute one bounded read under run and USB transaction ownership."""
     async with self._run_lock:
@@ -1363,6 +1520,7 @@ class ABI7500FastDx:
       journal.reserve_collection(record)
       async with self._lock:
         self._check_connected()
+        completed_burst: tuple[CameraAcquisition, ...] = ()
         try:
           self._check_collection_cover(run, status)
           optics = await self._query_optics()
@@ -1377,9 +1535,11 @@ class ABI7500FastDx:
               "Collection requires a ready camera and stationary illuminated optics"
             )
           for probing in (True, False) if plan.exposure_search_masks else (False,):
+            cadence_anchor: Optional[float] = None
+            status_observed_at: Optional[float] = None
             if not probing and plan.park_after_exposure_search:
               optics = await self._park_collection_filter()
-            for setting in plan.filters:
+            for filter_index, setting in enumerate(plan.filters):
               if probing and setting.mode != "automatic":
                 continue
               search = (
@@ -1387,7 +1547,9 @@ class ABI7500FastDx:
                 if setting.mode == "automatic"
                 else CalibrationExposureSearch()
               )
-              status = ABI7500Status(await self._thermal_query(0x29, 50))
+              if plan.cadence is None or status_observed_at is None:
+                status_observed_at = asyncio.get_running_loop().time()
+                status = ABI7500Status(await self._thermal_query(0x29, 50))
               if (
                 not point.matches(status)
                 or status.run_start_record != run.start_record
@@ -1397,12 +1559,20 @@ class ABI7500FastDx:
                 raise ABI7500RunError(
                   "Collection crossed a thermal boundary before filter selection"
                 )
+              motor = None
               if optics.filter_position != setting.position:
+                now = asyncio.get_running_loop().time()
+                move_deadline = min(now + 15, status_observed_at + status.remaining_hold_time - 2)
+                self._remaining(move_deadline, context="filter movement hold budget")
                 await self._thermal_query(0x69, 0, setting.position.to_bytes(2, "big"))
-                await self._wait_filter(
-                  asyncio.get_running_loop().time() + min(15, status.remaining_hold_time - 2)
-                )
-              optics = await self._query_optics()
+                if completed_burst:
+                  journal.save_acquisitions(completed_burst)
+                  completed_burst = ()
+                motor = await self._wait_filter(move_deadline)
+              if completed_burst:
+                journal.save_acquisitions(completed_burst)
+                completed_burst = ()
+              optics = await self._query_optics(motor=motor if plan.cadence is not None else None)
               if (
                 not optics.is_stationary
                 or optics.filter_position != setting.position
@@ -1410,6 +1580,16 @@ class ABI7500FastDx:
                 or optics.lamp_power != 1
               ):
                 raise ABI7500RunError("Optical readback disagrees with the collection plan")
+              if plan.cadence is not None:
+                (
+                  cadence_anchor,
+                  status,
+                  status_observed_at,
+                  completed_burst,
+                ) = await self._capture_filter_burst(
+                  run, record, setting, optics, plan.cadence.offsets[filter_index], cadence_anchor
+                )
+                continue
               for index in range(11 if probing else len(setting.exposures)):
                 if probing:
                   if search.next_milliseconds is None:
@@ -1451,6 +1631,9 @@ class ABI7500FastDx:
                 record.ordinal,
                 setting.position,
               )
+            if completed_burst:
+              journal.save_acquisitions(completed_burst)
+              completed_burst = ()
           if plan.park_between_collections:
             logger.info(
               "Run %s collection %d closing optics via %s",
@@ -1471,6 +1654,10 @@ class ABI7500FastDx:
         except BaseException as exc:
           self._fault = exc
           error = f"{type(exc).__name__}: {exc}"
+          if completed_burst:
+            journal.save_acquisitions(
+              tuple(replace(a, state="uncertain", error=error) for a in completed_burst)
+            )
           journal.save_collection(replace(record, error=error))
           journal.save(replace(run, collection_error=error))
           raise
@@ -1499,6 +1686,10 @@ class ABI7500FastDx:
     Cancellation can acquire the run lock between complete collection bursts. Original and partial
     frames remain accessible through get_collections(). A terminal thermal run alone does not
     establish optical success. Requires explicit hardware-session approval.
+
+    Plans with a cadence use fixed calibration bursts, with shared thermal/optical boundary
+    observations explicitly labelled on each frame. Missed start deadlines fail without replay.
+    This mode does not verify intermediate state stability or support ordinary PCR brackets.
     """
     _validate_run_id(run_id)
     if (

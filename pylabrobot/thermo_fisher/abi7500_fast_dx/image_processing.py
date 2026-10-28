@@ -1,4 +1,4 @@
-"""Offline camera corrections and diagnostic pixel measurements using saved vendor masks.
+"""Offline camera corrections and diagnostic measurements using explicit pixel masks.
 
 These are image-processing stages, not the vendor's complete fluorescence pipeline. Mask order
 does not independently verify physical plate orientation or bind a calibration to an instrument.
@@ -9,11 +9,13 @@ import struct
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal, Tuple
+from typing import Literal, Optional, Tuple
 
 from .acquisition import CameraAcquisition
 from .camera import CameraFrame, CameraGeometry
 from .protocol import ABI7500ProtocolError, _check_unsigned
+
+_PLR_MASK_HEADER = b"PLR-ABI7500-ROI\x01"
 
 
 @dataclass(frozen=True)
@@ -127,13 +129,41 @@ class _MaskReader:
     return selected
 
 
+def _read_generated_mask(data: bytes, filter: int) -> Tuple[Tuple[Tuple[int, int], ...], ...]:
+  """Decode a PLR pixel mask, rejecting overlaps, duplicates and incomplete regions."""
+  reader = _MaskReader(data)
+  reader.take(len(_PLR_MASK_HEADER))
+  if reader.take(1)[0] != filter:
+    raise ABI7500ProtocolError("Generated mask filter does not match its requested filter")
+  reader.take(32)  # SHA-256 of the unmodified ROI image in vendor coordinates.
+  wells = []
+  occupied: set[tuple[int, int]] = set()
+  for _ in range(96):
+    count = reader.word()
+    if not 1 <= count <= 4096:
+      raise ABI7500ProtocolError("Invalid generated well size")
+    points = tuple(struct.unpack("<BH", reader.take(3)) for _ in range(count))
+    if (
+      any(row >= 240 or column >= 320 for row, column in points)
+      or points != tuple(sorted(set(points)))
+      or occupied.intersection(points)
+    ):
+      raise ABI7500ProtocolError("Generated mask has invalid, unordered or overlapping pixels")
+    occupied.update(points)
+    wells.append(points)
+  if reader.position != len(data):
+    raise ABI7500ProtocolError("Unexpected bytes after generated mask")
+  return tuple(wells)
+
+
 @dataclass(frozen=True)
 class PlatePixelMask:
-  """Original 96-well AOI archive and an explicitly supplied acquisition filter index.
+  """A vendor AOI archive or PLR-generated mask with an acquisition filter index.
 
-  Choose a mask from the matching calibration backup. The file has no camera identity or filter
-  identity that this parser can verify; ``filter`` (1–5) is the caller's association, not a value
-  inferred from the filename. The reference F0 file corresponds to acquisition filter 1.
+  Vendor AOI files have no camera or filter identity that this parser can verify; ``filter``
+  (1–5) is the caller's association. The reference F0 file corresponds to acquisition filter 1.
+  PLR-generated masks embed their filter and source-image hash. Neither format establishes
+  current calibration validity or verifies the instrument/camera association.
   """
 
   source_bytes: bytes
@@ -147,7 +177,9 @@ class PlatePixelMask:
 
   @lru_cache(maxsize=16)
   def _decode(self) -> Tuple[Tuple[Tuple[int, int], ...], ...]:
-    """Parse only the recovered PlateMask/CMNImageAOI/CMNImageMatrix schema combination."""
+    """Decode the supported vendor archive or versioned PLR mask format."""
+    if self.source_bytes.startswith(_PLR_MASK_HEADER):
+      return _read_generated_mask(self.source_bytes, self.filter)
     reader = _MaskReader(self.source_bytes)
     reader.object(b"PlateMask", 10)
     if reader.word() != 96:
@@ -166,6 +198,58 @@ class PlatePixelMask:
     if not isinstance(self.source_bytes, bytes) or len(self.source_bytes) > 1024 * 1024:
       raise ValueError("Pixel-mask input must be immutable bytes no larger than 1 MiB")
     self._decode()
+
+  @classmethod
+  def from_regions(
+    cls,
+    wells: Tuple[Tuple[Tuple[int, int], ...], ...],
+    *,
+    filter: int,
+    source_image_sha256: str,
+  ) -> "PlatePixelMask":
+    """Encode 96 ordered regions in PLR's format, which is not a vendor calibration file.
+
+    Regions must contain unique row-major pixels and must not overlap. Their order is
+    A1 through H12; the caller must establish that order from the image geometry.
+    The image hash identifies the original 320 by 240 uint16 image in vendor coordinates.
+    """
+    _check_unsigned("filter", filter, 5)
+    if filter == 0:
+      raise ValueError("Well masks require acquisition filter 1 through 5")
+    if (
+      not isinstance(source_image_sha256, str)
+      or len(source_image_sha256) != 64
+      or any(c not in "0123456789abcdef" for c in source_image_sha256)
+    ):
+      raise ValueError("Source image SHA-256 must be 64 lowercase hexadecimal characters")
+    if type(wells) is not tuple or len(wells) != 96:
+      raise ValueError("Generated mask requires 96 immutable well regions")
+    data = bytearray(_PLR_MASK_HEADER + bytes([filter]) + bytes.fromhex(source_image_sha256))
+    for points in wells:
+      if type(points) is not tuple or not 1 <= len(points) <= 4096:
+        raise ValueError("Generated regions require 1 to 4096 immutable points")
+      data.extend(struct.pack("<H", len(points)))
+      for point in points:
+        if (
+          type(point) is not tuple
+          or len(point) != 2
+          or any(type(v) is not int for v in point)
+          or not (0 <= point[0] < 240 and 0 <= point[1] < 320)
+        ):
+          raise ValueError("Generated mask points must be integer image coordinates")
+        data.extend(struct.pack("<BH", *point))
+    return cls(bytes(data), filter)
+
+  @property
+  def generated(self) -> bool:
+    """Whether the stored bytes use PLR's generated-mask format rather than vendor AOI."""
+    return self.source_bytes.startswith(_PLR_MASK_HEADER)
+
+  @property
+  def source_image_sha256(self) -> Optional[str]:
+    """Return the generating image hash; vendor AOI files do not provide this field."""
+    start = len(_PLR_MASK_HEADER) + 1
+    return self.source_bytes[start : start + 32].hex() if self.generated else None
 
   @property
   def sha256(self) -> str:

@@ -1,17 +1,18 @@
 # Calculating optical calibration
 
 `calculate_optical_calibration()` generates new optical uniformity coefficients from raw
-camera images, the matching ROI masks, and native background coefficients. Use `Calibration.sda`
-for full binary32 precision; the supported version-5 `Background.csv` export can round
-coefficients enough to change an integer signal by one count. It runs in Python on
+camera images, the matching ROI masks, and matching background coefficients. Native `Calibration.sda` and
+[PLR-generated background CSV](background-calibration.md) preserve full binary32 precision;
+rounded vendor CSV exports can change an integer signal by one count. It runs in Python on
 Ubuntu without Windows or vendor DLLs. Existing uniformity coefficients and expected vendor
 results are **not** inputs to the calculation.
 
 ```{warning}
-This is an offline calculation routine. It does not yet automate the complete optical-calibration
-acquisition, exposure search, temperature control, or installation on the instrument/vendor PC.
-Its acceptance result describes the supplied data, not current instrument validity or assay
-performance. Direct Ubuntu acquisition of a fresh calibration remains unverified.
+The calculation runs offline. The journaled collection API has also completed one fresh
+Ubuntu optical calibration, including automatic exposure selection, thermal control and cleanup,
+on C9254-02/G2.10. Installation into the vendor software and its validity workflow are not
+implemented. A passing calculation does not establish independent repeatability or assay
+performance.
 ```
 
 ## Inputs and usage
@@ -82,6 +83,91 @@ corrected spectra and full binary32 coefficients. Keep the original frames, ROI 
 report and generated file together outside Git. Failed data remain inspectable and cannot be
 exported as a successful calibration.
 
+## Acquisition configuration
+
+A uniform mixed-dye plate can use the shared automatic-exposure collection API. Supply the
+same masks used to generate the background that will enter the optical calculation:
+
+```python
+from pylabrobot.thermo_fisher.abi7500_fast_dx import CollectionFilter, CollectionPlan
+
+plan = CollectionPlan(
+  steps=((0, 0),),
+  filters=tuple(
+    CollectionFilter(position, (2.0,) * count, mode="automatic")
+    for position, count in enumerate((1, 16, 16, 16, 16), start=1)
+  ),
+  read_window=584,
+  exposure_search_masks=tuple(masks[position] for position in range(1, 6)),
+  park_after_exposure_search=True,
+  park_between_collections=True,
+  home_after_collections=(1,),
+)
+```
+
+This plan belongs to a 60 °C/600-second hold followed by a 30 °C/30-second cooldown. Its first
+collection begins after 16 reported hold seconds. The 2-second entries are search ceilings,
+not fixed final exposures. At most 55 probes are retained separately from the 65 final images;
+all searches finish before final-image collection begins. The light path closes after searching,
+and the filter wheel homes after the complete final collection.
+
+Use the captured calibration configuration and persistent run journal, with standby lamp warm-up
+at stationary filter 0 before `start_run(..., calibration_startup=True, cover_temperature=90)`.
+The prepared session uses 270 seconds of standby and a 1200-second collection observation budget.
+These durations are explicit choices for this method, not universal instrument guarantees.
+The [calibration startup guide](pure-dye-calibration.md)
+describes the separate controller sequence and volume setting. Use the
+[run cleanup and recovery rules](thermal-runs.md) for faults, cancellation and tray release;
+never repeat Start or an uncertain exposure to fill a missing collection.
+
+Only confirmed final acquisitions belong in `OpticalCalibrationFilter`. Original search probes
+remain available through each collection's `exposure_probes` and are excluded from the average.
+Keep the generated uniformity file with its exact masks and background; do not silently combine
+it with a different calibration set.
+
+### Fresh Ubuntu acquisition
+
+Session `plr-u2opt-001` on Fast Dx **275030206**, camera **0000000747**, completed this
+configuration with the user-confirmed sealed mixed-dye ROI plate. All **55 exposure probes**
+and **65 final images** completed. The search selected these exposures from fresh pixels:
+
+| Physical filter | Saved channel | Final exposure, ms | Final images |
+| --- | --- | ---: | ---: |
+| 1 | E | 1,782 | 1 |
+| 2 | D | 711 | 16 |
+| 3 | C | 1,188 | 16 |
+| 4 | B | 603 | 16 |
+| 5 | A | 567 | 16 |
+
+The calculation used the five PLR-generated masks and the matching full-precision background
+from `plr-u2bg-002`. It produced **480 coefficients**, with no empty wells, spectral outliers,
+substitutions or saturated final wells. The generated file, matching masks/background and
+provenance reports are retained together in the session's `calibration/` directory outside Git.
+
+An independent audit reconstructed all 120 original camera transfers and replayed every
+exposure-search decision. Collection and homing finished with 296 seconds remaining in the
+60 °C hold. Normal completion, cooldown, tray release, lamp-off and USB closure were confirmed.
+See the [hardware report](hardware-validation.md) for the complete acquisition and cleanup record.
+Normalizing the fitting images is an internal consistency check. The separate acquisition below
+tests transfer to new images. There is no matching vendor result for either fresh acquisition.
+
+### Independent repeat with unchanged coefficients
+
+Separately authorized `plr-u2opt-002` repeated the same method and plate with 45 search probes
+and 65 final images. The prior coefficients, masks and background were frozen before acquisition;
+no coefficient refit, well exclusion or substitution occurred. Across-well sample CV fell from
+**17.49–20.23% before correction to 0.87–2.58% after correction**, across the five channels.
+No saturated final wells, empty wells or spectral outliers were found.
+
+Median brightness changes relative to the calibration acquisition were **+1.22%, −7.36%,
+−1.60%, +3.89% and −1.12%** in saved channels A–E. After removing one median scale ratio per
+channel for comparison, the largest individual spatial change was **7.63% at H12 in physical
+filter 2**. That scale removal is a diagnostic, not a change to the applied coefficients.
+The [hardware report](hardware-validation.md) retains all channel statistics, temporal variation
+and transport/cleanup checks. This supports uniformity correction on another acquisition of
+the same plate; absolute brightness drift, independent-plate reproducibility and assay performance
+remain separate validation questions. No vendor repeatability tolerance is assumed.
+
 ## Calculation
 
 1. Apply the supported OPB=0 crop and 180° rotation. For each well, sum nonzero ROI pixels
@@ -123,17 +209,20 @@ are excluded. No expected output is supplied to PLR during this calculation.
 
 The recorded final exposures were 1.800, 0.945, 1.350, 0.603 and 0.450 seconds at physical
 filters 1–5. These are observations for that plate, **not universal calibration settings**.
-The camera exposure type accepts up to the captured 2-second search exposure; the complete
-search/control sequence still needs its own implementation and hardware validation.
+The camera exposure type accepts up to the captured 2-second search exposure; the shared `CalibrationExposureSearch` reproduces all **44 original-image optical probes**
+and these five independently recorded final settings. This is separate from its pure-dye
+reference validation; an arbitrary exposure list is not a replacement for a fresh search.
 
 The numerical rules were checked against the native optical coefficient calculation,
 `CPureDyeDataListMgr` empty/outlier/local-neighbor routines, and the saved results. Regression
 fixtures contain all 480 spectra/coefficient strings and small A1 image patches from each
 final collection. Full images, vendor binaries and calibration backups remain outside Git.
-Agreement with one recorded vendor session establishes this processing path; independent plates
-and a fresh Ubuntu-only calibration are still needed for broader validation.
+Agreement with one recorded vendor session establishes this processing path. The fresh Ubuntu
+session above additionally validates acquisition and coefficient generation on one plate;
+independent plates and additional repeat acquisitions are still needed for broader validation.
 
 The captured vendor calibration used a 60 °C hold, a 90 °C cover setting and a distinct calibration
-start sequence. The regular PLR Standard-mode thermal-run API does not yet reproduce that entire
-workflow. Do not substitute the recorded exposure list into a regular run and call it a validated
+start sequence. The regular Standard-mode Start is not interchangeable with calibration Start. The explicit
+`calibration_startup=True` and `cover_temperature=90` options use the captured calibration
+sequence. Do not substitute the recorded exposure list into a regular PCR run and call it an
 optical calibration.

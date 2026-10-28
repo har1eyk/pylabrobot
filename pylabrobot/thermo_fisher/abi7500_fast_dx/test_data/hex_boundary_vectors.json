@@ -1,0 +1,194 @@
+{
+  "source_session": "abi7500-plr-unit2-dye-hex-003",
+  "usb_trace_sha256": "6213f9b07c4b289a4d37230aa0a89a075d989510bfc6d311ac6e244e69745bac",
+  "audit_sha256": "e817bbb43237861ea93b6344eb0c5b2f262953570c68ea790bfaf829deea4b96",
+  "description": "Recorded first filter transition. Command costs include intervening local work; 0.1 s busy-poll sleeps are charged separately. Removing the two flagged queries is a counterfactual replay, not a new hardware measurement. Image pixels and thermal ownership fields use existing synthetic/captured test fixtures.",
+  "first_download_start": 1.8530244379999203,
+  "download_duration": 0.3539899970000988,
+  "after_image_gap": 0.0647977655462455,
+  "exposure_configuration_duration": 0.0007713110007898649,
+  "target": 4.265665,
+  "original_second_configuration_reply": 4.76663510599974,
+  "commands": [
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 2.2718122005462646,
+      "end": 2.33145809173584,
+      "response": "0000",
+      "elapsed_to_next_command_without_poll_sleep": 0.059738874435424805,
+      "redundant": false
+    },
+    {
+      "command": "0x6b",
+      "payload": "",
+      "start": 2.3315510749816895,
+      "end": 2.3910820484161377,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.05961799621582031,
+      "redundant": false
+    },
+    {
+      "command": "0x66",
+      "payload": "",
+      "start": 2.3911690711975098,
+      "end": 2.470885992050171,
+      "response": "00010001",
+      "elapsed_to_next_command_without_poll_sleep": 0.07980799674987793,
+      "redundant": false
+    },
+    {
+      "command": "0x29",
+      "payload": "",
+      "start": 2.4709770679473877,
+      "end": 2.580817222595215,
+      "response": "000400020000025800000386000000f50000008b000000c7024e0258000002011a0a1a01041b3100001a0a1a0104220a0064",
+      "elapsed_to_next_command_without_poll_sleep": 0.17133307456970215,
+      "redundant": false
+    },
+    {
+      "command": "0x29",
+      "payload": "",
+      "start": 2.64231014251709,
+      "end": 2.7548701763153076,
+      "response": "000400020000025800000386000000f50000008b000000c7024e0258000002011a0a1a01041b3100001a0a1a0104220a0064",
+      "elapsed_to_next_command_without_poll_sleep": 0.11266398429870605,
+      "redundant": true
+    },
+    {
+      "command": "0x69",
+      "payload": "0002",
+      "start": 2.754974126815796,
+      "end": 2.825259208679199,
+      "response": "",
+      "elapsed_to_next_command_without_poll_sleep": 0.07037687301635742,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 2.8253509998321533,
+      "end": 2.8842201232910156,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.05928006172180175,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 2.984631061553955,
+      "end": 3.043814182281494,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.05955996513366699,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.144191026687622,
+      "end": 3.2041690349578857,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.060367012023925776,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.304558038711548,
+      "end": 3.364187002182007,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.06003608703613281,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.4645941257476807,
+      "end": 3.522379159927368,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.05817689895629882,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.6227710247039795,
+      "end": 3.7041242122650146,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.0817481517791748,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.8045191764831543,
+      "end": 3.8847641944885254,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.08044185638427734,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 3.9849610328674316,
+      "end": 4.057145118713379,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.07257213592529296,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 4.157533168792725,
+      "end": 4.252217054367065,
+      "response": "0001",
+      "elapsed_to_next_command_without_poll_sleep": 0.09506788253784179,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 4.352601051330566,
+      "end": 4.414216041564941,
+      "response": "0000",
+      "elapsed_to_next_command_without_poll_sleep": 0.06169414520263672,
+      "redundant": false
+    },
+    {
+      "command": "0x6c",
+      "payload": "",
+      "start": 4.414295196533203,
+      "end": 4.474907159805298,
+      "response": "0000",
+      "elapsed_to_next_command_without_poll_sleep": 0.06072282791137695,
+      "redundant": true
+    },
+    {
+      "command": "0x6b",
+      "payload": "",
+      "start": 4.47501802444458,
+      "end": 4.534741163253784,
+      "response": "0002",
+      "elapsed_to_next_command_without_poll_sleep": 0.059808969497680664,
+      "redundant": false
+    },
+    {
+      "command": "0x66",
+      "payload": "",
+      "start": 4.534826993942261,
+      "end": 4.595262050628662,
+      "response": "00010001",
+      "elapsed_to_next_command_without_poll_sleep": 0.06053519248962402,
+      "redundant": false
+    },
+    {
+      "command": "0x29",
+      "payload": "",
+      "start": 4.595362186431885,
+      "end": 4.709648132324219,
+      "response": "000400020000025700000389000000f60000008d000000c5024e0258000002011a0a1a01041b3100001a0a1a0104220a0064",
+      "elapsed_to_next_command_without_poll_sleep": 0.17050160856706498,
+      "redundant": false
+    }
+  ]
+}

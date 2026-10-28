@@ -162,6 +162,9 @@ class CameraAcquisition:
   Host timestamps alone do not establish synchronization with a thermal cycle. Scheduled reads
   also require a CollectionRecord with the intended hold and matching controller observations;
   this establishes hold association, not a hardware trigger or subsecond timing precision.
+  ``observation_scope="filter_burst"`` means all frames in that filter share the observations
+  before and after the burst. No intermediate state stability is claimed. ``exposure_start_offset``
+  records the host's CC submission time relative to the collection's first CC, not a camera trigger.
   """
 
   acquisition_id: str
@@ -180,10 +183,21 @@ class CameraAcquisition:
   thermal_after: Optional[ABI7500Status] = None
   optics_after: Optional[OpticalState] = None
   error: Optional[str] = None
+  observation_scope: Literal["frame", "filter_burst"] = "frame"
+  exposure_start_offset: Optional[float] = None
 
   def __post_init__(self) -> None:
     """Reject corrupt identities, incomplete successful results and oversized data."""
     _validate_acquisition_id(self.acquisition_id)
+    if self.observation_scope not in ("frame", "filter_burst"):
+      raise ValueError("Invalid acquisition observation scope")
+    if self.exposure_start_offset is not None and (
+      self.observation_scope != "filter_burst"
+      or isinstance(self.exposure_start_offset, bool)
+      or not math.isfinite(self.exposure_start_offset)
+      or self.exposure_start_offset < 0
+    ):
+      raise ValueError("Exposure start offset requires finite nonnegative burst timing")
     if self.state not in ("uncertain", "complete"):
       raise ValueError("Invalid camera acquisition state")
     if not isinstance(self.wire_data, bytes) or len(self.wire_data) > self.geometry.transfer_size:
@@ -198,6 +212,7 @@ class CameraAcquisition:
         or not self.readiness_replies
         or self.readiness_replies[-1] != b"ready"
         or self.error is not None
+        or (self.observation_scope == "filter_burst" and self.exposure_start_offset is None)
       ):
         raise ValueError("Complete acquisition requires a full frame and final observations")
 
@@ -227,6 +242,14 @@ class CameraAcquisition:
       "thermal_after": None if self.thermal_after is None else self.thermal_after.raw_payload.hex(),
       "optics_after": None if self.optics_after is None else self.optics_after.to_dict(),
       "error": self.error,
+      **(
+        {
+          "observation_scope": self.observation_scope,
+          "exposure_start_offset": self.exposure_start_offset,
+        }
+        if self.observation_scope != "frame"
+        else {}
+      ),
     }
 
   @classmethod
@@ -253,4 +276,6 @@ class CameraAcquisition:
       if value["optics_after"] is None
       else OpticalState.from_dict(value["optics_after"]),
       error=value["error"],
+      observation_scope=value.get("observation_scope", "frame"),
+      exposure_start_offset=value.get("exposure_start_offset"),
     )

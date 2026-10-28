@@ -76,7 +76,7 @@ class StandbyStartupTests(unittest.IsolatedAsyncioTestCase):
     self.usb.expect_write(b"CH   5")
     self.usb.expect_read(b"ready")
 
-  def script_start(self) -> None:
+  def script_start(self, motor_states: tuple[int, ...] = (0,)) -> None:
     """Check upload/power/table/load/home/normal Start with additional PLR observations."""
     self.preflight()
     usb = self.usb
@@ -91,6 +91,8 @@ class StandbyStartupTests(unittest.IsolatedAsyncioTestCase):
     usb.exchange(0x73, b"\x00\x00")
     usb.exchange(0x71)
     usb.exchange(0x73, b"\x00\x02")
+    for state in motor_states:
+      usb.exchange(0x6C, state.to_bytes(2, "big"))
     usb.optics(0)
     usb.exchange(0x67)
     usb.exchange(0x6C, b"\x00\x01")
@@ -158,6 +160,17 @@ class StandbyStartupTests(unittest.IsolatedAsyncioTestCase):
     self.assertEqual(self.usb.writes, writes)
     self.assertNotIn(0x13, self.usb.commands())
     self.assertEqual(self.usb.commands().count(0x67), 1)
+
+  async def test_normal_start_waits_for_motor_after_loading(self) -> None:
+    """Normal standby startup also waits for stationary optics before its single home."""
+    self.script_start(motor_states=(1, 0))
+    run = await self.start()
+    self.assertTrue(run.start_acknowledged)
+    self.assertFalse(self.usb.script)
+    commands = self.usb.commands()
+    self.assertEqual(commands.count(0x71), 1)
+    self.assertEqual(commands.count(0x67), 1)
+    self.assertEqual(commands.count(0x13), 1)
 
   async def test_lost_start_acknowledgement_remains_uncertain(self) -> None:
     """Reopening the journal does not repeat an ambiguous normal Start."""

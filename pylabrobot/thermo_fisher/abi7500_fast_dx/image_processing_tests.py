@@ -105,6 +105,8 @@ class ImageProcessingTests(unittest.TestCase):
     self.assertEqual(mask.wells[-1], ((185, 285), (185, 287), (186, 286)))
     self.assertEqual(mask.sha256, hashlib.sha256(source).hexdigest())
     self.assertEqual(mask.source_bytes, source)
+    self.assertFalse(mask.generated)
+    self.assertIsNone(mask.source_image_sha256)
 
   def test_reject_truncated_unknown_and_oversized_masks(self) -> None:
     """Malformed archives cannot silently substitute a grid or a partly decoded plate."""

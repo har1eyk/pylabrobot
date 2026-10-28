@@ -62,6 +62,7 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     OpticalState
     StoredExposureTimes
     CollectionFilter
+    CollectionCadence
     CalibrationExposureProbe
     CalibrationExposureSearch
     ABI7500CoverState
@@ -94,6 +95,16 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     CameraFrame
     CameraFrameAssembler
 
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.roi_calibration
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    ROICalibrationImage
+    ROIMaskResult
+    generate_roi_mask
+
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.results
 
 .. autosummary::
@@ -125,6 +136,41 @@ in :doc:`/user_guide/thermo_fisher/abi7500_fast_dx/synchronized-acquisition`.
     PureDyeCalibrationFilter
     PureDyeCalibrationResult
     calculate_pure_dye_calibration
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.spectral
+
+Offline dye separation and passive-reference normalization preserve original calibration
+provenance, signed components and explicit quality flags. See
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/spectral-measurements` for input requirements,
+saved-vendor comparisons and the distinction between diagnostic and guarded Rn values.
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    DyeCalibration
+    FilterSignal
+    WellFilterSignals
+    DyeMeasurement
+    read_eds_dye_calibration
+    unmix_well
+    unmix_collection
+
+.. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.background_calibration
+
+Offline background generation retains complete fixed-exposure images, matching ROI masks,
+full-precision coefficients and a source-hash report. See
+:doc:`/user_guide/thermo_fisher/abi7500_fast_dx/background-calibration` for input requirements,
+quality checks, export and validation limits.
+
+.. autosummary::
+  :toctree: _autosummary
+  :nosignatures:
+
+    BackgroundCalibrationGroup
+    BackgroundCalibrationFilter
+    BackgroundCalibrationResult
+    calculate_background_calibration
 
 .. currentmodule:: pylabrobot.thermo_fisher.abi7500_fast_dx.optical_calibration
 

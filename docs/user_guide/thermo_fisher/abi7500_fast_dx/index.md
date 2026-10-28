@@ -39,15 +39,27 @@ saved, and the entire optical run reached normal completion with matching instru
 
 A completed two-cycle vendor acquisition supplies matching USB frames and saved well outputs
 for exact numerical comparison. This supports the recorded processing configuration; the new
-PLR run has no matching vendor output. Dye unmixing, Ct analysis and assay interpretation are
-not implemented.
+PLR run has no matching vendor output. Offline
+[dye separation and ROX normalization](spectral-measurements.md) reproduce saved vendor
+components and Rn values while retaining quality flags. Ct analysis and assay interpretation
+are not implemented.
+An [offline background-calibration calculation](background-calibration.md) generates offsets and
+slopes from complete water-plate images and matching masks, retaining full coefficient precision.
 An [offline optical-calibration calculation](optical-calibration.md) generates new uniformity
 coefficients from final camera collections, matching ROI masks and background calibration.
+A fresh Ubuntu optical session completed automatic exposure search and all 65 final images,
+generating 480 coefficients with PLR-generated masks and matching background, without
+empty wells, outliers, substitutions or saturated final wells.
+An [offline ROI generator](roi-calibration.md) derives new masks from original images without
+prior masks, reproducing all 960 well regions in two saved five-filter vendor calibrations.
+Fresh Ubuntu acquisitions also produced all 480 well regions across two sessions, with
+99.64–99.70% median per-well pixel overlap against the saved vendor masks.
 An [offline pure-dye calculation](pure-dye-calibration.md) reproduces the saved ROX spectrum
 and distinguishes native diagnostics from Java correction decisions. A fresh Ubuntu ROX session
 completed all 65 fixed-exposure images and cleanup; unreplaced saturation at A10 and B10 blocked
 calibration-file export. Automatic exposure selection reproduces all 35 vendor search probes
-offline; its acquisition path and the optional 90 °C cover setting await hardware validation.
+offline. The shared acquisition path and 90 °C cover setting were also exercised by the fresh
+optical session; that does not establish the quality of a new pure-dye calibration.
 Firmware updates remain outside scope.
 
 ```{toctree}
@@ -60,8 +72,11 @@ thermal-runs
 synchronized-acquisition
 raw-snapshots
 optics-and-measurements
+roi-calibration
+background-calibration
 optical-calibration
 pure-dye-calibration
+spectral-measurements
 hardware-validation
 capture
 ```

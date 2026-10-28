@@ -20,7 +20,7 @@ from .collection_tests import _CollectionUSB
 from .driver import ABI7500FastDx
 from .fluorescence import FluorescenceFrame
 from .image_processing import PlatePixelMask
-from .protocol import ThermalPacket
+from .protocol import ABI7500ProtocolError, ThermalPacket
 from .run import ABI7500RunError, ThermalRun
 from .run_tests import _BASELINE, _RUN_ID, _checkpoint
 from .status import ABI7500Status
@@ -33,10 +33,30 @@ _PACKETS = tuple(ThermalPacket.decode(bytes.fromhex(p["request_hex"])) for p in 
 _PROGRAM = ThermalProgram.decode(next(p.payload for p in _PACKETS if p.command == 0x12))
 _COLLECTION = replace(_PLAN, steps=((0, 0),), read_window=252, park_after_exposure_search=True)
 _COVER = bytes.fromhex("005a00010069")
+_MOTOR_TRANSITION = json.loads(
+  (Path(__file__).parent / "test_data/startup_motor_transition_vectors.json").read_text()
+)
 
 
 class CalibrationSequenceEvidenceTests(unittest.TestCase):
   """Keep captured method settings and immutable cache keys independent of device access."""
+
+  def test_loaded_state_precedes_recorded_motor_completion(self) -> None:
+    """Actual replies distinguish block loading from the optical motor state."""
+    observations = _MOTOR_TRANSITION["observations"]
+    decoded = []
+    for key in (
+      "loaded_observation",
+      "moving_motor_observation",
+      "subsequent_stationary_observation",
+    ):
+      row = observations[key]
+      request = ThermalPacket.decode(bytes.fromhex(row["request_hex"]))
+      reply = ThermalPacket.decode(bytes.fromhex(row["reply_hex"]))
+      self.assertEqual((request.command, request.sequence), (reply.command, reply.sequence))
+      self.assertEqual(reply.error_code, 0)
+      decoded.append((reply.command, int.from_bytes(reply.payload, "big")))
+    self.assertEqual(decoded, [(0x73, 2), (0x6C, 1), (0x6C, 0)])
 
   def test_capture_order_and_closed_transition(self) -> None:
     """The capture pins the 30 µL/312-second method and the intervening absolute park."""
@@ -163,7 +183,7 @@ class CalibrationStartupTests(unittest.IsolatedAsyncioTestCase):
     usb.expect_write(b"CH   5")
     usb.expect_read(b"ready")
 
-  def script_start(self) -> None:
+  def script_start(self, motor_states: tuple[int, ...] = (0,)) -> None:
     """Follow captured mutation order, retaining PLR's additional state verification."""
     usb = self.usb
     self.preflight()
@@ -182,6 +202,8 @@ class CalibrationStartupTests(unittest.IsolatedAsyncioTestCase):
     usb.exchange(0x73, b"\x00\x00")
     usb.exchange(0x71)
     usb.exchange(0x73, b"\x00\x02")
+    for state in motor_states:
+      usb.exchange(0x6C, state.to_bytes(2, "big"))
     usb.optics(0)
     usb.exchange(0x67)
     usb.exchange(0x6C, b"\x00\x01")
@@ -233,6 +255,44 @@ class CalibrationStartupTests(unittest.IsolatedAsyncioTestCase):
     self.assertEqual((await self.start()).state, "not_started")
     self.assertEqual(self.usb.writes, writes)
     self.assertEqual(self.usb.commands().count(0x67), 1)
+    self.assertNotIn(0x7E, self.usb.commands())
+
+  async def test_loaded_plate_waits_for_optical_motor_before_home(self) -> None:
+    """A loaded block can precede motor completion; polling never repeats loading."""
+    self.script_start(motor_states=(1, 1, 0))
+    run = await self.start()
+    self.assertTrue(run.start_acknowledged)
+    self.assertFalse(self.usb.script)
+    commands = self.usb.commands()
+    self.assertEqual(commands.count(0x71), 1)
+    self.assertEqual(commands.count(0x67), 1)
+    self.assertEqual(commands.count(0x7E), 1)
+    load = commands.index(0x71)
+    home = commands.index(0x67)
+    self.assertEqual(commands[load + 1 : home], [0x73, 0x6C, 0x6C, 0x6C, 0x6C, 0x6B, 0x66])
+
+  async def test_motor_wait_timeout_does_not_home_start_or_replay(self) -> None:
+    """A bounded wait failure leaves a non-replayable not-started checkpoint."""
+    self.script_start(motor_states=())
+    with patch.object(
+      self.driver, "_wait_filter", new=AsyncMock(side_effect=TimeoutError("Motor still moving"))
+    ) as wait:
+      with self.assertRaisesRegex(TimeoutError, "Motor still moving"):
+        await self.start()
+      wait.assert_awaited_once()
+    writes = list(self.usb.writes)
+    self.assertEqual((await self.start()).state, "not_started")
+    self.assertEqual(self.usb.writes, writes)
+    self.assertNotIn(0x67, self.usb.commands())
+    self.assertNotIn(0x7E, self.usb.commands())
+
+  async def test_unknown_motor_state_does_not_home_or_start(self) -> None:
+    """Unknown motor words remain errors rather than being interpreted as completion."""
+    self.script_start(motor_states=(2,))
+    with self.assertRaisesRegex(ABI7500ProtocolError, "Unknown filter motor state"):
+      await self.start()
+    self.assertEqual((await self.start()).state, "not_started")
+    self.assertNotIn(0x67, self.usb.commands())
     self.assertNotIn(0x7E, self.usb.commands())
 
   async def test_standby_and_explicit_mode_are_required(self) -> None:

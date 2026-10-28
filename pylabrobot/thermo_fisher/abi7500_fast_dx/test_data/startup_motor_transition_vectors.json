@@ -1,0 +1,36 @@
+{
+  "source_capture": "abi7500-plr-unit2-block-comparison-001",
+  "usb_transcript_sha256": "0c56cd427ba3e3e550ec498381653224bd57d35fd5de0fba4600d8e9e912d3ce",
+  "instrument_label": "275030206",
+  "usb_serial": "0000000747",
+  "notes": "Selected actual observations. Stationary was read after a cleanup reconnect, not a continuous startup polling sequence. No motor command intervened.",
+  "observations": {
+    "loaded_observation": {
+      "command": 115,
+      "sequence": 55,
+      "request_hex": "5858ffffffff000f39373030007300000000003789",
+      "reply_hex": "5858ffffffff001139373030007300000000003700028d",
+      "request_payload_hex": "",
+      "payload_hex": "0002",
+      "completed_utc": "2026-10-21T18:41:34.458885+00:00"
+    },
+    "moving_motor_observation": {
+      "command": 108,
+      "sequence": 56,
+      "request_hex": "5858ffffffff000f39373030006c00000000003883",
+      "reply_hex": "5858ffffffff001139373030006c000000000038000186",
+      "request_payload_hex": "",
+      "payload_hex": "0001",
+      "completed_utc": "2026-10-21T18:41:34.552275+00:00"
+    },
+    "subsequent_stationary_observation": {
+      "command": 108,
+      "sequence": 7,
+      "request_hex": "5858ffffffff000f39373030006c00000000000752",
+      "reply_hex": "5858ffffffff001139373030006c000000000007000054",
+      "request_payload_hex": "",
+      "payload_hex": "0000",
+      "completed_utc": "2026-10-21T18:41:35.721938+00:00"
+    }
+  }
+}
