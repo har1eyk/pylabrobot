@@ -171,6 +171,7 @@ If you cannot find something, please contribute what you are looking for!
 ```{toctree}
 :caption: Resource Library
 
+library/abdos
 library/agenbio
 library/agilent
 library/alpaqua

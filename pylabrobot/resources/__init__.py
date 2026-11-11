@@ -1,4 +1,5 @@
 # labware manufacturers and suppliers
+from .abdos import *
 from .agenbio import *
 from .agilent import *
 from .alpaqua import *
